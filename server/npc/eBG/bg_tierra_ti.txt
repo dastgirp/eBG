@@ -1,0 +1,214 @@
+// Battle Ground - Tierra Triple Infierno
+
+-	script	TI_Tierra	FAKE_NPC,{
+	end;
+
+OnInit:
+	setwall("ebg_tti",46,85,8,6,0,"ti_wall_a");
+	setwall("ebg_tti",46,74,8,6,0,"ti_wall_a1");
+	setwall("ebg_tti",14,46,8,0,0,"ti_wall_b");
+	setwall("ebg_tti",25,46,8,0,0,"ti_wall_b1");
+	setwall("ebg_tti",85,46,8,0,0,"ti_wall_c");
+	setwall("ebg_tti",74,46,8,0,0,"ti_wall_c1");
+	end;
+
+OnPCDieEvent:
+	/* Drops all the skull, new skull if other team was killed. */
+	if (strcharinfo(PC_MAP) == "ebg_tti"){
+		.@team = callfunc("F_ValidateeBG",BGT_TI,0);
+		if ($@eBG_start[BGT_TI] == EBG_RUNNING) {
+			getmapxy .@m$, .@x, .@y, 0;
+			.@bg_id = getcharid(4);
+			for (.@i=0; .@i < 3; ++.@i) {
+				.@count = countitem($bg_tierra_ti[.@i]);
+				delitem($bg_tierra_ti[.@i], .@count);
+				bg_areaitem("ebg_tti", .@x, .@y, $bg_tierra_ti[.@i], .@count);
+			}
+			if (@killer_bg_id != .@bg_id) {
+				if (.@team >= 1 && .@team <= 3) {
+					bg_areaitem("ebg_tti", .@x, .@y, $bg_tierra_ti[.@team - 1], 1);
+				}
+			}
+		}
+		callfunc("F_warpDie",BGT_TI,.@team);
+	}
+	end;
+
+OnReadyCheck:
+	if ($@eBG_start[BGT_TI])
+		end;
+		
+	$@eBG_start[BGT_TI] = EBG_RUNNING;
+
+	initnpctimer;
+	.time_remaining = getvariableofnpc(.bg_time[BGT_TI], "BG_Settings");
+
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	.Team3_Score = 0;
+	donpcevent("::OnEmblem_TI");
+	sleep 1500;
+	bg_warp($@ebg_tti_BG_id1,"ebg_tti",29,49);
+	bg_warp($@ebg_tti_BG_id2,"ebg_tti",70,50);
+	bg_warp($@ebg_tti_BG_id3,"ebg_tti",49,70);
+	sleep 1500;
+	donpcevent("ti_respawn#5::OnBGStart");
+	donpcevent("ti_respawn#6::OnBGStart");
+	donpcevent("ti_respawn#7::OnBGStart");
+	for (.@i = 1; .@i <= 3; ++.@i) {
+		sleep 1000;
+		bg_team_reveal(getd("$@ebg_tti_BG_id"+ .@i));
+		bg_team_score(getd("$@ebg_tti_BG_id"+ .@i), getd(".Team"+.@i+"_Score"));
+	}
+	end;
+
+OnValidateScore:
+	if ($@eBG_start[BGT_TI] != EBG_RUNNING)
+		end;
+	for (.@i = 1; .@i <= 3; .@i++)
+		if (getd(".Team"+.@i+"_Score") >= $bg_tierra_ti[3]){
+			donpcevent("TI_Tierra::OnMatchEnd");
+			break;
+		}
+	end;
+
+OnTimer60000:
+	.time_remaining--;
+	if (.time_remaining != 0) {
+		mapannounce("ebg_tti", "The Battle will end in "+ .time_remaining +" Minutes!!", bc_map, 0x696969);
+		initnpctimer;
+		end;
+	}
+OnMatchStop:
+OnMatchEnd:
+	stopnpctimer;
+	cleanmap "ebg_tti"; // Removes all ground items
+	donpcevent("ti_respawn#5::OnBGStop");
+	donpcevent("ti_respawn#6::OnBGStop");
+	donpcevent("ti_respawn#7::OnBGStop");
+	$@eBG_start[BGT_TI] = EBG_ENDING;
+	// Rewards
+		
+	.@win = callfunc("F_eBGReward", BGT_TI, $bg_tierra_ti, 3, .Team1_Score, .Team2_Score, .Team3_Score, 0, 4, 0);
+	if (.@win)  {
+		mapannounce("ebg_tti","The " + callfunc("F_eBGTeamName", .@win) + " has won the Battle of Tierra Inferno!",bc_map,callfunc("F_eBGTeamColor",.@win));
+	} else {
+		mapannounce("ebg_tti","The battle is over. There are no Winners!", bc_map, 0x696969);
+	}
+	
+	//
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	.Team3_Score = 0;
+	sleep 5000;
+	callfunc("F_EndeBG", "ebg_tti",3);
+	end;
+}
+
+/* Totems */
+-	script	Sacrifice_Totem_eBG	FAKE_NPC,{
+	end;
+	
+OnTouch:
+	if ($@eBG_start[BGT_TI] != EBG_RUNNING) {
+		end;
+	}
+
+	// Get BGid of NPC
+	if (strnpcinfo(NPC_NAME_HIDDEN) == "blue") {
+		.@id = 1;
+	} else if (strnpcinfo(NPC_NAME_HIDDEN) == "red") {
+		.@id = 3;
+	} else if (strnpcinfo(NPC_NAME_HIDDEN) == "green") {
+		.@id = 2;
+	} else if (atoi(strnpcinfo(NPC_NAME_HIDDEN)) > 0) {
+		.@id = atoi(strnpcinfo(NPC_NAME_HIDDEN));
+	}
+	
+	// Only Team Members can do sacrifice.
+	if (getcharid(4) != getd("$@ebg_tti_BG_id"+ .@id)) {
+		end;
+	}
+
+	.@Points = 0;
+	// Delete Self Skulls
+	delitem($bg_tierra_ti[.@id - 1], countitem($bg_tierra_ti[.@id - 1]));
+	
+	// Delete other teams skulls, and increase the points
+	for (.@i = 0; .@i < 3; ++.@i){
+		if ((.@id - 1) == .@i) {
+			continue;
+		}
+		if (countitem($bg_tierra_ti[.@i])) {
+			.@n = countitem($bg_tierra_ti[.@i]);
+			delitem($bg_tierra_ti[.@i], .@n);
+			.@Points += .@n;
+		}
+	}
+	if (.@Points > 0) {
+		emotion(e_no1, 1);
+		specialeffect(EF_THUNDERSTORM2);
+		.@Score = getvariableofnpc(getd(".Team"+ .@id +"_Score"), "TI_Tierra") + .@Points;
+		if (.@Score > $bg_tierra_ti[3]) {	// Score > Score To Win
+			.@Score = $bg_tierra_ti[3];
+		}
+		set(getvariableofnpc(getd(".Team"+ .@id +"_Score"), "TI_Tierra"), .@Score);
+		bg_team_score(getd("$@ebg_tti_BG_id"+ .@id), .@Score);
+		mapannounce("ebg_tti", callfunc("F_eBGTeamName",.@id) + " : " + .@Points + " slaughtered skulls by " + strcharinfo(0) + " [" + .@Score + "/"+ $bg_tierra_ti[3] +"]", bc_map, callfunc("F_eBGTeamColor", .@id));
+		bg_addpoints(BG_TI_SKULL, .@Points, 1);
+		donpcevent("TI_Tierra::OnValidateScore");
+	}
+	end;
+}
+ebg_tti,28,42,0	duplicate(Sacrifice_Totem_eBG)	Sacrifice Totem#blue	HIDDEN_NPC,2,2
+ebg_tti,28,57,0	duplicate(Sacrifice_Totem_eBG)	Sacrifice Totem#1	HIDDEN_NPC,2,2
+
+ebg_tti,71,57,0	duplicate(Sacrifice_Totem_eBG)	Sacrifice Totem#red	HIDDEN_NPC,2,2
+ebg_tti,71,42,0	duplicate(Sacrifice_Totem_eBG)	Sacrifice Totem#2	HIDDEN_NPC,2,2
+
+ebg_tti,44,71,0	duplicate(Sacrifice_Totem_eBG)	Sacrifice Totem#green	HIDDEN_NPC,2,2
+ebg_tti,55,71,0	duplicate(Sacrifice_Totem_eBG)	Sacrifice Totem#3	HIDDEN_NPC,2,2
+
+// MapFlags
+// *********************************************************************
+
+ebg_tti	mapflag	bg_topscore	80
+ebg_tti	mapflag	battleground	3
+ebg_tti	mapflag	nomemo
+ebg_tti	mapflag	nosave	SavePoint
+ebg_tti	mapflag	noteleport
+ebg_tti	mapflag	nowarp
+ebg_tti	mapflag	nowarpto
+ebg_tti	mapflag	noreturn
+ebg_tti	mapflag	nobranch
+ebg_tti	mapflag	nopenalty
+
+// Emblem Flags
+
+-	script	ebg_ttiBase	FAKE_NPC,{
+	end;
+	
+OnEmblem_TI:
+	if (atoi(strnpcinfo(2)) >= 0)
+		flagemblem bg_get_guild_id(atoi(strnpcinfo(2)));
+	end;
+}
+
+ebg_tti,75,47,2	duplicate(ebg_ttiBase)	Bravo Base 1#1	GUILD_FLAG
+ebg_tti,75,52,2	duplicate(ebg_ttiBase)	Bravo Base 2#1	GUILD_FLAG
+
+ebg_tti,24,47,6	duplicate(ebg_ttiBase)	Alpha Base 1#0	GUILD_FLAG
+ebg_tti,24,52,6	duplicate(ebg_ttiBase)	Alpha Base 2#0	GUILD_FLAG
+
+ebg_tti,47,75,4	duplicate(ebg_ttiBase)	Charlie Base 1#2	GUILD_FLAG
+ebg_tti,52,75,4	duplicate(ebg_ttiBase)	Charlie Base 2#2	GUILD_FLAG
+
+// Battleground Therapist
+ebg_boss,7,52,3	duplicate(Therapist#eBG)	Therapist in battle#ti_1	4_F_SISTER
+ebg_boss,52,92,3	duplicate(Therapist#eBG)	Therapist in battle#ti_2	4_F_SISTER
+ebg_boss,92,52,3	duplicate(Therapist#eBG)	Therapist in battle#ti_3	4_F_SISTER
+
+// Battleground Respawn
+ebg_tti,49,89,0	duplicate(respawn_script#bg)	ti_respawn#5	HIDDEN_WARP_NPC	//#tti_respawn
+ebg_tti,10,49,0	duplicate(respawn_script#bg)	ti_respawn#6	HIDDEN_WARP_NPC	//#gti_respawn
+ebg_tti,89,49,0	duplicate(respawn_script#bg)	ti_respawn#7	HIDDEN_WARP_NPC	//#cti_respawn

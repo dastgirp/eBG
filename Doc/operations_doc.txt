@@ -1,0 +1,86 @@
+//=====================================================
+// ExtendedBG Script Commands
+//=====================================================
+// By:
+// 	Dastgir
+//=====================================================
+// Date:
+// 	05-02-2016
+//=====================================================
+
+There are Several Operations to be performed at Timers:
+	EBG_OP_HEAL               : 0x0001
+	EBG_OP_WARP               : 0x0002
+	EBG_OP_ADDTIME            : 0x0004
+	EBG_OP_EFFECT             : 0x0008
+	EBG_OP_DELETE             : 0x0010
+	EBG_OP_ADDSELF            : 0x0020
+	EBG_OP_ADDTIMESELF        : 0x0040
+	EBG_OP_VIEWPOINT          : 0x0080
+	EBG_OP_CONDITION          : 0x0100
+	EBG_OP_REVEAL_MOB         : 0x0200
+	EBG_OP_FORCE_DELETE       : 0x0400
+	EBG_OP_ARITHMETIC         : 0x0800
+	EBG_OP_DOEVENT            : 0x1000
+	EBG_OP_MAPANNOUNCE        : 0x2000
+	EBG_OP_DELAY              : 0x4000
+
+Descriptions:
+
+*EBG_OP_HEAL (bg_areaheal_timer)
+	Heals the Area
+
+*EBG_OP_WARP (bg_areawarp_timer)
+	Warps the Area
+
+*EBG_OP_ADDTIME (bg_timer_child)
+	Generates new timer with specified operations.
+	Does not free by default
+
+*EBG_OP_EFFECT (bg_effect_timer)
+	Shows Effect
+
+*EBG_OP_DELETE (Use by bg_operations_timer)
+	Delete's Self
+	It is set if interval is 0.
+
+*EBG_OP_ADDSELF (Use by bg_operations_timer)
+	Add's Self(Generate New Timer with same ParentUID)
+	Delete's itself after generating new timer
+
+*EBG_OP_ADDTIMESELF (Use by bg_operations_timer)
+	Add's Self(Generate New Timer with same ParentUID)
+	However, Timer is Timer(Child 'bg_timer_child')+SelfTime
+	Delete's itself after generating new timer
+
+*EBG_OP_VIEWPOINT (bg_viewpoint_timer)
+	Shows ViewPoint to all people on a map
+
+*EBG_OP_CONDITION (bg_npc_cond_hpsp/bg_player_cond_timer/bg_npc_cond_timer)
+	Checks for Condition's.
+	if npc_or_var is false, it tries to attach player, failure to which timer will be deleted.
+	Reads Player variable if npc_or_var is false. (Set by bg_player_cond_timer)
+	else reads NPC value's. (Set by bg_npc_data)
+	If condition is satisfied, the operation mentioned is used. (bg_npc_cond_timer/bg_player_cond_timer)
+
+*EBG_OP_REVEAL_MOB (Use by bg_operations_timer)
+	Reveals Monster Location by ViewPoint
+
+*EBG_OP_FORCE_DELETE
+	Deprecated
+
+*EBG_OP_ARITHMETIC (bg_perform_arithmetic)
+	Performs Arithmetic Operation on NPC Values (Set by bg_npc_data)
+
+*EBG_OP_DOEVENT (bg_insert_event_name)
+	Calls Label specified.
+	Player is not attached.
+
+*EBG_OP_MAPANNOUNCE (bg_mapannounce_timer)
+	Announces text on the map.
+
+*EBG_OP_DELAY
+	Used for Delaying the Operation in case independent operation has not executed yet.
+	Cannot use it via any scriptCommands.
+	Totally for Internal usage.
+	If used via scriptCommands, the source will unset it.

@@ -1,0 +1,751 @@
+/**
+ * Format:
+ *	callfunc("F_eBGReward",BG_TYPE,$@var_of_config,TotalTeam,Score1,Score2,...,ScoreN,AddScore,StartingIndex,CheckMethod, Timer)
+ *		BG_TYPE: Refer to BGT Constants
+ *		$@var_of_config: Configuration variable that is described in bg_common
+ *		TotalTeam: Total Teams in current type of bg.
+ *		Score1,Score2,...,ScoreN: N Variables Containing Score of Each Team.
+ *		AddScore:	Add Team's Score to Reward(to increase reward according to scores gained)
+ *		StartingIndex:	Starting Index of the reward's configuration in the $@var_of_config
+ *		CheckMethod:	See Comments inside function
+ *		Timer(if CM = 2):	1 = called when time limit is reached, 0 = Called with some conditions
+ *	NOTE 1:
+ *		if add_score is 1, add score as it is
+ *		if add_score >= 10, Reward will be Given as (Reward+(Score*(var[add_score-10])))
+ */
+function	script	F_eBGReward	{
+	/* Data Collection */
+	// BG Type
+	.@bg_type = getarg(0);
+	// Copy the Variables
+	copyarray .@var[0], getarg(1), getarraysize(getarg(1));
+	// Team Size
+	.@teams = getarg(2);
+	.@j = .@teams;
+	// Scores of All Team
+	for (.@i = 0; .@i < .@teams; ++.@i)
+		.@score[.@i + 1] = getarg(3 + .@i);
+	// Add TeamScore to Amount of Items Won. (NOTE 1)
+	.@add_score = getarg(3 + .@j);
+	// Starting Index of Rewards in .@var
+	.@si = getarg(4 + .@j, 4);
+	/*
+	Check Methods:
+		0 = Compare Scores, the higher one's win.
+		1 = Compare Scores with index 0. score > [0] wins.
+		2 = If TeamB Score <= 0, TeamA Wins and vice versa,
+			else if timer is 1, its a Tie.
+			else if NoPlayer is there from TeamB, TeamA wins.
+			else -1 is returned.
+			Accepts Additional Arguments:
+			1: Timer.
+		3 = If Score >= [0] Attacker($bg_conquest_attacker) Wins
+			addScore Reward = [0] or equal score if Attacker Won
+					[0]-ActualScore is Defender Won
+			Extra Rewards for Winner [10]
+	*/
+	.@check_method = getarg(5 + .@j, 0);
+	/* Data Processing */
+	.@map$ = getvariableofnpc(.bg_mapname$[.@bg_type], "BG_Settings");
+	for (.@i = 0; .@i < .@teams; ++.@i) {
+		// Save all BgID
+		.@bg_id[.@i + 1] = getd("$@"+ .@map$ +"_BG_id"+ (.@i + 1));
+	}
+	/* Calculation of Extra Bonus Reward(add_score) (NOTE 1) */
+	for (.@i = 0; .@i < .@teams; ++.@i) {
+		.@temp = 0;
+		if (.@add_score == 1)
+			.@temp = .@score[.@i + 1];
+		else if (.@add_score >= 10)
+			.@temp = .@score[.@i + 1] * .@var[.@add_score - 10];
+		.@score_t[.@i + 1] = .@temp;
+	}
+	.@win = 0;
+	.@tied = false;
+	/* Check Winning Team */
+	switch(.@check_method) {
+		/**
+		 * Compare Scores, the higher one's win.
+		 * Used by CTF/Boss/TI/SC/Rush
+		 */
+		case 0:
+			// Team 1 > Team 2
+			if (.@score[1] > .@score[2]) {
+				.@win = 1;
+				if (.@teams == 3) {
+					// Team 1 > Team 3
+					if (.@score[1] > .@score[3]) {
+						.@win = 1;
+					} else {
+						.@win = 3;
+					}
+				}
+			} else if (.@score[2] > .@score[1]) { // Team 2 > Team 1
+				.@win = 2;
+				if (.@teams == 3) {
+					// Team 2 > Team 3
+					if (.@score[2] > .@score[3]) {
+						.@win = 2;
+					} else {
+						.@win = 3;
+					}
+				}
+			} else {
+				// Team 1 == Team 2  and Team 3 > Team 1
+				if (.@teams == 3 && .@score[3] > .@score[1]) {
+					.@win = 3;
+				} else {
+					// If Total Teams == 2, Its a Tie
+					.@tied = true;
+					setarray .@tie[0], 2, 1;
+				}
+			}
+			break;
+		/**
+		 * Compare Scores with index 0. score >= 0 wins.
+		 * Used by CTF/EoS
+		 */ 
+		case 1:
+			.@tied = true;
+			// Check if some team have score < [0] index
+			for (.@i = 1; .@i <= .@teams; ++.@i) {
+				if (.@score[.@i] < .@var[0]) {
+					.@tied = false;
+					break;
+				}
+			}
+			if (.@tied == true) {
+				setarray .@tie[0], 2, 1;
+			} else {
+				// Winner = score >= [0] index
+				for (.@i = 1; .@i <= .@teams; ++.@i) {
+					if (.@score[.@i] >= .@var[0]) {
+						.@win = .@i;
+						break;
+					}
+				}
+				// No One Won? Not Possible
+				if (.@win == 0) {
+					return -1;
+				}
+			}
+			break;
+		/**
+		 * 2 = If TeamB Score <= 0, TeamA Wins and vice versa,
+		 * 	else if timer is 1, its a Tie.
+		 * 	else if NoPlayer is there from TeamB, TeamA wins.
+		 * 	else -1 is returned.
+		 * 	Accepts Additional Arguments:
+		 * 	1: Timer.
+		 * Used by TD
+		 */
+		case 2:
+			.@timer = getarg(6 + .@j, 0);
+			.@count[1] = bg_get_data(.@bg_id[1], 0);	// Number of Players
+			.@count[2] = bg_get_data(.@bg_id[2], 0);	// Number of Players
+			if (.@score[2] <= 0) {
+				.@win = 1;
+			} else if (.@score[1] <= 0) {
+				.@win = 2;
+			} else if (.@timer) {
+				.@tied = true;
+				setarray .@tie[0], 2, 1;
+			}
+			/* Rewards if player quit are based on % of Killed Players to Total Kills Required. */
+			else if (.@count[2] == 0) {
+				.@win = 1;
+				.@win_a = (.@var[.@si + .@tie[0] + 1] * (.@var[0] - .Team2_Score)) / .@var[0];
+			} else if (.@count[1] == 0) {
+				.@win = 2;
+				.@win_a = (.@var[.@si + .@tie[0] + 1] * (.@var[0] - .Team1_Score)) / .@var[0];
+			} else {
+				return -1;
+			}
+			break;
+	
+		/**
+		 * If Score >= [0] Attacker($bg_conquest_attacker) Wins
+		 *	addScore Reward = [0] or equal score if Attacker Won
+		 *			[0]-ActualScore is Defender Won
+		 *	Extra Rewards for Winner [10]
+		 * Used by Conquest
+		 */
+		case 3:
+			if (.@bg_id[1] == $bg_conquest_attacker) {
+				if (.@score[1] >= .@var[0]) {
+					.@win = 1;
+				} else {
+					.@win = 2;
+					.@swap = .@score_t[.@win];
+					.@score_t[.@win] = .@score_t[.@los];
+					.@score_t[.@los] = .@swap;
+				}
+			} else {
+				if (.@score[1] >= .@var[0]) {
+					.@win = 2;
+					.@swap = .@score_t[.@win];
+					.@score_t[.@win] = .@score_t[.@los];
+					.@score_t[.@los] = .@swap;
+				} else {
+					.@win = 1;
+				}
+			}
+			.@reward_addW = .@var[10];
+			.@reward_addL = 0;
+			break;
+	}
+	
+	.@var_to_add$ = callfunc("F_varAdd", .@bg_type);
+	// Check if There's any Winning Team
+	if (.@win > 0 || .@tied == true){
+		/**
+		 * .@los = -2 : No Loser
+		 * .@los = -1 : 3 Teams
+		 * .@los > 0 : Loser Team
+		 * .@tied == true => match tied
+		 */
+		if (.@check_method == 2) {
+			if (.@win_a) {
+				.@los = -2;	// No Loser if There's 0 players on other team.
+				.@var[.@si + .@tie[0] + 1] = .@win_a;
+			} else {
+				.@los = (.@win == 2) ? 1 : 2;
+			}
+		} else if (.@teams == 3) {
+			.@los = -1;
+			if (.@tied == true) {
+				// .@tie value set accordingly to give same price.
+				.@win = 1;
+			}
+		} else {
+			if (.@tied == true) {
+				// Fake Values according to .@tie variable
+				.@win = 1;
+				.@los = 2;
+			}
+			.@los = (.@win == 2) ? 1 : 2;
+		}
+		/**
+		 * ITEM_QUANTITY:
+			.@si: Start Index
+			.@tie[0]: Check If Tie(To Go to Tie Variable)
+			1: Winner Item Index
+		 * EXTRA_REWARD:
+			.@reward_addW = Variable[10] (case 3)
+		 */
+		//        BG_ID         , ITEM_ID    , ITEM_QUANTITY          + SCORE            + EXTRA_REWARD , KAFRA_POINTS          , QUEST_ID     , VARIABLE     , ADD_TO_VAR   , BG_tYPE  , BG_STATUS
+		bg_reward(.@bg_id[.@win], .@var[.@si], .@var[.@si+.@tie[0] + 1] + .@score_t[.@win] + .@reward_addW, .@var[.@si+.@tie[0]+4], .@var[.@si+7], .@var_to_add$, .@var[.@si+8], .@bg_type, (BGC_WON+.@tie[0]));
+		if (.@los > 0) { // Loser Reward
+			bg_reward(.@bg_id[.@los], .@var[.@si], .@var[.@si+.@tie[1] + 2] + .@score_t[.@los] + .@reward_addL, .@var[.@si+.@tie[1]+5], .@var[.@si+7], .@var_to_add$, .@var[.@si+8], .@bg_type, (BGC_LOSS+.@tie[1]));
+		} else if (.@los == -1) { // 2 Loser
+			/**
+			 * 3 Teams
+			 * Reward Other 2 losers
+			 */
+			// Team 1 Won
+			if (.@win == 1) {
+				setarray .@los[0], 2, 3;
+			} else if (.@win == 2) { // Team 2 Won
+				setarray .@los[0], 1, 3;
+			} else { // Team 3 Won
+				setarray .@los[0], 1, 2;
+			}
+			for (.@i = 0; .@i < 2; ++.@i) {
+				bg_reward .@bg_id[.@los[.@i]], .@var[.@si], .@var[.@si+.@tie[1]+2] + .@score_t[.@los], .@var[.@si+.@tie[1]+5], .@var[.@si+7], .@var_to_add$, .@var[.@si+8], .@bg_type, BGC_LOSS+.@tie[1];
+			}
+		}
+	}
+	if (.@tied == true)
+		return 0;
+	else
+		return .@win; // Return Winning Team, else 0 on Tie
+}
+
+function	script	F_varAdd	{
+	.@bg_type = getarg(0);
+	switch(.@bg_type){
+		case BGT_CTF:
+			return "BG_CTF";
+		case BGT_BOSS:
+			return "BG_BOSS";
+		case BGT_TI:
+			return "BG_TI";
+		case BGT_EOS:
+			return "BG_EOS";
+		case BGT_TD:
+			return "BG_TDM";
+		case BGT_SC:
+			return "BG_SC";
+		case BGT_CONQ:
+			return "BG_CON";
+		case BGT_RUSH:
+			return "BG_RUSH";
+		case BGT_DOM:
+			return "BG_DOM";
+		case BGT_TOUCHDOWN:
+			return "BG_TOUCHDOWN";
+	}
+	return "NONE_BGTYPE";
+}
+
+/*
+	TeamID to Color (For ViewPoints)
+*/
+function	script	F_eBGTeamColor_VP	{
+	.@team = getarg(0, -1);
+	switch(.@team) {
+		default:
+			return 0xC4C4C4;	// 0 = None.
+		case GUILLAUME:
+			return 0x0000FF;	// Blue
+		case CROIX:
+			return 0xFF0000;	// Red
+		case TRAITOR:
+			return 0x00FF00;	// Green
+	}
+	return 0x5E5E5E;			// Default
+}
+
+/*
+	TeamID to Color
+*/
+function	script	F_eBGTeamColor	{
+	.@team = getarg(0, -1);
+	switch(.@team) {
+		default:
+			return 0xFFFFFF;	// 0 = None.
+		case GUILLAUME:
+			return 0x0000FF;	// Blue
+		case CROIX:
+			return 0xFF0000;	// Red
+		case TRAITOR:
+			return 0x00FF00;	// Green
+	}
+	return 0xFFFFFF;			// Default
+}
+
+/*
+	TeamID to Team Name
+*/
+function	script	F_eBGTeamName	{
+	.@team = getarg(0, -1);
+	switch(.@team) {
+		case GUILLAUME:
+			return "Blue Team";
+		case CROIX:
+			return "Red Team";
+		case TRAITOR:
+			return "Green Team";
+	}
+	return "Null - Error";
+}
+
+/**
+ * TeamID and BGID to NPCName
+ */
+function	script	F_eBGNPCName	{
+	.@team = getarg(0, -1);
+	.@bg = getarg(0, BGT_CTF);
+	/**
+	 * BOSS = Guillaume/Croix
+	 */
+	switch(.@team) {
+		case GUILLAUME:
+			return "Guillaume";
+		case CROIX:
+			return "Croix";
+		case TRAITOR:
+			return "Traitor";
+	}
+	return "Neutral";
+}
+
+/*
+	Clears Queue Variables
+*/
+function	script	F_eBGCleanUp	{
+	for (.@i = 0; .@i < getargcount(); .@i = .@i + 2){
+		.@map$ = getarg(.@i);
+		.@teams = getarg(.@i+1);
+		for (.@j = 1; .@j <= .@teams; .@j++) {
+			if (getd("$@"+ .@map$ +"_BG_queue"+ .@j) > 0)
+				callfunc("F_queueclear",getd("$@"+ .@map$ +"_BG_queue"+ .@j));
+			if (getd("$@"+ .@map$ +"_BG_id"+ .@j) > 0){
+				bg_destroy getd("$@"+ .@map$ +"_BG_id"+ .@j);
+				setd("$@"+ .@map$ +"_BG_id"+ .@j, 0);
+			}
+		}
+	}
+	return;
+}
+
+/*
+	Returns the Maximum Players currently playing BG
+*/
+function	script	F_eBGMaxPlayer	{
+	.@map$ = getarg(0, "");
+	.@teams = getarg(1, 2);
+	.@c = 0;
+	for (.@i=1; .@i <= .@teams; ++.@i)
+		.@c += queuesize(getd("$@"+ .@map$ +"BG_queue"+ .@i));
+	return .@c;
+}
+
+/*
+	Returns BGType from MapName
+*/
+function	script	F_MapToId	{
+	.@map$ = getarg(0, "");
+	if (.@map$ != ""){	//Try to recognize via Map
+		if (.@map$ == "ebg_ctf") {
+			return BGT_CTF;
+		} else if (.@map$ == "ebg_boss") {
+			return BGT_BOSS;
+		} else if (.@map$ == "ebg_tti") {
+			return BGT_TI;
+		} else if (.@map$ == "ebg_eos") {
+			return BGT_EOS;
+		} else if (.@map$ == "ebg_td") {
+			return BGT_TD;
+		} else if (.@map$ == "ebg_sc") {
+			return BGT_SC;
+		} else if (.@map$ == "ebg_conquest") {
+			return BGT_CONQ;
+		} else if (.@map$ == "ebg_rush") {
+			return BGT_RUSH;
+		} else if (.@map$ == "ebg_dom") {
+			return BGT_DOM;
+		} else if (.@map$ == "ebg_tunnel") {
+			return BGT_TOUCHDOWN;
+		}
+	}
+	return BGT_MAX;
+}
+
+/*
+	Checks if Person is on BG , and nullify's the variables, and returns the teamID.
+*/
+function	script	F_ValidateeBG	{
+	.@type = getarg(0);		//BGT_xxx
+	.@clear = getarg(1, 0);	//Clear the Variables?
+	.@check = 0; // BG_Team is set to 0
+	
+	if (@BG_ID != getarg(0))
+		return -1;			//Not Valid BGT
+		
+	if (@BG_Team > 0) {
+		.@check = @BG_Team;
+	}
+	
+	if (.@check > 0 && .@clear > 0){
+		@BG_TeamJoin = 0;
+		@BG_ID = BGT_MAX;
+		@BG_TeamID = 0;
+		@BG_Team = 0;
+		@bg_killer_id = 0;
+	}
+	return .@check;
+}
+
+function	script	F_resetBases	{
+	.@type = getarg(0);
+	switch(.@type) {
+		case BGT_CTF:
+		case BGT_SC:
+		case BGT_TD:
+		case BGT_EOS:
+			getmapxy(.@mn$, @ebg_x, @ebg_y, UNITTYPE_PC);
+			doevent(getvariableofnpc(.bg_npcname$[.@type], "BG_Settings") +"::OnTeam"+ @BG_Team +"Off");
+			return 1;
+		case BGT_TOUCHDOWN:
+			setlook(LOOK_CLOTHES_COLOR, eBG_tod_pallete);
+			return 1;
+		case BGT_CONQ:
+		case BGT_BOSS:
+		case BGT_RUSH:
+		case BGT_DOM:
+		case BGT_TI:
+			break;
+		default:
+			break;
+	}
+	return 0;
+}
+
+/*
+	Destroys the queue
+*/
+function	script	F_queueclear	{
+	.@queue_id = getarg(0, -1);
+	if (.@queue_id == -1) {
+		return 0;
+	}
+	if (queuesize(.@queue_id) > 0) {	//Remove All Members in it...
+		.@it = queueiterator(.@queue_id);
+		for (.@p = qiget(.@it); qicheck(.@it); .@p = qiget(.@it)) {
+			if (attachrid(.@p)) {
+				@BG_Team = 0;
+				callfunc("F_ValidateeBG", @BG_ID, 1);
+			}
+			bg_join_time = gettimetick(2) + .bg_maxtime[@BG_ID];	//Sets Time to join Again
+			queueremove(.@queue,.@p);
+		}
+	}
+	return 1;
+}
+
+/*
+	Warps a Player when Dead.
+*/
+function	script	F_warpDie	{
+	.@bg_id = getarg(0, BGT_MAX);
+	.@team = getarg(1, 0);
+	if (.@team == 0){
+		return -1;
+	}
+	if (.@bg_id == BGT_MAX){
+		return -1;	
+	}
+	.@map_name$ = getvariableofnpc(.bg_mapname$[.@bg_id], "BG_Settings");
+	switch(.@bg_id) {
+		case BGT_CTF:
+		case BGT_TD:
+		case BGT_SC:
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$, 389, 10);
+					break;
+				case CROIX:
+					warp(.@map_name$, 10, 289);
+					break;
+			}
+			break;
+		case BGT_BOSS:
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$, 50, 374);
+					break;
+				case CROIX:
+					warp(.@map_name$, 42, 16);
+					break;
+			}
+			break;
+		case BGT_TI:
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$, 10, 49);
+					break;
+				case CROIX:
+					warp(.@map_name$, 89, 49);
+					break;
+				case TRAITOR:
+					warp(.@map_name$, 49, 89);
+					break;
+			}
+			break;
+		case BGT_DOM:
+		case BGT_EOS:
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$, 50, 374);
+					break;
+				case CROIX:
+					warp(.@map_name$, 42, 16);
+					break;
+			}
+			break;
+		case BGT_CONQ:
+			setarray .@GuillotineXY[0], 264, 379,
+										 90, 311,
+										 28, 50,
+										 30, 381,
+										298, 339,
+										328, 154;
+
+			setarray .@CroixXY[0],	295, 379,
+									113, 311,
+									 87, 50,
+									126, 357,
+									298, 308,
+									330, 154;
+			.@index = $bg_conquest_rotate;
+			switch(.@team) {
+				case GUILLAUME:
+					warp("ebg_conq0"+ (.@index + 1), .@GuillotineXY[.@index * 2], .@GuillotineXY[(.@index * 2) + 1]);
+					break;
+				case CROIX:
+					warp("ebg_conq0"+ (.@index + 1) ,.@CroixXY[.@index * 2], .@CroixXY[(.@index * 2) + 1]);
+					break;
+			}
+			break;
+		case BGT_RUSH:
+			setarray .@gXY[0],	202, 230,
+								146, 50,
+								60, 13,
+								270, 292;
+			setarray .@cXY[0],	202, 226,
+								146, 46,
+								64, 13,
+								270, 288;
+			.@index = $bg_rush_rotate;
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$ +"0"+ (.@index + 1), .@gXY[.@index * 2], .@gXY[(.@index * 2) + 1]);
+					break;
+				case CROIX:
+					warp(.@map_name$ +"0"+ (.@index + 1), .@cXY[.@index * 2], .@cXY[(.@index * 2) + 1]);
+					break;
+			}
+			break;
+		case BGT_TOUCHDOWN:
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$, 34, 79);
+					break;
+				case CROIX:
+					warp(.@map_name$, 144, 79);
+					break;
+			}
+			break;
+	}
+	return;
+}
+
+/*
+	Clears the BG Variables
+*/
+function	script	F_EndeBG	{
+	.@map$ = getarg(0, "");
+	.@teams = getarg(1, 2);
+	.@actual_name$ = getarg(2, "");
+	if (.@map$ == ""){
+		return -1;
+	}
+	.@queue_name$ = .@map$;
+	if (.@actual_name$ != ""){
+		.@map$ = .@actual_name$;
+	}
+	.@id = callfunc("F_MapToId", .@queue_name$);
+	bg_updatescore .@map$, 0, 0;
+	/* Destroy Existing BG */
+	for (.@i = 1; .@i <= .@teams; ++.@i) {
+		bg_destroy getd("$@"+ .@queue_name$ +"_BG_id"+ .@i);
+		setd("$@"+ .@queue_name$ +"_BG_id"+ .@i, 0);
+		callfunc("F_queueclear", getd("$@"+ .@queue_name$ +"_BG_queue"+ .@i));
+	}
+	bg_mapwarp(.@map$);	//Warps to SavePoint
+	$@eBG_start[.@id] = EBG_NOT_STARTED;
+	donpcevent("BG_Settings::OnChangeBGS");
+	return 0;
+}
+
+/*
+	Gives eBG Status Info
+*/
+function	script	F_eBG_Status	{
+	.@status = getarg(0, 0);
+	switch(.@status) {
+		case EBG_NOT_STARTED:
+			return "Waiting for Players";
+		case EBG_RUNNING:
+			return "InProgress";
+		case EBG_ENDING:
+			return "About to End";
+	}
+	return "-----";
+}
+
+/**
+ * Checks if Current eBG Supports WaitingRoom
+ */
+function	script	F_eBG_WR	{
+	.@bg_type = getarg(0);
+	switch(.@bg_type){
+		case BGT_CTF:
+			return 1;
+		case BGT_BOSS:
+		case BGT_TI:
+		case BGT_EOS:
+		case BGT_TD:
+		case BGT_SC:
+		case BGT_CONQ:
+		case BGT_RUSH:
+		case BGT_DOM:
+		case BGT_TOUCHDOWN:
+			return 0;
+	}
+	return 0;
+}
+
+/*
+	Warps to WaitingRoom Area
+*/
+function	script	F_eBG_WR_Warp	{
+	.@team = getarg(0);
+	.@bg_type = getarg(1);
+	if (callfunc("F_eBG_WR", .@bg_type) == 0) {
+		return 0;
+	}
+	switch(.@bg_type) {
+		case BGT_CTF:
+			if (.@team == GUILLAUME) {
+				warp("ebg_room", 56, 74);
+			} else {
+				warp("ebg_room", 56, 97);
+			}
+			return 1;
+	}
+	return 0;
+}
+
+/**
+ * Get's Total Player of Queue
+ */
+function	script	F_eBG_Total_Player	{
+	.@map$ = getarg(0, "");
+	.@teams = getarg(1, 2);
+	.@bg_type = getarg(2, BGT_MAX);
+	.@c = 0;
+	if (.@bg_type == BGT_MAX) {
+		return 0;
+	}
+	if ($@eBG_start[.@bg_type] != EBG_NOT_STARTED) {
+		.@c = callfunc("F_eBGMaxPlayer", .@map$, .@teams);
+	} else {
+		for (.@i = 0; .@i <= 2; ++.@i) {
+			.@c += queuesize(getvariableofnpc(.queue[.@i], "BG_Settings"));
+		}
+	}
+	return .@c;
+}
+
+/**
+ * Returns the Time Left for eBG
+ */
+function	script	F_eBG_Time_Left	{
+	.@bg_type = getarg(0, -1);
+	.@npc_name$ = getarg(1);
+	switch(.@bg_type) {
+		case BGT_CTF:
+		case BGT_BOSS:
+		case BGT_TI:
+		case BGT_TD:
+		case BGT_SC:
+		case BGT_CONQ:
+		case BGT_RUSH:
+			.@timer = (getnpctimer(0, .@npc_name$)/1000);
+			.@time_minutes = getvariableofnpc(.time_remaining, .@npc_name$) - 1;
+			dispbottom("Time Left: "+ .@time_minutes +" minutes "+ (60-.@timer) +" seconds.");
+			break;
+
+		case BGT_EOS:
+		case BGT_DOM:
+		case BGT_TOUCHDOWN:
+			dispbottom("Current BG does not have any specific time to end.");
+			break;
+		default:
+			dispbottom("This BG is not yet supported. Contact GM.");
+			break;
+	}
+	return;
+}

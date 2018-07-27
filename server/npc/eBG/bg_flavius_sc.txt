@@ -1,0 +1,374 @@
+// Battle Ground - Flavius SC
+
+-	script	SC_Flavius	FAKE_NPC,{
+	end;
+	
+OnPCDieEvent:
+	.@die = 1;
+OnPCLogoutEvent:
+	if (strcharinfo(PC_MAP) == "ebg_sc") {
+		.@team = callfunc("F_ValidateeBG",BGT_SC,0);
+		callsub(OnTeamDie, .@die);
+		callfunc("F_warpDie", BGT_SC, .@team);
+	}
+	end;
+
+OnTeam1Off:
+OnTeam2Off:
+	callsub(OnTeamDie, 0, @ebg_x, @ebg_y);
+	end;
+
+OnTeamDie:
+	.@died = getarg(0);
+	.@x = getarg(1, -1);
+	.@y = getarg(2, -1);
+	.@stone = callfunc("SC_StoneCheck", getcharid(0));
+	if ($@eBG_start[BGT_SC] == EBG_RUNNING && .@stone) { // Stone Carrier
+		bg_npc_data(0, .@stone);
+		if (.@x == -1 && .@y == -1)
+			getmapxy(.@m$, .@x, .@y, UNITTYPE_PC);
+		movenpc("Neutral Stone#" + .@stone, .@x, .@y);
+		mapannounce("ebg_sc","Neutral Stone Dropped by [ " + strcharinfo(0) + " ]",1,0xFFFFFF);
+		if (.@died) {
+			bg_addpoints BG_SC_DROPPED, 1, 1;
+			bg_addfame @killer_bg_src;
+		}
+		donpcevent("Neutral Stone#" + .@stone +"::OnTimerStartE");
+		bg_hpsp_time_del(EBG_HP_TIME | EBG_SP_TIME | EBG_EXTRA_TIME);
+		pc_block_si(PC_BLOCK_ALL, 0);
+		enablenpc("Neutral Stone#" + .@stone);
+	}
+	return;
+
+OnReadyCheck:
+	if ($@eBG_start[BGT_SC])
+		end;
+	$@eBG_start[BGT_SC] = EBG_RUNNING;
+	initnpctimer;
+	.time_remaining = getvariableofnpc(.bg_time[BGT_SC], "BG_Settings");
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	for (.@i = 1; .@i < 7; ++.@i){
+		bg_npc_data(0, .@i);
+		donpcevent("Neutral Stone#" + .@i + "::OnBGStart");
+	}
+
+	bg_updatescore "ebg_sc", .Team1_Score, .Team2_Score;
+	donpcevent("eos_respawn#12::OnBGStart");
+	donpcevent("eos_respawn#13::OnBGStart");
+	end;
+
+OnTeam1Score:
+	callsub(OnTeamScore, 1);
+	end;
+OnTeam2Score:
+	callsub(OnTeamScore, 2);
+	end;
+	
+OnTeamScore:
+	setd(".Team"+ getarg(0) +"_Score", getd(".Team"+ getarg(0) +"_Score") + 1);
+//OnValidateScore:
+	if ($@eBG_start[BGT_SC] != EBG_RUNNING)
+		end;
+	.Team1_Score = min(.Team1_Score, $bg_flavius_sc[0]);
+	.Team2_Score = min(.Team2_Score, $bg_flavius_sc[0]);
+
+	bg_updatescore "ebg_sc", .Team1_Score, .Team2_Score;
+	if (.Team2_Score == $bg_flavius_sc[0] || .Team1_Score == $bg_flavius_sc[0])
+		donpcevent("SC_Flavius::OnMatchEnd");
+	end;
+
+
+OnTimer60000:
+	.time_remaining--;
+	if (.time_remaining != 0) {
+		mapannounce("ebg_sc", "The Battle will end in "+ .time_remaining +" Minutes!!", bc_map, 0x9ACD32);
+		initnpctimer;
+		end;
+	}
+OnMatchStop:
+OnMatchEnd:
+	stopnpctimer;
+	donpcevent("eos_respawn#12::OnBGStop");
+	donpcevent("eos_respawn#13::OnBGStop");
+	$@eBG_start[BGT_SC] = EBG_ENDING;
+	/**
+	 * 2 Teams, AddScore = 0, StartingIndex = 1, CheckMethod(0)
+	 * CM: 0 = Compare Scores, the higher one's win.
+	 */
+	.@win = callfunc("F_eBGReward", BGT_SC, $bg_flavius_sc, 2, .Team1_Score, .Team2_Score, 0, 1, 0);
+	if (.@win > 0) {
+		mapannounce("ebg_sc","The "+ callfunc("F_eBGTeamName", .@win) +" army has won the Battle of Tierra SC!", bc_map, callfunc("F_eBGTeamColor", .@win));
+	} else {
+		mapannounce("ebg_sc","The battle is over. This is a Tie...!", bc_map, 0x9ACD32);
+	}
+	// =======================================================
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	for (.@i = 1; .@i < 7; ++.@i) {
+		bg_npc_data(0, .@i);
+		donpcevent("Neutral Stone#" + .@i + "::OnBGStop");
+		donpcevent("cSC" + .@i + "::OnBGStop");
+		donpcevent("gSC" + .@i + "::OnBGStop");
+	}
+	
+	callfunc("F_EndeBG", "ebg_sc", 2);
+	end;
+}
+// Basic Functions
+// Adds HP/SP Timer.
+function	script	eBG_SC_addTimer	{
+	// getarg(0) = Character ID
+	// getarg(1) = NPCName
+	.@team = callfunc("F_ValidateeBG", BGT_SC, 0);
+	.@stone = callfunc("SC_StoneCheck", getarg(0));
+	bg_hpsp_time($bg_flavius_sc[11], $bg_flavius_sc[12], $bg_flavius_sc[10]);
+	bg_hpsp_time_extra(EF_BOWLINGBASH, e_hlp, .@stone, callfunc("F_eBGTeamColor_VP", .@team));
+	for (.@i = 1; .@i < 7; ++.@i)
+		bg_npc_cond_hpsp(getarg(1), getarg(0), EBG_CONDITION_EQUAL, .@i - 1, .@i);
+	return;
+}
+
+// Checks if following member have stone
+function	script	SC_StoneCheck	{
+	// getarg(0) = Character ID
+	for (.@i = 1; .@i < 7; ++.@i) {
+		if (bg_get_npc_data(.@i, "SC_Flavius") == getarg(0)) {
+			return .@i;
+		}
+	}
+	return 0;
+}
+
+// Neutral Stones
+// *********************************************************************
+
+ebg_sc,177,182,0	script	Neutral Stone#1	BARRICADE,1,1,{
+	end;
+
+OnTouch:
+	if ($@eBG_start[BGT_SC] != EBG_RUNNING || Hp < 1 || getcharid(4) == 0)
+		end;
+	.@stone_id = atoi(strnpcinfo(2));
+	if (bg_get_npc_data(.@stone_id,"SC_Flavius") || callfunc("SC_StoneCheck",getcharid(0)))
+		end; // Already Captured / Already with a Stone
+
+	sc_end SC_HIDING;
+	sc_end SC_CLOAKING;
+	sc_end SC_CHASEWALK;
+	sc_end SC_CLOAKINGEXCEED;
+	sc_end SC_CAMOUFLAGE;
+	sc_end SC__INVISIBILITY;
+	pc_block_si PC_BLOCK_ALL, 1; // Block Skills/Items
+	
+	mapannounce("ebg_sc", "[ " + strcharinfo(0) + " ] Got the Neutral Stone.", bc_map, 0xFFFFFF);
+		
+	bg_npc_data(getcharid(0), .@stone_id, "SC_Flavius");
+	callfunc("eBG_SC_addTimer", getcharid(0), "SC_Flavius");
+	callsub(OnTimerStop);
+	disablenpc strnpcinfo(0);
+	end;
+
+OnTimerStartE:
+	.@end = 1;
+OnTimerStart:
+	.@stone_id = atoi(strnpcinfo(2));
+	if (.uid[.@stone_id] == 0) {
+		.uid[.@stone_id] = bg_timer_start(2000, 1);
+	}
+	getmapxy .@map$, .@x, .@y, UNITTYPE_NPC;
+	bg_viewpoint_timer(.uid[.@stone_id], "ebg_sc", 1, .@x, .@y, .@stone_id, callfunc("F_eBGTeamColor_VP", -1));
+	if (.@end)
+		end;
+	return;
+	
+OnTimerStop:
+	.@stone_id = atoi(strnpcinfo(2));
+	if (.uid[.@stone_id]) {
+		bg_timer_stop(.uid[.@stone_id]);
+		.uid[.@stone_id] = 0;
+	}
+	return;
+	
+OnBGStart:
+	callsub(OnTimerStart);
+	end;
+
+OnBGStop:
+	.@stone_id = atoi(strnpcinfo(2));
+	callsub(OnTimerStop);
+	movenpc strnpcinfo(0), .x[.@stone_id], .y[.@stone_id];
+	enablenpc strnpcinfo(0);
+	end;
+
+OnInit:
+	setarray .x[1], 177, 222, 222, 177, 200, 199;
+	setarray .y[1], 182, 182, 117, 117, 105, 194;
+	end;
+}
+
+ebg_sc,222,182,0	duplicate(Neutral Stone#1)	Neutral Stone#2	BARRICADE,1,1
+ebg_sc,222,117,0	duplicate(Neutral Stone#1)	Neutral Stone#3	BARRICADE,1,1
+ebg_sc,177,117,0	duplicate(Neutral Stone#1)	Neutral Stone#4	BARRICADE,1,1
+ebg_sc,200,105,0	duplicate(Neutral Stone#1)	Neutral Stone#5	BARRICADE,1,1
+ebg_sc,199,194,0	duplicate(Neutral Stone#1)	Neutral Stone#6	BARRICADE,1,1
+
+// Stone Point - Team 2
+// *********************************************************************
+// .point = 0
+// .Count = 1
+ebg_sc,85,159,0	script	Stone Point#1::cSC1	GAJOMART,1,1,{
+	end;
+
+OnTouch:
+	if ($@eBG_start[BGT_SC] != EBG_RUNNING || Hp < 1)
+		end;
+	.@stone_id = callfunc("SC_StoneCheck", getcharid(0));
+	.@hidden_part = atoi(strnpcinfo(2));
+	.@point = bg_get_npc_data(0, strnpcinfo(3));
+	.@team = 2;
+	.@oppose = 1;
+	if (.@hidden_part >= 7) {
+		.@team = 1; .@oppose = 2;
+	}
+	if (.@point && getd("$@ebg_sc_BG_id"+.@oppose) == getcharid(4) &&
+			.@stone_id == 0) { // Team 1 Stole the Stone
+		bg_npc_data(getcharid(0), .@point, "SC_Flavius");
+		setnpcdisplay strnpcinfo(3), "Stone Point#"+ .@hidden_part, GAJOMART;
+
+		sc_end SC_HIDING;
+		sc_end SC_CLOAKING;
+		sc_end SC_CHASEWALK;
+		sc_end SC_CLOAKINGEXCEED;
+		sc_end SC_CAMOUFLAGE;
+		sc_end SC__INVISIBILITY;
+		pc_block_si PC_BLOCK_ALL,1; // Block Skills/Items
+
+		mapannounce("ebg_sc", callfunc("F_eBGTeamName",.@team) + " Stone has been stole by [ " + strcharinfo(0) + " ]", 1, callfunc("F_eBGTeamColor", .@oppose));
+		bg_addpoints BG_SC_STOLE, 1, 1;
+
+		callfunc("eBG_SC_addTimer", getcharid(0), "SC_Flavius");
+		bg_npc_data(0, 0, strnpcinfo(3));
+		callsub(OnTimerStop);
+	}
+	else if (.@point == 0 && getd("$@ebg_sc_BG_id"+.@team) == getcharid(4)  && .@stone_id > 0) { // User is having stone
+		callsub(OnTimerStart);
+		bg_npc_data(.@stone_id, 0, strnpcinfo(3));
+		bg_npc_data(0, 1, strnpcinfo(3));
+		bg_hpsp_time_del(EBG_HP_TIME | EBG_SP_TIME | EBG_EXTRA_TIME);
+
+		mapannounce("ebg_sc", callfunc("F_eBGTeamName", .@team) + " Stone captured by [ " + strcharinfo(0) + " ]", 1, callfunc("F_eBGTeamColor",.@team));
+		bg_addpoints BG_SC_CAPTURED, 1, 1;
+		pc_block_si PC_BLOCK_ALL,0; // UnBlock Skills/Items
+		setnpcdisplay strnpcinfo(3), callfunc("F_eBGTeamName", .@team) + " Stone#"+ .@hidden_part, BARRICADE;
+		bg_npc_data(0, .@stone_id, "SC_Flavius");
+	}
+	end;
+
+OnTeamScore:
+	bg_npc_data(0, 1, strnpcinfo(3));
+	.@hidden_part = atoi(strnpcinfo(2));
+	if (.@hidden_part >= 7)
+		donpcevent("SC_Flavius::OnTeam1Score");
+	else
+		donpcevent("SC_Flavius::OnTeam2Score");
+	end;
+
+OnTimerStart:
+	.@hidden_part = atoi(strnpcinfo(2));
+	.uid[.@hidden_part] = bg_timer_start(2000, 1);
+	bg_effect_timer(.uid[.@hidden_part], EF_GANBANTEIN);
+	bg_insert_event_name(.uid[.@hidden_part], "OnTeamScore");
+	getmapxy .@map$, .@x, .@y, UNITTYPE_NPC;
+	bg_viewpoint_timer(.uid[.@hidden_part], "ebg_sc", 1, .@x, .@y, 900, callfunc("F_eBGTeamColor_VP", (.@hidden_part <= 6) ? GUILLAUME : CROIX));
+	bg_perform_arithmetic(.uid[.@hidden_part], strnpcinfo(3), 1, EBG_ADD, 1);
+	bg_npc_cond_timer(.uid[.@hidden_part], strnpcinfo(3), 5, EBG_CONDITION_GREATER | EBG_CONDITION_EQUAL, EBG_OP_DOEVENT, 0, 1);
+	return;
+	
+OnTimerStop:
+	.@hidden_part = atoi(strnpcinfo(2));
+	if (.uid[.@hidden_part]) {
+		bg_timer_stop(.uid[.@hidden_part]);
+		.uid[.@hidden_part] = 0;
+	}
+	return;
+
+OnBGStop:
+	callsub(OnTimerStop);
+	.@hidden_part = atoi(strnpcinfo(2));
+	setnpcdisplay strnpcinfo(3), "Stone Point#"+ .@hidden_part, GAJOMART;
+	bg_npc_data(0, 0, strnpcinfo(3));
+	bg_npc_data(0, 1, strnpcinfo(3));
+	end;
+}
+
+ebg_sc,78,159,0	duplicate(cSC1)	Stone Point#2::cSC2	GAJOMART,1,1
+ebg_sc,71,159,0	duplicate(cSC1)	Stone Point#3::cSC3	GAJOMART,1,1
+ebg_sc,85,140,0	duplicate(cSC1)	Stone Point#4::cSC4	GAJOMART,1,1
+ebg_sc,78,140,0	duplicate(cSC1)	Stone Point#5::cSC5	GAJOMART,1,1
+ebg_sc,71,140,0	duplicate(cSC1)	Stone Point#6::cSC6	GAJOMART,1,1
+
+// Stone Point - Team 1
+// *********************************************************************
+ebg_sc,312,159,0	duplicate(cSC1)	Stone Point#7::gSC1	GAJOMART,1,1
+ebg_sc,319,159,0	duplicate(cSC1)	Stone Point#8::gSC2	GAJOMART,1,1
+ebg_sc,326,159,0	duplicate(cSC1)	Stone Point#9::gSC3	GAJOMART,1,1
+ebg_sc,312,140,0	duplicate(cSC1)	Stone Point#10::gSC4	GAJOMART,1,1
+ebg_sc,319,140,0	duplicate(cSC1)	Stone Point#11::gSC5	GAJOMART,1,1
+ebg_sc,326,140,0	duplicate(cSC1)	Stone Point#12::gSC6	GAJOMART,1,1
+
+// Battleground Therapist
+ebg_sc,390,13,5	duplicate(Therapist#eBG)	Therapist in battle#sc1	4_F_SISTER
+ebg_sc,10,293,5	duplicate(Therapist#eBG)	Therapist in battle#sc2	4_F_SISTER
+// Battleground Respawn
+
+ebg_sc,390,10,0	duplicate(respawn_script#bg)	eos_respawn#12	HIDDEN_WARP_NPC	//#guisc_respawn
+ebg_sc,10,290,0	duplicate(respawn_script#bg)	eos_respawn#13	HIDDEN_WARP_NPC	//#crosc_respawn
+
+
+// Flags
+// *********************************************************************
+
+ebg_sc,304,231,1	duplicate(Flag#bat)	Alpha Base#sc_1	1_FLAG_LION
+ebg_sc,319,231,1	duplicate(Flag#bat)	Alpha Base#sc_2	1_FLAG_LION
+ebg_sc,304,218,1	duplicate(Flag#bat)	Alpha Base#sc_3	1_FLAG_LION
+ebg_sc,319,218,1	duplicate(Flag#bat)	Alpha Base#sc_4	1_FLAG_LION
+ebg_sc,304,231,1	duplicate(Flag#bat)	Alpha Base#sc_5	1_FLAG_LION
+ebg_sc,304,231,1	duplicate(Flag#bat)	Alpha Base#sc_6	1_FLAG_LION
+ebg_sc,335,142,1	duplicate(Flag#bat)	Alpha Base#sc_7	1_FLAG_LION
+ebg_sc,335,157,1	duplicate(Flag#bat)	Alpha Base#sc_8	1_FLAG_LION
+ebg_sc,390,16,1	duplicate(Flag#bat)	Alpha Base#sc_9	1_FLAG_LION
+ebg_sc,292,163,1	duplicate(Flag#bat)	Alpha Base#sc_10	1_FLAG_LION
+ebg_sc,292,136,1	duplicate(Flag#bat)	Alpha Base#sc_11	1_FLAG_LION
+ebg_sc,241,185,1	duplicate(Flag#bat)	Alpha Base#sc_12	1_FLAG_LION
+ebg_sc,247,179,1	duplicate(Flag#bat)	Alpha Base#sc_13	1_FLAG_LION
+
+ebg_sc,96,81,1	duplicate(Flag#bat)	Omega Base#sc_1	1_FLAG_EAGLE
+ebg_sc,96,68,1	duplicate(Flag#bat)	Omega Base#sc_2	1_FLAG_EAGLE
+ebg_sc,79,81,1	duplicate(Flag#bat)	Omega Base#sc_3	1_FLAG_EAGLE
+ebg_sc,79,68,1	duplicate(Flag#bat)	Omega Base#sc_4	1_FLAG_EAGLE
+ebg_sc,96,81,1	duplicate(Flag#bat)	Omega Base#sc_5	1_FLAG_EAGLE
+ebg_sc,96,81,1	duplicate(Flag#bat)	Omega Base#sc_6	1_FLAG_EAGLE
+ebg_sc,59,164,1	duplicate(Flag#bat)	Omega Base#sc_7	1_FLAG_EAGLE
+ebg_sc,59,137,1	duplicate(Flag#bat)	Omega Base#sc_8	1_FLAG_EAGLE
+ebg_sc,10,296,1	duplicate(Flag#bat)	Omega Base#sc_9	1_FLAG_EAGLE
+ebg_sc,110,162,1	duplicate(Flag#bat)	Omega Base#sc_10	1_FLAG_EAGLE
+ebg_sc,110,137,1	duplicate(Flag#bat)	Omega Base#sc_11	1_FLAG_EAGLE
+ebg_sc,152,120,1	duplicate(Flag#bat)	Omega Base#sc_12	1_FLAG_EAGLE
+ebg_sc,158,114,1	duplicate(Flag#bat)	Omega Base#sc_13	1_FLAG_EAGLE
+
+// MapFlags
+// *********************************************************************
+
+ebg_sc	mapflag	battleground	2
+ebg_sc	mapflag	nomemo
+ebg_sc	mapflag	nosave	SavePoint
+ebg_sc	mapflag	noteleport
+ebg_sc	mapflag	nowarp
+ebg_sc	mapflag	nowarpto
+ebg_sc	mapflag	noreturn
+ebg_sc	mapflag	nobranch
+ebg_sc	mapflag	nopenalty
+ebg_sc	mapflag	noemergencycall
+
+// ToDo: Add Announcement when Neutral stone is taken from its original place.

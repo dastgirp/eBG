@@ -1,0 +1,659 @@
+//===== Hercules Script ======================================
+// BG queuing functions
+//===== By: ==================================================
+//= jaBote/Dastgir
+//===== Current Version: =====================================
+//= 1.0
+//===== Description: =========================================
+//= Includes common BG queuing functions to make BG scripting 
+//= easier.
+//===== Additional Comments: =================================
+//= 1.0  First Version. Imported from Flavius BGqueue script.
+//=      Modernized syntax. Changed sorting to insertion sort.
+//=      Revamped team assignment algorithm to a smoother one.
+//=      Thanks to some previous adjustments by Haruna.
+//============================================================
+
+function	script	F_warpTeam	{
+	.@bg_id = getarg(0, BGT_MAX);
+	.@team = getarg(1, 0);
+	.@map$ = getarg(2, "");
+	if (.@team <= 0) {
+		return -1;
+	}
+	if (.@bg_id == BGT_MAX && .@map$ != "") {	//Try to recognize via Map
+		.@bg_id = callfunc("F_MapToId",.@map$);
+	}
+	if (.@bg_id == BGT_MAX) {
+		return -1;
+	}
+	.@map_name$ = getvariableofnpc(.bg_mapname$[.@bg_id], "BG_Settings");
+	switch (.@bg_id) {
+		case BGT_CTF:			// Flavius - CTF
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$,311,224);
+					break;
+				case CROIX:
+					warp(.@map_name$,87,75);
+					break;
+			}
+			break;
+		case BGT_BOSS:			// Tierra - Boss
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$,353,344);
+					break;
+				case CROIX:
+					warp(.@map_name$,353,52);
+					break;
+			}
+			break;
+		case BGT_TI:			// Tierra - TI
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$,10,49);
+					break;
+				case CROIX:
+					warp(.@map_name$,89,49);
+					break;
+				case TRAITOR:
+					warp(.@map_name$,49,89);
+					break;
+			}
+			break;
+		case BGT_DOM:			// Domination
+		case BGT_EOS:			// Eye of Storm
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$,353,344);
+					break;
+				case CROIX:
+					warp(.@map_name$,353,52);
+					break;
+			}
+			break;
+		case BGT_TD:
+		case BGT_SC:
+			switch(.@team) {
+				case GUILLAUME:
+					warp(.@map_name$,328,150);
+					break;
+				case CROIX:
+					warp(.@map_name$,62,150);
+					break;
+			}
+			break;
+			
+		case BGT_CONQ:
+			setarray .@bg_conquest_Defender_XY[0],	120, 129,
+													136, 188,
+													308, 208,
+													67 , 193,
+													43 , 256,
+													121, 318;
+			setarray .@bg_conquest_Attacker_XY[0],	119, 8,
+													339, 78,
+													337, 330,
+													275, 93,
+													139, 31,
+													141, 45;
+			
+			.@attacker = $bg_conquest_attacker;
+			.@index = $bg_conquest_rotate;
+			.@Castle$ = "ebg_conq0"+ (.@index + 1);
+			if (.@team == .@attacker) {
+				.@AttackerX = .@bg_conquest_Attacker_XY[.@index * 2];
+				.@AttackerY = .@bg_conquest_Attacker_XY[(.@index * 2) + 1];
+				warp(.@Castle$, .@AttackerX, .@AttackerY);
+			} else {
+				.@DefenderX = .@bg_conquest_Defender_XY[.@index * 2];
+				.@DefenderY = .@bg_conquest_Defender_XY[(.@index* 2 ) + 1];
+				warp(.@Castle$, .@DefenderX, .@DefenderY);
+			}
+			break;
+		
+		case BGT_RUSH:
+			setarray .@XY[0],	43, 229,
+								252, 271,
+								216, 103,
+								100, 280;
+			.@index = $bg_rush_rotate;
+			warp("ebg_rush0"+ (.@index + 1), .@XY[.@index * 2],.@XY[(.@index * 2) + 1]);
+			break;
+		case BGT_TOUCHDOWN:
+			switch (.@team) {
+				case GUILLAUME:
+					warp(.@map_name$, 77, 181);
+					break;
+				case CROIX:
+					warp(.@map_name$, 16, 182);
+					break;
+			}
+			break;
+			
+	}
+	announce(strcharinfo(0) +" Has Joined BG", bc_all);	//Customization Needed.
+	return 1;
+}
+
+// BG team splitting algorithm. 
+// Usage: callfunc F_splitTeams("map name",x,y{, teams{, tolerance{, splitGroups{, destroy}}}})
+// Attempts to split teams for a given BG according to its name, a number
+// of teams, and optionally a (unused) maximum tolerance of size
+// difference between teams.
+// Parameters:
+// getarg(0): Map name to add to the queues to have them compounded in
+//            this fashion:
+//            "$@" + getarg(0) + "_BG_id%" for BG team IDs.
+//            "$@" + getarg(0) + "_BG_queue%" for BG queues.
+//            where % is the team number. Must be set or will error.
+// getarg(1): Amount of teams to split the awaiting participants in.
+//            Default value is 2.
+// getarg(2): Maximum size difference between the teams to make the script
+//            return an error if it's impossible to meet that condition
+//            (optional, not used officially). Default: -1 (disabled).
+// getarg(3): Whether to allow splitting of large groups (guilds or
+//            parties) to try to make the team sizes as evenly as possible
+//            while trying to fit to tolerance exigences (optional, not 
+//            used officially). Default: 0 (no).
+// getarg(4): Whether to destroy the BG ids and queues, throwing an error,
+//            if tolerance requirements are not met. Function will try to
+//            make its best approximation anyways if enabled (optional,
+//            not used officially). Default: 0 (no).
+// getarg(5): LogoutEvent Array. (Logout Event which will be executed for team x.)
+// getarg(6): GuildID Array.(Put team x into BG GuildID y.)
+// Returns: 0 if algorithm could successfully split the teams on required 
+//          tolerance without problem, or amount of uneven people if it
+//          couldn't meet tolerance requirements. It returns negative
+//          values if errors happens (no teams will be made in this case).
+//          Return values are not checked at all in official scripts.
+//          -1 : Invalid Map
+//          -2 : Unable to Split teams.
+//          -3 : Invalid Co-Ordinate
+//			-4 : Not Enough GuildID
+//			-5 : Not Enough LogoutEvents.
+              
+// Remember we've also got:
+// $@eBG_member_size: number of members.
+// $@eBG_member[]: array containing account IDs.
+// $@eBG_member_group[]: array containing member's group ID if chosen so.
+// $@eBG_member_type[]: array containing tipe of BG group.
+
+/*
+Additional Comments by Dastgir:
+One have to first call "F_splitTeams" function with appropriate arguments.
+$@" + MAPNAME + "_BG_queue% will contain the bg_queue id's (% = team number.)
+you need to do necessary enabling/disabling of npc's, adjusting scores or w/e, then warp them to map then call
+
+Some Important Labels:
+
+edit OnLeaveBG (bg_common.txt)
+
+OnMatchOver:
+	// All Neccessary things to specific eBG 
+	callfunc(("F_EndeBG","ebg_mapname",Teams));
+	end;
+*/
+
+function	script	F_splitTeams	{
+	copyarray .@map$[0], getarg(0), getarraysize(getarg(0));
+	.@teams = getarg(1, 2);
+	.@tol = getarg(2, -1);
+	.@split = getarg(3, 0);
+	.@destroy = getarg(4, 0);
+	copyarray .@guild[0], getarg(6), getarraysize(getarg(6));
+	copyarray .@logout$[0], getarg(5), getarraysize(getarg(5));
+	
+	if (getarraysize(.@guild) < .@teams && (getarraysize(.@guild) != 0 || .@guild != 0)) {
+		debugmes("Unable to make BG Data, GuildID Invalid. Ending Script...");
+		debugmes("Teams: "+ .@teams +", GuildID: "+ getarraysize(.@guild));
+		return -4;
+	}
+	if (getarraysize(.@logout$) < .@teams && (getarraysize(.@logout$) != 0 || .@logout$ != "")) {
+		debugmes("Unable to make BG Data, LogoutEvent Invalid. Ending Script...");
+		debugmes("Teams: "+ .@teams +", LogoutSize: "+ getarraysize(.@logout$));
+		return -5;
+	}
+		
+	// Check if map is valid:
+	if (.@map$[0] == "" || !map_exists(.@map$[1])) {
+		debugmes("F_splitTeams: Unable to make BG data: sent empty or nonexistent("+@map$[0]+":"+.@map$[1]+") map name. Ending script...");
+		return -1; // Nonexistent map.
+	}
+	
+	// Check if we can meet tolerance requirements for a special case and save what's to come
+	.@rem = $@eBG_member_size % .@teams;
+	if (.@tol == 0 && .@rem > 0 && .@destroy) { // Impossible to meet tolerance and allowing team destruction = don't do anything
+		return -2; // Unable to properly split teams.
+	}
+	
+	// We need to copy the values because this is processor intensive and could end up needing to use sleep commands
+	copyarray .@bg_member[0], $@eBG_member[0], $@eBG_member_size;
+	copyarray .@bg_member_group[0], $@eBG_member_group[0], $@eBG_member_size;
+	copyarray .@bg_member_type[0], $@eBG_member_type[0], $@eBG_member_size;
+	.@bg_member_size = $@eBG_member_size;
+	deletearray $@eBG_member;
+	deletearray $@eBG_member_group;
+	deletearray $@eBG_member_type;
+	$@eBG_member_size = 0;
+	/**
+	 * .@bg_member_type:
+			0 = Individual
+			1 = Guild
+			2 = Party
+	 * .@bg_member_type:
+			0
+			GuildID
+			PartyID
+	 */
+	
+	freeloop(1);
+	// Counting all participants and determining sizes, condensing .@bg_member_group
+	for (.@i = 0; .@i < .@bg_member_size; .@i++) {
+		if (.@bg_member_group[.@i] == 0) { // Just count them
+			++.@nogroupcount;
+			continue;
+		}
+		// check if .@bg_member_group and .@bg_member_type already exists on these groups.
+		for (.@j = 0; .@j < getarraysize(.@bg_groups); .@j++) {
+			if ((.@bg_member_group[.@i] == .@bg_groups[.@j]) && (.@bg_member_type[.@i] == .@bg_types[.@j])) {
+				.@bg_count[.@j]++;
+				break;
+			}
+		// Else keep running the loop until we find there's a group already made or make a new one at the end of this loop
+		}
+		if (.@j == getarraysize(.@bg_groups)) { // It isn't there, insert a new entry at j (last position)
+			.@bg_groups[.@j] = .@bg_member_group[.@i];
+			.@bg_types[.@j] = .@bg_member_type[.@i];
+			.@bg_count[.@j] = 1;
+		}
+	}
+	
+	// Now, sorting the group arrays from amount of population descending! Insertion sort powers, I call upon thee!
+	// Type doesn't matter here for precedence checks, but also needs to be sorted the same way along with groups
+	for (.@i = 1; .@i < getarraysize(.@bg_groups); .@i++) {
+		.@j = .@i;
+		while (.@j > 0 && .@bg_count[.@j-1] < .@bg_count[.@j]) {
+			.@temp1 = .@bg_groups[.@j];
+			.@temp2 = .@bg_types[.@j];
+			.@temp3 = .@bg_count[.@j];
+			.@bg_groups[.@j] = .@bg_groups[.@j-1];
+			.@bg_types[.@j] = .@bg_types[.@j-1];
+			.@bg_count[.@j] = .@bg_count[.@j-1];
+			.@bg_groups[.@j-1] = .@temp1;
+			.@bg_types[.@j-1] = .@temp2;
+			.@bg_count[.@j-1] = .@temp3;
+			.@j--;
+		}
+	}
+
+	// Add the groups to the queues! :D
+	// Using newly made ".@team_ids_" + .@i and .@team_amount[team_no] arrays, remember they are initializad to 0
+	for (.@i = 0; .@i < getarraysize(.@bg_groups); .@i++) {
+		// We've got to get the minimum size team and add a whole group there
+		.@min_team = 1; // Should range from 1 to number of teams.
+		.@min_size = .@team_amount[1]; // Will go down by checking the teams
+		for (.@j = 2; .@j <= .@teams; .@j++) {
+			if (.@team_amount[.@j] < .@min_size) {
+				.@min_team = .@j;
+				.@min_size = .@team_amount[.@j];
+			}
+		}
+		
+		// Now, we've got to pre-add the group to the designated team array. 
+		// The idea here is to pop these arrays to a single array now, as if in a queue.
+		for (.@j = 0; .@j < .@bg_member_size; .@j++) {
+			if (.@bg_groups[.@i] == .@bg_member_group[.@j] && .@bg_types[.@i] == .@bg_member_type[.@j]) {
+				setd ".@team_ids_" + .@min_team + "[" + .@team_amount[.@min_team] + "]", .@bg_member[.@j];
+				++.@team_amount[.@min_team];
+			}
+		}
+	}
+	
+	// Also add people that go on their own
+	for (.@i = 0; .@i < .@bg_member_size; .@i++) {
+		.@attached = 0;
+		if (.@bg_member_group[.@i] == 0) { // This will get you only if you're not in a group
+			if (attachrid(.@bg_member[.@i])) {
+				if (@BG_TeamJoin <= .@teams && @BG_TeamJoin > 0) {
+					.@min_team = @BG_TeamJoin; // The Team Number
+					.@min_size = .@team_amount[@BG_TeamJoin]; // Team Size
+					@BG_TeamJoin = 0;
+					.@attached = 1;
+				}
+			}
+			if (.@attached == 0) {
+				// We've got to get the minimum size team and add this guy here
+				.@min_team = 1; // Should range from 1 to number of teams.
+				.@min_size = .@team_amount[1]; // Will go down by checking the teams
+				for (.@j = 2; .@j <= .@teams; .@j++) {
+					if (.@team_amount[.@j] < .@min_size) {
+						.@min_team = .@j;
+						.@min_size = .@team_amount[.@j];
+					}
+				}
+			}
+			
+			// Congrats! You get added to the group! :D
+			setd ".@team_ids_" + .@min_team + "[" + .@team_amount[.@min_team] + "]", .@bg_member[.@i];
+			++.@team_amount[.@min_team];
+		}
+	}
+	
+	// Now, we've got to check if this complies with tolerance requirements!
+	// Also split random people from the largest groups.
+	if (.@tol > -1) {
+		.@max_size = .@team_amount[1]; // Preset to a possible value, so it saves an iteration
+		.@min_size = .@max_size;
+		for (.@i = 2; .@i <= .@teams; .@i++) {
+			if (.@team_amount[.@i] > .@max_size) {
+				.@max_team = .@i;
+				.@max_size = .@team_amount[.@i];
+			}
+			else if (.@team_amount[.@i] < .@min) {
+				.@min_team = .@i;
+				.@min_size = .@team_amount[.@i];
+			}
+		}
+		
+		// Does it achieve tolerance? 
+		.@diff = .@max_size - .@min_size;
+		if (.@diff > .@tol) { // Nope it doesn't. What do?
+			if (!.@split && .@destroy) { // Nothing to do. Teams are not yet made, so just end this function.
+				return -2; // Unable to properly split teams.
+			}
+			
+			if (.@split) { // make teams as evenly as possible
+				// We need an average value to know what we are up about
+				.@avg = .@bg_member_size / .@teams;
+				
+				// Now, loop on the teams and restruct them. Get spare IDs to sort into teams
+				// .@spare_ids[] = 0; .@spare_ids_count = 0;			
+				for (.@i = 1; .@i <= .@teams; .@i++) {
+					while (.@team_amount[.@i] > .@avg) {
+						// Get a random member from this team...
+						.@pos = rand(.@team_amount[.@i]);
+						.@id = getd(".@team_ids_" + .@i + "[" + .@pos + "]");
+						// ... remove it from team...
+						deletearray getd(".@team_ids_" + .@i + "[" + .@pos + "]"),1;
+						--.@team_amount[.@i];
+						// And add it to...
+						if ((.@spare_ids_count) < .@rem) { // ... the group of spare people, up to the remainder of people, to be sorted later.
+							.@spare_ids[.@spare_ids_count] = .@id;
+							++.@spare_ids_count;
+						}
+						else { // ...another team in which they'll fit
+							for (.@j = 1; .@j <= .@teams; .@j++) {
+								if (.@i != .@j && .@team_amount[.@i] < .@avg) { // We're just interested on these cases
+									setd ".@team_ids_" + .@j + "[" + .@team_amount[.@j] + "]", .@id;
+									++.@team_amount[.@j];
+								}
+							}
+						}
+					}
+				}
+				
+				// Possible bug here: you can split someone from a group, add it to another group and get other people added into the first group because of this.
+				// So, we should have an even split right now. Organize the spare people, if existent, on the groups:
+				.@i = 0;
+				while (.@spare_ids_count) {
+					.@rand = rand(.@teams) + 1; // Pick a lucky, random team
+					if (.@team_amount[.@rand] == .@avg) { // Wait, have you already NOT had one?
+						setd ".@team_ids_" + .@rand + "[" + .@team_amount[.@rand] + "]", .@id;
+						++.@team_amount[.@rand];
+						++.@i; // Look for another person now
+					}
+				}
+				
+				// If tolerance is 0 and there are spare members, then we should remark this to result.
+				.@res = ((.@rem && .@tol == 0) ? 1 : 0);
+			}
+			else { // Well, we couldn't do any better
+				.@res = .@diff;
+			}
+		}
+		else {
+			.@res = 0;
+		}
+	}
+	
+	if (.@res==0) {	//If All Fine, Add them to Queue,BG, and warp them
+		// Make required amount of teams and queues:
+		for (.@i = 1; .@i <= .@teams; .@i++) {
+			.@team_id = bg_create_team(.@map$[1], 32000, 32000);
+			.@queue = queue();
+			setd "$@" + .@map$[0] + "_BG_id" + .@i, .@team_id;
+			setd "$@" + .@map$[0] + "_BG_queue" + .@i, .@queue;
+			queueopt(.@queue,QUEUEOPT_LOGOUT,getelementofarray(.@logout$,.@i));
+			
+			// And finally, add people there
+			for (.@j = 0; .@j < .@team_amount[.@i]; .@j++) {
+				.@id = getelementofarray(getd(".@team_ids_" + .@i), .@j);
+				.@retval = bg_e_join_team(.@team_id, .@guild[.@i], .@id);
+				if (.@retval == 1) {
+					queueadd(.@queue, .@id);
+				}
+			}
+		}
+	}
+	
+	// We're finally done here!
+	return .@res;
+}
+
+function	script	F_balanceTeams	{
+	copyarray(.@map$[0], getarg(0), getarraysize(getarg(0)));
+	copyarray(.@queue[0], getarg(1), getarraysize(getarg(1)));
+	.@teams = getarg(2, 2);
+	.@max_p = getarg(3);
+	copyarray(.@guild[0], getarg(4), getarraysize(getarg(4)));
+	.@add_player = getarg(5);
+	
+	if (.@min_p > .@max_p && .@max_p != -1) {
+		debugmes("F_balanceTeams: Minimum Player cannot be more than maximum Player. Ending Script.");
+		return -1;
+	}
+	
+	if (getarraysize(.@guild) < .@teams && (getarraysize(.@guild) != 0 || .@guild != 0)) {
+		debugmes("F_balanceTeams: Unable to make BG Data, GuildID Invalid. Ending Script...");
+		return -1;
+	}
+
+	// Check if map is valid:
+	if (.@map$[0] == "" || !map_exists(.@map$[1])) {
+		debugmes("F_balanceTeams: Unable to make BG data: sent empty or nonexistent map name("+@map$[0]+":"+.@map$[1]+"). Ending script...");
+		return -1;
+	}
+	
+	// new player: Player Joining when BG Already Running
+	if (.@add_player) {
+		.@max = (.@max_p / .@teams) + 1;	// Can't be more than this
+		for (.@i = 2; .@i >= 0; .@i--) {
+			.@it = queueiterator(.@queue[.@i]);
+			for (.@p = qiget(.@it); qicheck(.@it); .@p = qiget(.@it)) {	//Initialize data.
+				if (.@p == -1)
+					continue;
+				.@team_to_join = rand(1, .@teams);	//Favors the random team, if all team have same players.
+				.@avg = 0;
+				.@min = .@max;
+				.@team_to_join = 0;
+				// Check team with minimum  players
+				for (.@j = 1; .@j <= .@teams; .@j++) {
+					if (.@min > queuesize(getd("$@"+ .@map$[0] +"_BG_queue" + .@j))) {
+						.@min = queuesize(getd("$@"+ .@map$[0] +"_BG_queue" + .@j));
+						.@team_to_join = .@j;
+					}
+					.@avg += queuesize(getd("$@"+ .@map$[0] +"_BG_queue" + .@j));
+				}
+				if (@BG_TeamJoin > 0 && queuesize(getd("$@"+ .@map$[0] +"_BG_queue" + @BG_TeamJoin)) < .@avg) {
+					.@team_to_join = @BG_TeamJoin;
+				}
+				// Remove from queue
+				queueremove(.@queue[.@i], .@p);
+
+				// minimum players are greater than max allowed players
+				if (.@min == (.@max_p/.@teams)+1 && queuesize(getd("$@"+ .@map$[0] +"_BG_queue" + .@team_to_join)) >= .@max) {
+					callfunc("F_ValidateeBG", BGT_MAX, 1);
+					continue;
+				}
+
+				// Set Variables
+				@BG_TeamID = getd("$@"+ .@map$[0] +"_BG_id"+ .@team_to_join);
+				@BG_QueueID = getd("$@"+ .@map$[0] +"_BG_queue" + .@team_to_join);
+				queueadd(@BG_QueueID, .@p);
+				@BG_Team = .@team_to_join;
+				@BG_ID = callfunc("F_MapToId",.@map$[0]);
+				@BG_TeamJoin = 0;
+
+				// Join the Team
+				if (bg_e_join_team(getd("$@"+ .@map$[0] +"_BG_id"+ .@team_to_join), .@guild[.@team_to_join])) {
+					queueadd(getd("$@"+ .@map$[0] +"_BG_queue"+ .@team_to_join), getcharid(3));
+					.@retval += 1;
+				} else {
+					dispbottom("F_balanceTeams: Failed to Join Battleground, Please try Again.");
+					callfunc("F_ValidateeBG", BGT_MAX, 1);
+					continue;
+				}
+			}
+		}
+		return 1;	// Return Total Player Added.
+	} else {	// Some Player Left: ReOrganize Players.
+		// Check team with max players
+		.@avg = 0;
+		for (.@j = 1; .@j <= .@teams; .@j++) {
+			if (.@max < queuesize(getd("$@"+ .@map$[0] +"_BG_queue" + .@j))) {
+				.@max = queuesize(getd("$@"+ .@map$[0] +"_BG_queue" + .@j));
+				.@i = .@j;
+			}
+			.@avg += queuesize(getd("$@"+ .@map$[0] +"_BG_queue" + .@j));
+		}
+		.@avg /= .@teams;
+		if (.@max > .@avg) { // If max members are greater than avg, then select one player and adjust
+			.@rand_player = rand(0, .@max);
+			.@qi = queueiterator(getd("$@"+ .@map$[0] +"_BG_queue" + .@j));
+			.@idx = 0;
+			for (.@elem = qiget(.@qi); qicheck(.@qi); .@elem = qiget(.@qi)) {
+				if (.@elem != -1 && .@idx >= .@rand_player)
+					break;
+				.@idx++;
+			}
+		} else {	// Already Balanced
+			return 0;
+		}
+		if (attachrid(.@elem)) {
+			/* Remove and Add to New Queue */
+			queueremove(@BG_QueueID, getcharid(3));
+			@BG_TeamID = getd("$@"+ .@map$[0] +"_BG_id"+ .@i);
+			@BG_QueueID = getd("$@"+ .@map$[0] +"_BG_queue" + .@i);
+			@BG_Team = .@i;
+			queueadd(getd("$@"+ .@map$[0] +"_BG_queue" + .@i), getcharid(3));
+			bg_change_team(getd("$@"+ .@map$[0] +"_BG_id"+ .@i), .@guild[.@i]);
+			return 1;
+		}
+		return 0;
+	}
+}
+
+// BG Join Team.
+// Usage: callfunc F_joinTeams("map_name",queueid,teams,difference,split_group,destroy_bg_on_incomplete,min_player,max_player,guildid,logout)
+// Attempts to split teams for a given BG according to its name, a number
+// of teams, and optionally a (unused) maximum tolerance of size
+// difference between teams.
+// Returns TeamID.
+function	script	F_joinTeams	{
+	copyarray .@map$[0],getarg(0),getarraysize(getarg(0));
+	copyarray .@queue[0],getarg(1),getarraysize(getarg(1));
+	.@teams_ = getarg(2,2);
+	.@tol = getarg(3,-1);
+	.@split = getarg(4,0);
+	.@destroy = getarg(5,0);
+	.@max_p = getarg(6);
+	copyarray .@guild[0],getarg(7),getarraysize(getarg(7));
+	copyarray .@logout$[0],getarg(8),getarraysize(getarg(8));
+	
+	if (getarraysize(.@guild) < .@teams_ && (getarraysize(.@guild) != 0 || .@guild != 0)) {
+		debugmes("Unable to make BG Data, GuildID Invalid. Ending Script...");
+		return -1;
+	}
+
+	// Check if map is valid:
+	if (.@map$[0] == "" || !map_exists(.@map$[1])) {
+		debugmes("F_joinTeams: Unable to make BG data: sent empty or nonexistent map name("+@map$[0]+":"+.@map$[1]+"). Ending script...");
+		return -1;
+	}
+	
+	.@bg_id = callfunc("F_MapToId", .@map$[0]);
+	if (!$@eBG_start[.@bg_id]) {	//Starting the BG
+		// Get Solo,Party,Guild Members
+		$@eBG_member_size = 0;
+		for (.@i = 2; .@i >= 0; .@i--) {
+			.@it = queueiterator(.@queue[.@i]);
+			for (.@p = qiget(.@it); qicheck(.@it); .@p = qiget(.@it)) {	//Initialize data.
+				if (.@p == -1)
+					continue;
+				if (attachrid(.@p)) {
+					$@eBG_member[$@eBG_member_size] = .@p;
+					.@group = 0;
+					.@type = 0;
+					switch(.@i) {
+						case 0:
+							break;
+						case 1:
+							if (getcharid(2) == 0)
+								break;
+							.@type = 1;
+							.@group = getcharid(2);
+							break;
+						case 2:
+							if (getcharid(1) == 0)
+								break;
+							.@type = 2;
+							.@group = getcharid(1);
+							break;
+							
+					}
+					$@eBG_member_group[$@eBG_member_size] = .@group;
+					$@eBG_member_type[$@eBG_member_size] = .@type;
+					$@eBG_member_size++;
+				}
+				queueremove(.@queue[.@i], .@p);
+				if (.@max_p == $@eBG_member_size)
+					break;
+			}
+		}
+		
+		.@i = callfunc("F_splitTeams",.@map$,.@teams_,.@tol,.@split,.@destroy,.@logout$,.@guild);	// 2 Teams
+		if (.@i != 0)
+			return -1;
+		// Warp Players
+		for (.@j = 1; .@j <= .@teams_; .@j++) {
+			if (queuesize(getd("$@"+ .@map$[0] +"_BG_queue" + .@j))) {	//To Check if atleast 1 player exist, before iteration.
+				.@it = queueiterator(getd("$@"+ .@map$[0] +"_BG_queue" + .@j));
+				.@max_p_ = 0;
+				for (.@p = qiget(.@it); qicheck(.@it); .@p = qiget(.@it)) {
+					if (.@p == -1)
+						continue;
+					attachrid .@p;
+					@BG_QueueID = getd("$@"+ .@map$[0] +"_BG_queue" + .@j);
+					@BG_TeamID = getd("$@"+ .@map$[0] +"_BG_id" + .@j);
+					@BG_Team = .@j;
+					@BG_ID = callfunc("F_MapToId",.@map$[0]);
+					callfunc("F_warpTeam",BGT_MAX,.@j,.@map$[0]);
+					.@max_p_++;
+					if (.@max_p_ == .@max_p)	//Don't include more players than Max.
+						break;
+				}
+			}
+		}
+		return 0;
+	} else if ($@eBG_start[.@bg_id] == EBG_RUNNING) {
+		.@i = callfunc("F_balanceTeams", .@map$, .@queue, .@teams_, .@max_p, .@guild, 1);	//New Player
+		if (.@i > 0) { // Some Members have been rebalanced
+			callfunc("F_warpTeam", BGT_MAX, @BG_Team, .@map$[0]);
+			return 0;
+		}
+		return -1;	// Failed to Join
+	}
+	
+}

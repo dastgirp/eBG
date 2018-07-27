@@ -1,0 +1,18 @@
+ebg_boss#Battlegrounds : Bossnia#
+ebg_ctf#Battlegrounds : Capture the Flag#
+ebg_tti#Battlegrounds : Triple Inferno#
+ebg_eos#Battlegrounds : Eye of the Storm#
+ebg_td#Battlegrounds : Team Deathmatch#
+ebg_sc#Battlegrounds : Stone Control#
+ebg_conq01#Battlegrounds : Conquest#
+ebg_conq02#Battlegrounds : Conquest#
+ebg_conq03#Battlegrounds : Conquest#
+ebg_conq04#Battlegrounds : Conquest#
+ebg_conq05#Battlegrounds : Conquest#
+ebg_conq06#Battlegrounds : Conquest#
+ebg_rush01#Battlegrounds : Rush#
+ebg_rush02#Battlegrounds : Rush#
+ebg_rush03#Battlegrounds : Rush#
+ebg_rush04#Battlegrounds : Rush#
+ebg_dom#Battlegrounds : Domination#
+ebg_room#Battlegrounds : Waiting Room#

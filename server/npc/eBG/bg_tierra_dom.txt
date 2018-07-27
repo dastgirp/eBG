@@ -1,0 +1,190 @@
+// Tierra Domination
+
+// Battleground Engine
+// *********************************************************************
+
+-	script	DOM_Tierra	FAKE_NPC,{
+	end;
+
+
+OnPCLogoutEvent:
+OnPCDieEvent:
+	if (strcharinfo(PC_MAP) == "ebg_dom"){
+		.@team = callfunc("F_ValidateeBG", BGT_DOM, 0);
+		switch(.@team){
+			case GUILLAUME:
+				callsub(OnTeamDie, .@team, CROIX, "Croix");
+				break;
+			case CROIX:
+				callsub(OnTeamDie, .@team, GUILLAUME, "Guillaume");
+				break;
+		}
+		callfunc("F_warpDie", BGT_DOM, .@team);
+	}
+	end;
+
+OnTeamDie:
+	// Check for Offensive or Defensive Kills
+	if ($@eBG_start[BGT_DOM] != EBG_RUNNING)
+		return;
+
+	if (!@killer_bg_id || @killer_bg_id == getcharid(4))
+		return;
+
+	.@Base =  0;
+	getmapxy .@m$, .@x, .@y, 0;
+	if (.@x >= 136 && .@y >= 329 && .@x <= 186 && .@y <= 361 ) {
+		.@Base = bg_get_npc_data(0, "North_Base#3"); // North
+	} else if (.@x >= 260 && .@y >= 194 && .@x <= 287 && .@y <= 213) {
+		.@Base = bg_get_npc_data(0, "Center_Base#5"); // Center
+	} else if (.@x >= 129 && .@y >= 34 && .@x <= 175 && .@y <= 65) {
+		.@Base = bg_get_npc_data(0, "South_Base#4"); // South
+	} else {
+		return;
+	}
+
+	if (.@Base == 1) { // Team 1
+		if(getcharid(4) == $@ebg_dom_BG_id1) {
+			bg_addpoints(BG_DOM_OFF_KILL, 1, 1, @killer_bg_src);
+		} else {
+			bg_addpoints(BG_DOM_DEF_KILL, 1, 1, @killer_bg_src);
+		}
+	} else if (.@Base == 2) { // Team 2
+		if (getcharid(4) == $@ebg_dom_BG_id2) {
+			bg_addpoints(BG_DOM_OFF_KILL, 1, 1, @killer_bg_src);
+		} else {
+			bg_addpoints(BG_DOM_DEF_KILL, 1, 1, @killer_bg_src);
+		}
+	}
+	return;
+
+OnReadyCheck:
+	if ($@eBG_start[BGT_DOM])
+		end;
+		
+	$@eBG_start[BGT_DOM] = EBG_RUNNING;
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	bg_updatescore "ebg_dom",.Team1_Score,.Team2_Score;
+	donpcevent("North_Base#3::OnBase");
+	donpcevent("South_Base#4::OnBase");
+	donpcevent("Center_Base#5::OnBase");
+	sleep 2000;
+	donpcevent("dom_respawn#18::OnBGStart");
+	donpcevent("dom_respawn#19::OnBGStart");
+	end;
+
+OnNorthScore:
+	callsub(OnScore, 1);
+	end;
+	
+OnSouthScore:
+	callsub(OnScore, 2);
+	end;
+	
+OnCenterScore:
+	callsub(OnScore, 3);
+	end;
+	
+OnScore:
+	.@base = getarg(0);
+	.@North = bg_get_npc_data(1, "North_Base#3");
+	.@South = bg_get_npc_data(1, "South_Base#4");
+	.@Center = bg_get_npc_data(1, "Center_Base#5");
+	.@Score = ((.@base == 1) ? .@North : ((.@base == 2) ? .@South : .@Center));
+	
+	if (!.@Score)	//Should contain OwnerID
+		return;
+	
+	.@points = 1;
+	if (.@Score == 1) {
+		.Team1_Score++;
+	} else {
+		.Team2_Score++;
+	}
+	
+	donpcevent("DOM_Tierra::OnValidateScore");
+	return;
+
+OnMatchStop:
+	.@stop = 1;
+OnValidateScore:
+	if (.Team1_Score > $bg_tierra_dom[0]) {
+		.Team1_Score = $bg_tierra_dom[0];
+	}
+	if (.Team2_Score > $bg_tierra_dom[0]) {
+		.Team2_Score = $bg_tierra_dom[0];
+	}
+
+	bg_updatescore("ebg_dom", .Team1_Score, .Team2_Score); // Update Visual Score
+
+	if (!.@stop && .Team1_Score < $bg_tierra_dom[0] && .Team2_Score < $bg_tierra_dom[0])	//No Winners Yet
+		end; // No winners
+
+	stopnpctimer "North_Base#3";
+	stopnpctimer "South_Base#4";
+	stopnpctimer "Center_Base#5";
+	donpcevent("dom_respawn#18::OnBGStop");
+	donpcevent("dom_respawn#19::OnBGStop");
+	set $@eBG_start[BGT_DOM], EBG_ENDING;
+	// Team Rewards
+	.@win = callfunc("F_eBGReward", BGT_DOM, $bg_tierra_dom, 2, .Team1_Score, .Team2_Score, 0, 1, 1);
+	/* .@win = -1, some unknown error, don't give rewards */
+	if (.@win == -1) {
+		if (.@stop)
+			mapannounce("ebg_dom","The battle is over. Nobody won the match...!",bc_map,0x4169E1);
+	}
+
+	if (.@win)
+		mapannounce("ebg_dom","The "+ callfunc("F_eBGTeamName", .@win) +" army has won the Battle of Tierra DoM!",bc_map,callfunc("F_eBGTeamColor",.@win));
+	else if (.@win == 0)
+		mapannounce("ebg_dom","The battle is over. This is a Tie...!",bc_map,0x4169E1);
+	
+	// =======================================================
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	sleep 5000;
+	callfunc("F_EndeBG", "ebg_dom", 2);
+	bg_updatescore("ebg_dom", 0, 0);
+	end;
+}
+
+// Battleground Bases
+// *********************************************************************
+
+ebg_dom,173,345,0	duplicate(North_Base#1)	North_Base#3	OBJ_NEUTRAL
+ebg_dom,164,50,0	duplicate(North_Base#1)	South_Base#4	OBJ_NEUTRAL
+ebg_dom,273,204,0	duplicate(North_Base#1)	Center_Base#5	OBJ_NEUTRAL
+
+// Battleground Therapist
+ebg_dom,53,377,3	duplicate(Therapist#eBG)	Therapist in battle#dom1	4_F_SISTER
+ebg_dom,45,18,3	duplicate(Therapist#eBG)	Therapist in battle#dom2	4_F_SISTER
+
+// Battleground Respawn
+// *********************************************************************
+
+ebg_dom,38,19,0	duplicate(North Base Warp#1)	North Base Warp #1	1_SHADOW_NPC
+ebg_dom,46,377,0	duplicate(North Base Warp#1)	North Base Warp  #1	1_SHADOW_NPC
+ebg_dom,45,12,0	duplicate(North Base Warp#1)	South Base Warp #2	1_SHADOW_NPC
+ebg_dom,53,370,0	duplicate(North Base Warp#1)	South Base Warp  #2	1_SHADOW_NPC
+
+ebg_dom,46,370,0	duplicate(North Base Warp#1)	Center Base Warp #3	1_SHADOW_NPC
+ebg_dom,38,12,0	duplicate(North Base Warp#1)	Center Base Warp  #3	1_SHADOW_NPC
+
+// *********************************************************************
+ebg_dom,50,374,0	duplicate(respawn_script#bg)	dom_respawn#18	HIDDEN_WARP_NPC	//#guiDOM_respawn
+ebg_dom,42,16,0	duplicate(respawn_script#bg)	dom_respawn#19	HIDDEN_WARP_NPC	//#croDOM_respawn
+
+
+// MapFlags
+
+ebg_dom	mapflag	battleground	2
+ebg_dom	mapflag	nomemo
+ebg_dom	mapflag	nosave	SavePoint
+ebg_dom	mapflag	noteleport
+ebg_dom	mapflag	nowarp
+ebg_dom	mapflag	nowarpto
+ebg_dom	mapflag	noreturn
+ebg_dom	mapflag	nobranch
+ebg_dom	mapflag	nopenalty
+ebg_dom	mapflag	noemergencycall

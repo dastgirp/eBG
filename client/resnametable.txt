@@ -1,0 +1,114 @@
+// Map List:
+//ebg_boss
+//ebg_ctf
+//ebg_tti
+//ebg_eos
+//ebg_td
+//ebg_sc
+//ebg_conq01
+//ebg_conq02
+//ebg_conq03
+//ebg_conq04
+//ebg_conq05
+//ebg_conq06
+//ebg_rush01
+//ebg_rush02
+//ebg_rush03
+//ebg_rush04
+//ebg_dom
+//ebg_room
+
+// Bossnia
+ebg_boss.gnd#bat_a01.gnd#
+ebg_boss.gat#bat_a01.gat#
+ebg_boss.rsw#bat_a01.rsw#
+유저인터페이스\map\ebg_boss.bmp#유저인터페이스\map\bat_a01.bmp#
+// Capture the Flag
+ebg_ctf.gnd#bat_b01.gnd#
+ebg_ctf.gat#bat_b01.gat#
+ebg_ctf.rsw#bat_b01.rsw#
+유저인터페이스\map\ebg_ctf.bmp#유저인터페이스\map\bat_b01.bmp#
+// Triple Infierno
+ebg_tti.gnd#guild_vs2.gnd#
+ebg_tti.gat#guild_vs2.gat#
+ebg_tti.rsw#guild_vs2.rsw#
+유저인터페이스\map\ebg_tti.bmp#유저인터페이스\map\guild_vs2.bmp#
+// Eye of Storm
+ebg_eos.gnd#bat_a01.gnd#
+ebg_eos.gat#bat_a01.gat#
+ebg_eos.rsw#bat_a01.rsw#
+유저인터페이스\map\ebg_eos.bmp#유저인터페이스\map\bat_a01.bmp#
+// Team Deathmatch
+ebg_td.gnd#bat_b01.gnd#
+ebg_td.gat#bat_b01.gat#
+ebg_td.rsw#bat_b01.rsw#
+유저인터페이스\map\ebg_td.bmp#유저인터페이스\map\bat_b01.bmp#
+// Stone Control
+ebg_sc.gnd#bat_b01.gnd#
+ebg_sc.gat#bat_b01.gat#
+ebg_sc.rsw#bat_b01.rsw#
+유저인터페이스\map\ebg_sc.bmp#유저인터페이스\map\bat_b01.bmp#
+
+// Conquest
+
+ebg_conq01.gnd#schg_cas01.gnd#
+ebg_conq01.gat#schg_cas01.gat#
+ebg_conq01.rsw#schg_cas01.rsw#
+유저인터페이스\map\ebg_conq01.bmp#유저인터페이스\map\schg_cas01.bmp#
+
+ebg_conq02.gnd#schg_cas02.gnd#
+ebg_conq02.gat#schg_cas02.gat#
+ebg_conq02.rsw#schg_cas02.rsw#
+유저인터페이스\map\ebg_conq02.bmp#유저인터페이스\map\schg_cas02.bmp#
+
+ebg_conq03.gnd#schg_cas03.gnd#
+ebg_conq03.gat#schg_cas03.gat#
+ebg_conq03.rsw#schg_cas03.rsw#
+유저인터페이스\map\ebg_conq03.bmp#유저인터페이스\map\schg_cas03.bmp#
+
+ebg_conq04.gnd#arug_cas01.gnd#
+ebg_conq04.gat#arug_cas01.gat#
+ebg_conq04.rsw#arug_cas01.rsw#
+유저인터페이스\map\ebg_conq04.bmp#유저인터페이스\map\arug_cas01.bmp#
+
+ebg_conq05.gnd#arug_cas02.gnd#
+ebg_conq05.gat#arug_cas02.gat#
+ebg_conq05.rsw#arug_cas02.rsw#
+유저인터페이스\map\ebg_conq05.bmp#유저인터페이스\map\arug_cas02.bmp#
+
+ebg_conq06.gnd#arug_cas03.gnd#
+ebg_conq06.gat#arug_cas03.gat#
+ebg_conq06.rsw#arug_cas03.rsw#
+유저인터페이스\map\ebg_conq06.bmp#유저인터페이스\map\arug_cas03.bmp#
+
+// Rush
+
+ebg_rush01.rsw#prtg_cas02.rsw#
+ebg_rush01.gat#prtg_cas02.gat#
+ebg_rush01.gnd#prtg_cas02.gnd#
+유저인터페이스\map\ebg_rush01.bmp#유저인터페이스\map\prtg_cas02.bmp#
+ebg_rush02.rsw#payg_cas04.rsw#
+ebg_rush02.gat#payg_cas04.gat#
+ebg_rush02.gnd#payg_cas04.gnd#
+유저인터페이스\map\ebg_rush02.bmp#유저인터페이스\map\payg_cas04.bmp#
+ebg_rush03.rsw#aldeg_cas05.rsw#
+ebg_rush03.gat#aldeg_cas05.gat#
+ebg_rush03.gnd#aldeg_cas05.gnd#
+유저인터페이스\map\ebg_rush03.bmp#유저인터페이스\map\aldeg_cas05.bmp#
+ebg_rush04.rsw#gefg_cas03.rsw#
+ebg_rush04.gat#gefg_cas03.gat#
+ebg_rush04.gnd#gefg_cas03.gnd#
+유저인터페이스\map\ebg_rush04.bmp#유저인터페이스\map\gefg_cas03.bmp#
+
+// Domination
+
+ebg_dom.gnd#bat_a01.gnd#
+ebg_dom.gat#bat_a01.gat#
+ebg_dom.rsw#bat_a01.rsw#
+유저인터페이스\map\ebg_dom.bmp#유저인터페이스\map\bat_a01.bmp#
+
+// bat_room
+ebg_room.gnd#bat_room.gnd#
+ebg_room.gat#bat_room.gat#
+ebg_room.rsw#bat_room.rsw#
+유저인터페이스\map\ebg_room.bmp#유저인터페이스\map\bat_room.bmp#

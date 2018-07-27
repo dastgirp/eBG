@@ -1,0 +1,279 @@
+
+// Battleground Engine
+
+-	script	eBG_Rush	FAKE_NPC,{
+	end;
+
+OnInit:
+	// ebg_rush01
+	setwall("ebg_rush01", 198, 228, 10, 6, 0, "Rush_wall_a");
+	setcell("ebg_rush01", 198, 224, 207, 233, cell_basilica, 1);
+	// ebg_rush02
+	setwall("ebg_rush02", 142, 48, 10, 6, 0, "Rush_wall_b");
+	setcell("ebg_rush02", 142, 44, 151, 53, cell_basilica, 1);
+	// ebg_rush03
+	setwall("ebg_rush03", 62, 8, 10, 0, 0, "Rush_wall_c");
+	setcell("ebg_rush03", 56, 6, 69, 17, cell_basilica, 1);
+	// ebg_rush04
+	setwall("ebg_rush04", 266, 290, 10, 6, 0, "Rush_wall_d");
+	setcell("ebg_rush04", 266, 286, 275, 295, cell_basilica, 1);
+	end;
+
+OnPCLogoutEvent:
+OnPCDieEvent:
+	if (compare(strcharinfo(PC_MAP),"ebg_rush0")) { // check if player was on rush map
+		.@team = callfunc("F_ValidateeBG", BGT_RUSH, 0);
+		callfunc("F_warpDie", BGT_RUSH, .@team);
+	}
+	end;
+	
+OnSpawnEmperium:
+	.@index = $bg_rush_rotate;
+	.@bg_id = getarg(0);
+	setarray .@locXY[0],158,174,	// ebg_rush01
+						271,29,		// ebg_rush02
+						28,102,		// ebg_rush03
+						245,167;	// ebg_rush04
+	.@emp_id = bg_monster(.@bg_id, .Castle$, .@locXY[.@index*2], .@locXY[(.@index*2)+1], "Emperium", EMPELIUM, strnpcinfo(0)+"::OnEmp");
+	bg_mob_move .@emp_id, EBG_IMMOVABLE;
+	return;
+
+OnReadyCheck:
+	if ($@eBG_start[BGT_RUSH])
+		end;
+	
+	$@eBG_start[BGT_RUSH] = EBG_RUNNING;	
+	
+	.@index = $bg_rush_rotate;
+	.Castle$ =  "ebg_rush0"+ (.@index + 1);
+
+	initnpctimer;
+	.time_remaining = getvariableofnpc(.bg_time[BGT_RUSH], "BG_Settings");
+
+	donpcevent("rush_respawn#16::OnBGStart");
+	donpcevent("rush_respawn#17::OnBGStart");
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	.Defender = 0; // No Defender
+	callsub(OnSpawnEmperium, 0);
+	// ======================================
+	sleep 4000;
+	mapannounce(.Castle$, "Move on warriors!! Let's capture this Castle!!", bc_map, 0xDDA0DD);
+	end;
+
+OnEmp:
+	if ($@eBG_start[BGT_RUSH] != EBG_RUNNING)
+		end;
+
+	if (.Defender == 0) {	// First Time
+		bg_addpoints BG_RUSH_EMPERIUM, 1, 0; // Emperium Captured
+		initnpctimer;
+		.time_remaining = getvariableofnpc(.bg_time[BGT_RUSH], "BG_Settings");
+		.Defender = getcharid(4);
+		mapannounce(.Castle$ ,bg_info(.Defender,1) + " : Castle captured, now prepare to Defend it!!", bc_map, bg_info(.Defender,2));
+		.@attacker = 1;
+		if (.Defender == $@ebg_rush_BG_id1) {
+			.@attacker = 2;
+			.Team1_Score = 1;
+		} else 
+			.Team2_Score = 1;
+		.Attacker = getd("$@ebg_rush_BG_id"+.@attacker);
+		//
+		.@it = queueiterator(getd("$@ebg_rush_BG_queue"+.@attacker));
+		for (.@p = qiget(.@it); qicheck(.@it) && .@p != -1; .@p = qiget(.@it)) {	//Warp all Attackers.
+			if (attachrid(.@p)) {
+				.@team = callfunc("F_ValidateeBG", BGT_RUSH, 0);
+				callfunc("F_warpDie", BGT_RUSH, .@team);
+			}
+		}
+		//
+		bg_updatescore .Castle$, .Team1_Score, .Team2_Score;
+		callsub(OnSpawnEmperium, .Defender);
+		donpcevent("rush_respawn#16::OnBGStart");
+		donpcevent("rush_respawn#17::OnBGStart");
+
+		sleep 5000;
+		mapannounce(.Castle$, bg_info(.Attacker, 1) + " : Capture the Castle, it's our last chance to Win!!", 1, bg_info(.Attacker, 2));
+		end;
+	}
+
+	// End on Second Capture
+	mapannounce(.Castle$, bg_info(.Attacker, 1) + " : Castle captured, we won the Battle!!", 1, bg_info(.Attacker, 2));
+	if (.Defender == $@ebg_rush_BG_id1)
+		.Team2_Score = 2;
+	else
+		.Team1_Score = 2;
+
+	donpcevent("eBG_Rush::OnMatchEnd");
+	end;
+
+OnTimer60000:
+	.time_remaining--;
+	if (.time_remaining != 0) {
+		mapannounce(.Castle$, "Battle of Rush will ends in "+ .time_remaining +" Minutes!!", bc_map, 0xDDA0DD);
+		initnpctimer;
+		end;
+	}
+	if (.Defender == 0) {
+		mapannounce(.Castle$, "Castle captured Fail. No winners", bc_map, 0xDDA0DD);
+	} else {
+		mapannounce(.Castle$, bg_info(.Defender, 1) + " : Castle protected, we won the Battle!!", 1, bg_info(.Defender,2));
+		if (.Defender == $@ebg_rush_BG_id1)
+			.Team1_Score = 3;
+		else
+			.Team2_Score = 3;
+	}
+
+	donpcevent("eBG_Rush::OnMatchEnd");
+	end;
+
+OnMatchStop:
+OnMatchEnd:
+	stopnpctimer;
+	donpcevent("rush_respawn#16::OnBGStop");
+	donpcevent("rush_respawn#17::OnBGStop");
+	killmonster .Castle$, "eBG_Rush::OnEmp";
+	bg_updatescore .Castle$, .Team1_Score, .Team2_Score;
+	$@eBG_start[BGT_RUSH] = EBG_ENDING;
+	.@win = callfunc("F_eBGReward", BGT_RUSH, $bg_rush, 2, .Team1_Score, .Team2_Score, 10, 1, 0);
+	// =======================================================
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	sleep 5000;
+	bg_updatescore .Castle$, .Team1_Score, .Team2_Score;
+	callfunc("F_EndeBG", "ebg_rush", 2, "ebg_rush0"+ ($bg_rush_rotate + 1));
+	end;
+}
+
+// Battleground Respawn
+// *********************************************************************
+ebg_rush01,0,0,0	duplicate(respawn_script#bg)	rush_respawn#16	HIDDEN_WARP_NPC	//Rush_Respawn
+ebg_rush01,0,0,0	duplicate(respawn_script#bg)	rush_respawn#17	HIDDEN_WARP_NPC	//Rush_Respawn
+
+// Battleground Therapist
+
+ebg_rush01,198,230,6	duplicate(Therapist#eBG)	Therapist in battle#rh1	4_F_SISTER
+ebg_rush01,198,226,6	duplicate(Therapist#eBG)	Therapist in battle#rh2	4_F_SISTER
+ebg_rush02,142,50,6	duplicate(Therapist#eBG)	Therapist in battle#rh3	4_F_SISTER
+ebg_rush02,142,46,6	duplicate(Therapist#eBG)	Therapist in battle#rh4	4_F_SISTER
+ebg_rush03,60,17,4	duplicate(Therapist#eBG)	Therapist in battle#rh5	4_F_SISTER
+ebg_rush03,64,17,4	duplicate(Therapist#eBG)	Therapist in battle#rh6	4_F_SISTER
+ebg_rush04,266,292,6	duplicate(Therapist#eBG)	Therapist in battle#rh7	4_F_SISTER
+ebg_rush04,266,288,6	duplicate(Therapist#eBG)	Therapist in battle#rh8	4_F_SISTER
+
+// Warp Portals
+
+
+ebg_rush01,157,135,0	warp	rush106-1	1,1,ebg_rush01,184,40
+ebg_rush01,161,41,0	warp	rush102-1	1,1,ebg_rush01,57,202
+ebg_rush01,184,44,0	warp	rush106	1,1,ebg_rush01,157,140
+ebg_rush01,203,21,0	warp	rush105-1	1,1,ebg_rush01,45,25
+ebg_rush01,210,41,0	warp	rush101-1	1,1,ebg_rush01,84,215
+ebg_rush01,35,183,0	warp	rush104	1,1,ebg_rush01,71,82
+ebg_rush01,45,21,0	warp	rush105	1,1,ebg_rush01,203,25
+ebg_rush01,53,202,0	warp	rush102	1,1,ebg_rush01,165,41
+ebg_rush01,64,164,0	warp	rush103	1,1,ebg_rush01,98,25
+ebg_rush01,71,86,0	warp	rush104-1	1,1,ebg_rush01,35,187
+ebg_rush01,88,215,0	warp	rush101	1,1,ebg_rush01,206,41
+ebg_rush01,98,21,0	warp	rush103-1	1,1,ebg_rush01,64,168
+
+ebg_rush02,259,212,0	warp	rush201	1,1,ebg_rush02,72,240
+ebg_rush02,75,240,0	warp	rush201-1	1,5,ebg_rush02,256,212
+ebg_rush02,232,189,0	warp	rush202	1,1,ebg_rush02,74,261
+ebg_rush02,78,261,0	warp	rush202-1	1,1,ebg_rush02,236,189
+ebg_rush02,229,208,0	warp	rush203	1,1,ebg_rush02,70,282
+ebg_rush02,74,282,0	warp	rush203-1	1,1,ebg_rush02,225,208
+ebg_rush02,7,261,0	warp	rush204	1,1,ebg_rush02,55,30
+ebg_rush02,59,30,0	warp	rush204-1	1,1,ebg_rush02,11,261
+ebg_rush02,28,31,0	warp	rush205	1,1,ebg_rush02,251,42
+ebg_rush02,254,45,0	warp	rush205-1	1,1,ebg_rush02,24,31
+
+ebg_rush03,194,71,0	warp	rush301	1,1,ebg_rush03,129,194
+ebg_rush03,125,194,0	warp	rush301-1	1,1,ebg_rush03,199,70
+ebg_rush03,164,86,0	warp	rush302	1,1,ebg_rush03,66,189
+ebg_rush03,70,189,0	warp	rush302-1	1,1,ebg_rush03,166,81
+ebg_rush03,150,67,0	warp	rush303	1,1,ebg_rush03,9,187
+ebg_rush03,5,187,0	warp	rush303-1	1,1,ebg_rush03,151,62
+ebg_rush03,165,232,0	warp	rush304	1,1,ebg_rush03,193,49
+ebg_rush03,188,49,0	warp	rush304-1	1,1,ebg_rush03,165,228
+ebg_rush03,195,42,0	warp	rush305	1,1,ebg_rush03,19,227
+ebg_rush03,15,227,0	warp	rush305-1	1,1,ebg_rush03,195,46
+ebg_rush03,13,175,0	warp	rush306	1,1,ebg_rush03,162,194
+ebg_rush03,166,194,0	warp	rush306-1	1,1,ebg_rush03,13,179
+ebg_rush03,156,231,0	warp	rush307	1,1,ebg_rush03,18,88
+ebg_rush03,14,88,0	warp	rush307-1	1,1,ebg_rush03,156,227
+
+ebg_rush04,106,217,0	warp	rush407	1,1,ebg_rush04,131,15	
+ebg_rush04,115,210,0	warp	rush408	1,1,ebg_rush04,92,215	
+ebg_rush04,135,15,0	warp	rush407-1	1,1,ebg_rush04,110,217	
+ebg_rush04,135,92,0	warp	rush402-1	1,1,ebg_rush04,34,282	
+ebg_rush04,152,92,0	warp	rush404-1	1,1,ebg_rush04,59,255	
+ebg_rush04,154,16,0	warp	rush414	1,1,ebg_rush04,252,11	
+ebg_rush04,17,206,0	warp	rush406-1	1,1,ebg_rush04,29,219	
+ebg_rush04,212,46,0	warp	rush415	1,1,ebg_rush04,225,158	
+ebg_rush04,225,154,0	warp	rush415-1	1,1,ebg_rush04,212,42	
+ebg_rush04,237,74,0	warp	rush412-1	1,1,ebg_rush04,62,213	
+ebg_rush04,256,11,0	warp	rush414-1	1,1,ebg_rush04,159,16	
+ebg_rush04,266,47,0	warp	rush409-1	1,1,ebg_rush04,45,175	
+ebg_rush04,27,215,0	warp	rush406-2	1,1,ebg_rush04,17,202	
+ebg_rush04,34,286,0	warp	rush402	1,1,ebg_rush04,131,92	
+ebg_rush04,38,243,0	warp	rush406	1,1,ebg_rush04,29,219	
+ebg_rush04,38,259,0	warp	rush403-1	1,1,ebg_rush04,43,271	
+ebg_rush04,42,175,0	warp	rush409	1,1,ebg_rush04,266,43	
+ebg_rush04,43,191,0	warp	rush410-1	1,1,ebg_rush04,70,185	
+ebg_rush04,47,271,0	warp	rush403	1,1,ebg_rush04,38,255	
+ebg_rush04,50,248,0	warp	rush405	1,1,ebg_rush04,54,229	
+ebg_rush04,58,232,0	warp	rush405-1	1,1,ebg_rush04,62,213	
+ebg_rush04,63,255,0	warp	rush404	1,1,ebg_rush04,156,92	
+ebg_rush04,65,215,0	warp	rush412	1,1,ebg_rush04,233,74	
+ebg_rush04,66,223,0	warp	rush401	1,1,ebg_rush04,96,53	
+ebg_rush04,70,182,0	warp	rush410	1,1,ebg_rush04,39,191	
+ebg_rush04,79,244,0	warp	rush413-1	1,1,ebg_rush04,91,250	
+ebg_rush04,88,248,0	warp	rush411-1	1,1,ebg_rush04,76,242	
+ebg_rush04,90,218,0	warp	rush408-1	1,1,ebg_rush04,111,210	
+ebg_rush04,92,53,0	warp	rush401-1	1,1,ebg_rush04,62,223	
+ebg_rush04,93,209,0	warp	rush411	1,1,ebg_rush04,92,250	
+ebg_rush04,95,251,0	warp	rush413	1,1,ebg_rush04,91,209	
+
+// MapFlags
+// *********************************************************************
+
+ebg_rush01	mapflag	battleground	2
+ebg_rush01	mapflag	nomemo
+ebg_rush01	mapflag	nosave	SavePoint
+ebg_rush01	mapflag	noteleport
+ebg_rush01	mapflag	nowarp
+ebg_rush01	mapflag	nowarpto
+ebg_rush01	mapflag	noreturn
+ebg_rush01	mapflag	nobranch
+ebg_rush01	mapflag	nopenalty
+
+ebg_rush02	mapflag	battleground	2
+ebg_rush02	mapflag	nomemo
+ebg_rush02	mapflag	nosave	SavePoint
+ebg_rush02	mapflag	noteleport
+ebg_rush02	mapflag	nowarp
+ebg_rush02	mapflag	nowarpto
+ebg_rush02	mapflag	noreturn
+ebg_rush02	mapflag	nobranch
+ebg_rush02	mapflag	nopenalty
+
+ebg_rush03	mapflag	battleground	2
+ebg_rush03	mapflag	nomemo
+ebg_rush03	mapflag	nosave	SavePoint
+ebg_rush03	mapflag	noteleport
+ebg_rush03	mapflag	nowarp
+ebg_rush03	mapflag	nowarpto
+ebg_rush03	mapflag	noreturn
+ebg_rush03	mapflag	nobranch
+ebg_rush03	mapflag	nopenalty
+
+ebg_rush04	mapflag	battleground	2
+ebg_rush04	mapflag	nomemo
+ebg_rush04	mapflag	nosave	SavePoint
+ebg_rush04	mapflag	noteleport
+ebg_rush04	mapflag	nowarp
+ebg_rush04	mapflag	nowarpto
+ebg_rush04	mapflag	noreturn
+ebg_rush04	mapflag	nobranch
+ebg_rush04	mapflag	nopenalty

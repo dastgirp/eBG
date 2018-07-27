@@ -1,0 +1,490 @@
+// Battle Ground - Tierra Eye of Storm(EoS)
+// .Flag_Carrier - Neutral Flag#eBG = bg_data (0)
+// .Flag_Status = bg_data(1)
+
+-	script	EOS_Tierra	-1,{
+	end;
+
+OnPCLogoutEvent:
+OnPCDieEvent:
+	if (strcharinfo(PC_MAP) == "ebg_eos") {
+		.@team = callfunc("F_ValidateeBG", BGT_EOS, 0);
+		callsub(OnTeamDie, callfunc("F_eBGTeamName",.@team));
+		callfunc("F_warpDie",BGT_EOS,.@team);
+	}
+	end;
+
+OnTeam1Off:
+	callsub(OnTeamDie, callfunc("F_eBGTeamName", GUILLAUME), @ebg_x, @ebg_y);
+	end;
+OnTeam2Off:
+	callsub(OnTeamDie, callfunc("F_eBGTeamName", CROIX), @ebg_x, @ebg_y);
+	end;
+
+OnTeamDie:
+	.@x = getarg(1, -1);
+	.@y = getarg(2, -1);
+	if ($@eBG_start[BGT_EOS] == EBG_RUNNING && bg_get_npc_data(0, "Neutral Flag#eBG") == getcharid(0)) {
+		pc_block_si(PC_BLOCK_ALL, 0);
+		if (.@x == -1 && .@y == -1)
+			getmapxy(.@m$, .@x, .@y, UNITTYPE_PC);
+		movenpc("Neutral Flag#eBG", .@x, .@y);
+		mapannounce("ebg_eos", getarg(0)+" have dropped the Flag",1,0xFFFFFF);
+		bg_npc_data(EOS_ONGROUND,1,"Neutral Flag#eBG");	//Flag on Floor
+		bg_npc_data(EOS_ONGROUND,0,"Neutral Flag#eBG");	//No One Carrying Flag
+		bg_hpsp_time_del(EBG_HP_TIME | EBG_SP_TIME | EBG_EXTRA_TIME);
+		donpcevent("Neutral Flag#eBG::OnTimerStart");
+		enablenpc("Neutral Flag#eBG");
+	}
+	return;
+
+OnReadyCheck:
+	if ($@eBG_start[BGT_EOS])
+		end;
+		
+	$@eBG_start[BGT_EOS] = EBG_RUNNING;
+	// BG Variables
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	sleep 2000;
+	// Respawn NPC's
+	donpcevent("eos_respawn#8::OnBGStart");
+	donpcevent("eos_respawn#9::OnBGStart");
+	// Start Match!!
+	donpcevent("North_Base#1::OnBase");
+	donpcevent("South_Base#2::OnBase");
+	donpcevent("Neutral Flag#eBG::OnBase");
+	donpcevent("::OneBGStartStorm");
+	mapannounce("ebg_eos","The Battle of Tierra Valley - Eye of Storm has begun",bc_map,0x4169E1);
+	end;
+
+OnGuillaumeFlag:
+	callsub(OnFlag, GUILLAUME);
+	end;
+
+OnCroixFlag:
+	callsub(OnFlag, CROIX);
+	end;
+
+OnFlag:
+	viewpointmap("ebg_eos",2, 0, 0, 3, 0xFFFF00);
+	.@North = bg_get_npc_data(0, "North_Base#1");
+	.@South = bg_get_npc_data(0, "South_Base#2");
+
+	.@team_name$ = callfunc("F_eBGTeamName", getarg(0));
+
+	bg_addpoints(BG_EOS_FLAG, 1, 1);
+
+	.@points = 5;	// Both Occupied
+	if (.@North != .@South) 
+		.@points = 3;
+	setd(".Team"+ getarg(0) +"_Score", getd(".Team"+ getarg(0) +"_Score")+ .@points);
+	mapannounce("ebg_eos",.@team_name$ +" captured the Flag [+"+ .@points +" points]", bc_map, callfunc("F_eBGTeamColor",getarg(0)));
+
+	donpcevent("EOS_Tierra::OnValidateScore");
+	donpcevent("Neutral Flag#eBG::OnBase");
+	return;
+
+OnNorthScore:
+	callsub(OnScore, 1);
+	end;
+
+OnSouthScore:
+	callsub(OnScore, 2);
+	end;
+	
+OnScore:
+	.@base = getarg(0);
+	.@North = bg_get_npc_data(0, "North_Base#1");
+	.@South = bg_get_npc_data(0, "South_Base#2");
+	.@Score = (.@base == 1) ? .@North : .@South;
+	
+	if (!.@Score)	//Should contain BG_ID
+		return;
+	
+	.@points = 1;
+
+	if (.@North == .@South)
+		.@points = 2;
+	
+	if (.@Score == $@ebg_eos_BG_id1) {
+		.Team1_Score = .Team1_Score + .@points;
+	} else {
+		.Team2_Score = .Team2_Score + .@points;
+	}
+
+	donpcevent("EOS_Tierra::OnValidateScore");
+	return;
+	
+OnMatchStop:
+	.@stop = 1;
+OnValidateScore:
+	if (.Team1_Score > $bg_tierra_eos[0])
+		.Team1_Score = $bg_tierra_eos[0];
+	if (.Team2_Score > $bg_tierra_eos[0])
+		.Team2_Score = $bg_tierra_eos[0];
+
+	bg_updatescore "ebg_eos",.Team1_Score,.Team2_Score; // Update Visual Score
+
+	if (!.@stop && .Team1_Score < $bg_tierra_eos[0] && .Team2_Score < $bg_tierra_eos[0])	//No Winners
+		end;
+
+	donpcevent("Neutral Flag#eBG::OnDisable");
+	stopnpctimer "North_Base#1";
+	stopnpctimer "South_Base#2";
+	donpcevent("eos_respawn#8::OnBGStop");
+	donpcevent("eos_respawn#9::OnBGStop");
+	$@eBG_start[BGT_EOS] = EBG_ENDING;
+	// Team Rewards
+	.@win = callfunc("F_eBGReward", BGT_EOS, $bg_tierra_eos, 2, .Team1_Score, .Team2_Score, 0, 4, 1);
+	/* .@win = -1, some unknown error, don't give rewards */
+	if (.@win == -1) {
+		if (.@stop)
+			mapannounce("ebg_eos", "The battle is over. Nobody won the match...!", bc_map, 0x4169E1);
+	}
+
+	if (.@win)
+		mapannounce("ebg_eos"," The "+ callfunc("F_eBGTeamName",.@win) +" army has won the Battle of Tierra EoS!", bc_map, callfunc("F_eBGTeamColor",.@win));
+	else if (.@win == 0)
+		mapannounce("ebg_eos", "The battle is over. This is a Tie...!", bc_map, 0x4169E1);
+	
+	// =======================================================
+	.Team1_Score = 0;
+	.Team2_Score = 0;
+	sleep 5000;
+	donpcevent("::OneBGEndStorm");
+	callfunc("F_EndeBG", "ebg_eos",2);
+	end;
+
+OnBreak:
+	if ($@eBG_start[BGT_EOS] != EBG_RUNNING)
+		end;
+
+	if (getcharid(4) == $@ebg_eos_BG_id1) {
+		mapannounce("ebg_eos","Neutral Flag Taken by "+ callfunc("F_eBGTeamName", 1), bc_map, callfunc("F_eBGTeamColor", 1));
+	} else if (getcharid(4) == $@ebg_eos_BG_id2) {
+		mapannounce("ebg_eos","Neutral Flag Taken by "+ callfunc("F_eBGTeamName", 2), bc_map, callfunc("F_eBGTeamColor", 2));
+	} else {
+		end;
+	}
+
+	bg_npc_data(EOS_TAKEN, 1, "Neutral Flag#eBG");
+	bg_npc_data(getcharid(0), 0, "Neutral Flag#eBG");
+
+	sc_end(SC_HIDING);
+	sc_end(SC_CLOAKING);
+	sc_end(SC_CHASEWALK);
+
+	if (RENEWAL) {
+		sc_end(SC_CLOAKINGEXCEED);
+		sc_end(SC_CAMOUFLAGE);
+		sc_end(SC__INVISIBILITY);
+	}
+
+	pc_block_si(PC_BLOCK_ALL,1);
+
+	donpcevent("Neutral Flag#eBG::OnTimerStopE");
+	disablenpc("Neutral Flag#eBG");
+	bg_hpsp_time($bg_tierra_eos[1],$bg_tierra_eos[2],$bg_tierra_eos[3]);
+	bg_hpsp_time_extra(EF_BOWLINGBASH,e_hlp,3,0xFFFF00);
+	bg_npc_cond_hpsp("Neutral Flag#eBG",getcharid(0),EBG_CONDITION_EQUAL,0,0);
+	end;
+}
+
+// Battleground Flag
+// *********************************************************************
+
+ebg_eos,273,204,0	script	Neutral Flag#eBG	OBJ_NEUTRAL,2,2,{
+	end;
+
+OnTouch:
+	if ($@eBG_start[BGT_EOS] != EBG_RUNNING || Hp < 1 || bg_get_npc_data(1))
+		end;
+
+	.@self = GUILLAUME;
+
+	if (getcharid(4) == $@ebg_eos_BG_id1) {
+		mapannounce("ebg_eos","Neutral Flag Taken by "+ callfunc("F_eBGTeamName", 1), bc_map, callfunc("F_eBGTeamColor", 1));
+	} else if (getcharid(4) == $@ebg_eos_BG_id2) {
+		mapannounce("ebg_eos","Neutral Flag Taken by "+ callfunc("F_eBGTeamName", 2), bc_map, callfunc("F_eBGTeamColor", 2));
+		.@self = CROIX;
+	} else {
+		end;
+	}
+
+	bg_npc_data(EOS_TAKEN,1);
+	bg_npc_data(getcharid(0));
+
+	sc_end(SC_HIDING);
+	sc_end(SC_CLOAKING);
+	sc_end(SC_CHASEWALK);
+
+	if (RENEWAL){
+		sc_end(SC_CLOAKINGEXCEED);
+		sc_end(SC_CAMOUFLAGE);
+		sc_end(SC__INVISIBILITY);
+	}
+
+	pc_block_si(PC_BLOCK_ALL, 1);
+
+	callsub(OnTimerStop);
+	disablenpc("Neutral Flag#eBG");
+	bg_hpsp_time($bg_tierra_eos[1], $bg_tierra_eos[2], $bg_tierra_eos[3]);
+	bg_hpsp_time_extra(EF_BOWLINGBASH, e_hlp, 3, callfunc("F_eBGTeamColor_VP", .@self));
+	bg_npc_cond_hpsp(strnpcinfo(0), getcharid(0), EBG_CONDITION_EQUAL, 0, 0);
+	end;
+
+OnTimerStopE:
+	.@end = 1;
+OnTimerStop:
+	bg_timer_stop(.uid);
+	.uid = 0;
+	if (.@end)
+		end;
+	return;
+	
+OnTimerStart:
+	if (.uid){
+		return;
+	}
+	.uid = bg_timer_start(2000, 1);
+	bg_npc_cond_timer(.uid, strnpcinfo(0), 0, EBG_CONDITION_EQUAL, EBG_OP_VIEWPOINT | EBG_OP_EFFECT);
+	bg_effect_timer(.uid, EF_GANBANTEIN);
+	bg_viewpoint_timer(.uid, "ebg_eos", 1, -1, -1, 3, 0xFFFF00);
+	return;
+
+OnDisable:
+	movenpc "Neutral Flag#eBG",273,204;
+	bg_npc_data(EOS_ONGROUND,1);
+	callsub(OnTimerStop);
+	disablenpc "Neutral Flag#eBG";
+	killmonster "ebg_eos","EOS_Tierra::OnBreak";
+	end;
+
+OnBase:
+	if ($@eBG_start[BGT_EOS] != EBG_RUNNING)
+		end;
+
+	movenpc "Neutral Flag#eBG",273,204;
+	bg_npc_data(EOS_ONGROUND, 1);
+	bg_npc_data(0);
+	callsub(OnTimerStart);
+	disablenpc "Neutral Flag#eBG";
+	mapannounce("ebg_eos","The Neutral Flag have been set!!",bc_map,0xFFFFFF);
+	bg_monster(0, "ebg_eos", 273, 204, "Neutral Flag", 1911, "EOS_Tierra::OnBreak");
+	end;
+}
+
+// Battleground Bases
+// *********************************************************************
+// 0 = .Owner
+// 1-2 EoS
+// 3-4 DoM
+ebg_eos,173,345,0	script	North_Base#1	OBJ_NEUTRAL,3,3,{
+	end;
+
+OnTouch:
+	if ($@eBG_start[BGT_EOS] != EBG_RUNNING || bg_get_npc_data() == 0 || bg_get_npc_data() != getcharid(4) || bg_get_npc_data(0,"Neutral Flag#eBG") != getcharid(0))
+		end;
+
+	bg_npc_data(0, 0, "Neutral Flag#eBG");
+	pc_block_si(PC_BLOCK_ALL, 0);
+	bg_hpsp_time_del(EBG_HP_TIME | EBG_SP_TIME);
+	if (bg_get_npc_data() == $@ebg_eos_BG_id1) {
+		doevent("EOS_Tierra::OnGuillaumeFlag");
+	} else {
+		doevent("EOS_Tierra::OnCroixFlag");
+	}
+	end;
+
+OnBase:
+	.@id = atoi(strnpcinfo(2));
+	if (.@id <= 2)
+		.@base$ = ((.@id==1)?"North":"South");
+	else if (.@id <= 5)
+		.@base$ = ((.@id==3)?"North":((.@id==4)?"South":"Center"));
+	bg_npc_data(0);
+	bg_npc_data(0, 1);
+
+	.Balance[.@id] = 0;
+	.Tick[.@id] = 0;
+
+	setnpcdisplay(strnpcinfo(0), .@base$ +"_Base#"+ .@id, OBJ_NEUTRAL);
+	initnpctimer;
+	end;
+
+OnTimer1000:
+	stopnpctimer;
+	.@id = atoi(strnpcinfo(2));
+	.@warp_id = .@id;
+	if (.@id <= 2) {
+		.@base$ = ((.@id == 1) ? "North": "South");
+	} else if (.@id <= 5) {
+		.@base$ = ((.@id == 3) ? "North": ((.@id == 4) ? "South" : "Center"));
+	}
+	.@map$ = strnpcinfo(4);
+
+	if ($@eBG_start[callfunc("F_MapToId", .@map$)] != EBG_RUNNING)
+		end;
+
+	setarray .@bg_id[1], getd("$@"+ .@map$ +"_BG_id1"), getd("$@"+ .@map$ +"_BG_id2");
+	setarray .@XY[0],136,329,186,361,	// North
+					 129,34,175,65,		// South
+					 260,194,287,213;	// Center
+	if (.@id > 2) {	//Domination
+		.@warp_id -= 2;
+	}
+	.@index = (.@warp_id - 1) * 4;
+	.@Guillaume = bg_getareausers(.@bg_id[1], .@map$, .@XY[.@index], .@XY[.@index+1], .@XY[.@index+2], .@XY[.@index+3]);
+	.@Croix = bg_getareausers(.@bg_id[2], .@map$, .@XY[.@index], .@XY[.@index+1], .@XY[.@index+2], .@XY[.@index+3]);
+	.@Balance = .@Guillaume - .@Croix;
+	.Balance[.@id] += .@Balance;
+
+	if (.Balance[.@id] > 50) {
+		.Balance[.@id] = 50;
+	} else if (.Balance[.@id] < -50) {
+		.Balance[.@id] = -50;
+	}
+
+	if (bg_get_npc_data() == 0) {
+		showscript("Points: "+ .Balance[.@id] +" (T1: 50, T2: -50).");
+	} else {
+		showscript("Points: "+ .Balance[.@id] +" (T1: 50, T2: -50). Points are gained every 7 seconds");
+	}
+
+	if (bg_get_npc_data() == 0) {
+		.@team = 0;
+		if (.Balance[.@id] == 50) {
+			.@team = 1;
+		} else if (.Balance[.@id] == -50)  {
+			.@team = 2;
+		}
+		
+		if (.@team) {
+			bg_npc_data(.@bg_id[.@team]);
+			bg_npc_data(.@team, 1);
+			mapannounce(.@map$,strnpcinfo(1)+" captured by "+ callfunc("F_eBGTeamName",.@team), bc_map, callfunc("F_eBGTeamColor", .@team));
+			setnpcdisplay strnpcinfo(0), callfunc("F_eBGNPCName", .@team, BGT_EOS)+"_Base#"+ .@id, OBJ_NEUTRAL+.@team;
+			bg_addpoints(.@bg_id[.@team], strnpcinfo(4), .@XY[.@index], .@XY[.@index+1], .@XY[.@index+2], .@XY[.@index+3], ((.@id > 2) ? BG_DOM_BASE : BG_EOS_BASE), 1, ((.@id > 2) ? 10 : 1));
+		}
+	} else if (bg_get_npc_data() == .@bg_id[1]) {
+		if (.Balance[.@id] <= 0) { // Guillaume lost Control
+			bg_npc_data(0);
+			bg_npc_data(0, 1);
+			setnpcdisplay(strnpcinfo(0), .@base$ +"_Base#"+ .@id, OBJ_NEUTRAL);
+			mapannounce(.@map$,"Guillaume Team lost control of the "+ .@base$ +" Base", bc_map, 0x0000FF);
+		}
+	} else if (bg_get_npc_data() == .@bg_id[2]) {
+		if (.Balance[.@id] >= 0) { // Croix lost Control
+			bg_npc_data(0);
+			bg_npc_data(0, 1);
+			setnpcdisplay(strnpcinfo(0), .@base$ +"_Base#"+ .@id, OBJ_NEUTRAL);
+			mapannounce(.@map$,"Croix Team lost control of the "+ .@base$ +" Base", bc_map, 0xFF0000);
+		}
+	}
+
+	if (.@Balance[.@id] > 0 || bg_get_npc_data() == .@bg_id[1]) {
+		specialeffect EF_DELUGE;
+	} else if (.@Balance[.@id] < 0 || bg_get_npc_data() == .@bg_id[2]) {
+		specialeffect EF_VOLCANO;
+	} else {
+		specialeffect EF_GANBANTEIN;
+	}
+	
+	if (bg_get_npc_data() == 0 || bg_get_npc_data() == .@bg_id[1] || bg_get_npc_data() == .@bg_id[2]) {
+		if (.@base$ == "South") {
+			viewpointmap .@map$, 1, 164, 50, 2, callfunc("F_eBGTeamColor_VP", bg_get_npc_data(1));
+		} else if (.@base$ == "North") {
+			viewpointmap .@map$, 1, 173, 345, 1, callfunc("F_eBGTeamColor_VP", bg_get_npc_data(1));
+		} else {
+			viewpointmap .@map$, 1, 273, 204, 3, callfunc("F_eBGTeamColor_VP", bg_get_npc_data(1));
+		}
+	}
+	
+	.Tick[.@id] += 1;
+	if (bg_get_npc_data() == 0) {
+		.Tick[.@id] = 0;
+	} else if(.Tick[.@id] == 7) {
+		if (.@id <= 2) {
+			donpcevent("EOS_Tierra::On"+ .@base$ +"Score");
+		} else {
+			donpcevent("DOM_Tierra::On"+ .@base$ +"Score");
+		}
+		.Tick[.@id] = 0;
+	}
+
+	initnpctimer;
+	end;
+}
+
+ebg_eos,164,50,0	duplicate(North_Base#1)	South_Base#2	OBJ_NEUTRAL,3,3
+
+// Battleground Therapist
+ebg_eos,53,377,3	duplicate(Therapist#eBG)	Therapist in battle#eos1	4_F_SISTER
+ebg_eos,45,18,3	duplicate(Therapist#eBG)	Therapist in battle#eos2	4_F_SISTER
+
+
+// Battleground Respawn and Warps
+// *********************************************************************
+
+ebg_eos,38,19,0	script	North Base Warp#1	1_SHADOW_NPC,{
+	.@id = atoi(strnpcinfo(2));
+	@eBG_eos_w = .@id;	// Source set's this variable to 0
+	dispbottom("You will be warped to "+((.@id==1)?"North":"South") +" Base");
+	end;
+}
+
+ebg_eos,45,12,0	duplicate(North Base Warp#1)	South Base Warp#2	1_SHADOW_NPC
+ebg_eos,46,377,0	duplicate(North Base Warp#1)	North Base Warp_#1	1_SHADOW_NPC
+ebg_eos,53,370,0	duplicate(North Base Warp#1)	South Base Warp_#2	1_SHADOW_NPC
+
+// *********************************************************************
+
+ebg_eos,50,374,0	duplicate(respawn_script#bg)	eos_respawn#8	HIDDEN_WARP_NPC	//#guieoe_respawn
+ebg_eos,42,16,0	duplicate(respawn_script#bg)	eos_respawn#9	HIDDEN_WARP_NPC	//#croeoe_respawn
+
+// MapFlags
+// *********************************************************************
+
+ebg_eos	mapflag	battleground	2
+ebg_eos	mapflag	nomemo
+ebg_eos	mapflag	nosave	SavePoint
+ebg_eos	mapflag	noteleport
+ebg_eos	mapflag	nowarp
+ebg_eos	mapflag	nowarpto
+ebg_eos	mapflag	noreturn
+ebg_eos	mapflag	nobranch
+ebg_eos	mapflag	nopenalty
+ebg_eos	mapflag	noemergencycall
+
+// Eye of the Storm Effects
+// *********************************************************************
+
+ebg_eos,269,189,0	script	stormeos#1	HIDDEN_WARP_NPC,{
+	end;
+	
+OneBGEndStorm:
+	.@id = atoi(strnpcinfo(2));
+	bg_timer_stop(.uid[.@id]);
+	.uid[.@id] = 0;
+	end;
+
+OneBGStartStorm:
+	.@id = atoi(strnpcinfo(2));
+	.uid[.@id] = bg_timer_start(0, 0, 20, 40);
+	bg_operations_timer(.uid[.@id], EBG_OP_ADDSELF, 0);
+	bg_effect_timer(.uid[.@id], EF_THUNDERSTORM2);
+	bg_effect_timer(.uid[.@id], EF_ACIDDEMON, 1);		//Second Effect
+	end;
+}
+
+ebg_eos,284,189,0	duplicate(stormeos#1)	stormeos#2	HIDDEN_WARP_NPC
+ebg_eos,267,204,0	duplicate(stormeos#1)	stormeos#3	HIDDEN_WARP_NPC
+ebg_eos,278,210,0	duplicate(stormeos#1)	stormeos#4	HIDDEN_WARP_NPC
+ebg_eos,262,210,0	duplicate(stormeos#1)	stormeos#5	HIDDEN_WARP_NPC
+ebg_eos,256,201,0	duplicate(stormeos#1)	stormeos#6	HIDDEN_WARP_NPC
+ebg_eos,284,218,0	duplicate(stormeos#1)	stormeos#7	HIDDEN_WARP_NPC
+ebg_eos,263,220,0	duplicate(stormeos#1)	stormeos#8	HIDDEN_WARP_NPC
+ebg_eos,289,207,0	duplicate(stormeos#1)	stormeos#9	HIDDEN_WARP_NPC
+ebg_eos,279,182,0	duplicate(stormeos#1)	stormeos#10	HIDDEN_WARP_NPC
+ebg_eos,272,229,0	duplicate(stormeos#1)	stormeos#11	HIDDEN_WARP_NPC

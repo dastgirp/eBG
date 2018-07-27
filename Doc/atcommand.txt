@@ -1,0 +1,83 @@
+======================
+| 1. Debug Commands  |
+======================
+
+---------------------------------------
+
+@get_value <Type>
+
+Gets the Value of data (@see Player_Data)
+
+---------------------------------------
+
+@set_value <Type> <value>
+
+Sets the Value of data (@see Player_Data)
+
+---------------------------------------
+
+@esend
+
+Sends a Test Packet(0x1b4)
+
+---------------------------------------
+
+@bgsend_
+
+Sends BG Packet for Test
+
+---------------------------------------
+
+@debug_time
+
+Shows all active timers
+
+---------------------------------------
+
+@debug_time2
+
+Shows Detail of Specified Timer ID
+
+---------------------------------------
+
+======================
+| 2. Player Commands |
+======================
+
+---------------------------------------
+
+@bgranked
+
+Lists out all Ranked Matches Rankings
+
+---------------------------------------
+
+@bgregular
+
+Lists out all Regular Matches Rankings
+
+---------------------------------------
+
+@order <message>
+
+Sends message to all teammates in eBG
+
+---------------------------------------
+
+@leader <name>
+
+Changes the leader of eBG
+
+---------------------------------------
+
+@reportafk <name>
+
+Kicks the AFK player from eBG
+
+---------------------------------------
+
+@ignorebg
+
+Ignores all BG Announcements
+
+---------------------------------------
