@@ -3274,7 +3274,7 @@ void bg_guild_build_data(void) {
 		sprintf(path_db, "db/emblems/bg_%d.ebm", i);
 		if ((fp = fopen(path_db, "rb")) != NULL) {
 			fseek(fp, 0, SEEK_END);
-			g->emblem_len = ftell(fp);
+			g->emblem_len = (int)ftell(fp);
 			fseek(fp, 0, SEEK_SET);
 			if (fread(g->emblem_data, 1,g->emblem_len, fp) != g->emblem_len) {
 				ShowWarning("bg_guild_build_data: db/emblems/bg_%d.ebm Cannot be read properly.\n", i);
