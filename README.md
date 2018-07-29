@@ -1,3 +1,5 @@
+Build Status: [![Build Status](https://travis-ci.org/dastgirp/eBG.svg?branch=master)](https://travis-ci.org/dastgirp/eBG) 
+
 # Extended Battlegrounds for Hercules - PLUGIN #
 
 Plugin for Extended Battleground for Hercules :D

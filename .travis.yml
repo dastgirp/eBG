@@ -1,0 +1,39 @@
+language: c
+sudo: false
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-5
+    - gcc-6
+
+before_script:
+  - uname -a
+  - chmod a+x travis-eBG.sh
+  - ./travis-eBG.sh getrepo || true
+  - ./travis-eBG.sh createdb ragnarok root
+  - ./travis-eBG.sh importdb ragnarok travis
+  - mysql -u root -e "SET PASSWORD FOR 'travis'@'localhost' = PASSWORD('travis');"
+
+script:
+  - ./travis-eBG.sh build $CONFIGURE_FLAGS
+  - ./travis-eBG.sh test ragnarok travis travis
+
+matrix:
+  exclude:
+  - env: ignore=this
+  include:
+  - compiler: clang
+    env: CONFIGURE_FLAGS="--enable-debug --enable-Werror --enable-buildbot"
+  - compiler: gcc
+    env: CONFIGURE_FLAGS="--enable-debug --enable-Werror --enable-buildbot"
+  - compiler: gcc
+    env: LDFLAGS="-fuse-ld=gold" CONFIGURE_FLAGS="--enable-debug --enable-sanitize=full CC=gcc-5 --disable-manager --enable-Werror --enable-buildbot"
+  - compiler: gcc
+    env: LDFLAGS="-fuse-ld=gold" CONFIGURE_FLAGS="--enable-debug --enable-sanitize=full CC=gcc-6 --disable-manager --enable-Werror --enable-buildbot"
+  - compiler: gcc
+    env: LDFLAGS="-fuse-ld=gold" CONFIGURE_FLAGS="--enable-debug --enable-sanitize=full CC=gcc-6 --disable-manager --disable-renewal --enable-Werror --enable-buildbot"
+  
+notifications:
+  email: false

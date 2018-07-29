@@ -1,0 +1,19 @@
+// Add to end of db/map_index.txt
+ebg_boss
+ebg_conq01
+ebg_conq02
+ebg_conq03
+ebg_conq04
+ebg_conq05
+ebg_conq06
+ebg_ctf
+ebg_dom
+ebg_eos
+ebg_room
+ebg_rush01
+ebg_rush02
+ebg_rush03
+ebg_rush04
+ebg_sc
+ebg_td
+ebg_tti
