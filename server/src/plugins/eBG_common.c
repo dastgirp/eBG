@@ -1767,7 +1767,7 @@ void bg_save_common(struct ebg_save_data *esdb, struct Sql *mysql_handle, int ch
 			if (i > BG_TOTAL_RANKED_GAMES && i <= COMMON_MAX)
 				continue;
 #ifdef EBG_MAP
-/			values[i-BG_POINTS] = get_variable_(sd, i, false, 0);
+			values[i-BG_POINTS] = get_variable_(sd, i, false, 0);
 #else
 			values[i-BG_POINTS] = get_variable_(esdb, i, false, 0);
 #endif
