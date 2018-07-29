@@ -3564,7 +3564,14 @@ int eBG_Guildremove(struct map_session_data *sd, struct guild* g) {
 void send_bg_memberlist_(struct map_session_data **sd_)
 {
 	struct map_session_data *sd = *sd_;
-	if (sd->status.guild_id >= GET_EBG_GUILD_ID(0) && sd->status.guild_id <= GET_EBG_GUILD_ID(TOTAL_GUILD)) {
+	struct battleground_data *bgd = bg->team_search(sd->bg_id);
+#ifdef VIRT_GUILD
+	struct bg_extra_info *bg_data_t;
+	if (bgd != NULL && (bg_data_t = bg_extra_create(bgd, false)) != NULL && bg_data_t->g != NULL)
+#else
+	if (sd->status.guild_id >= GET_EBG_GUILD_ID(0) && sd->status.guild_id <= GET_EBG_GUILD_ID(TOTAL_GUILD))
+#endif
+	{
 		send_bg_memberlist(sd);
 		hookStop();
 	}
@@ -3577,10 +3584,17 @@ void send_bg_memberlist_(struct map_session_data **sd_)
 void send_bg_memberlist(struct map_session_data *sd)
 {
 	int fd;
-	int i,c;
+	int i, c;
 	struct battleground_data *bgd;
 	struct map_session_data *psd;
 	struct sd_p_data *data;
+#if PACKETVER < 20161026
+	const int cmd = 0x154;
+	const int size = 104;
+#else
+	const int cmd = 0xaa5;
+	const int size = 34;
+#endif
 	nullpo_retv(sd);
 
 	if ((fd = sd->fd) == 0)
@@ -3591,36 +3605,41 @@ void send_bg_memberlist(struct map_session_data *sd)
 	if (data == NULL || !sd->bg_id || (bgd = bg->team_search(sd->bg_id)) == NULL)
 		return;
 	
-	WFIFOHEAD(fd, bgd->count * 104 + 4);
-	WFIFOW(fd, 0)=0x154;
-	eShowDebug("%d - Bg_Count \n",bgd->count);
-	for (i=0,c=0;i<bgd->count;i++) {
+	WFIFOHEAD(fd, bgd->count * size + 4);
+	WFIFOW(fd, 0) = cmd;
+	eShowDebug("%d - Bg_Count \n", bgd->count);
+	for (i = 0, c = 0; i < bgd->count; i++) {
 		if ((psd = bgd->members[i].sd) == NULL)
 			continue;
 		data = pdb_search(psd, false);
 		if (data == NULL)
 			continue;
-		eShowDebug("Accounts %d-%d-%d-%s\n",i,psd->status.account_id,psd->status.char_id,psd->status.name);
-		WFIFOL(fd,c*104+ 4) = psd->status.account_id;
-		WFIFOL(fd,c*104+ 8) = psd->status.char_id;
-		WFIFOW(fd,c*104+12) = psd->status.hair;
-		WFIFOW(fd,c*104+14) = psd->status.hair_color;
-		WFIFOW(fd,c*104+16) = psd->status.sex;
-		WFIFOW(fd,c*104+18) = psd->status.class;
-		WFIFOW(fd,c*104+20) = psd->status.base_level;
-		WFIFOL(fd,c*104+22) = data->kills;
-		WFIFOL(fd,c*104+26) = 1; // Online
-		WFIFOL(fd,c*104+30) = ((data->leader)?0:1);
-		if (data->flag.ebg_afk)
-			memcpy(WFIFOP(fd,c*104+34),"AFK",50);
-		else
-			memset(WFIFOP(fd,c*104+34),0,50);
-		memset(WFIFOP(fd,c*104+34),0,50);
-		memcpy(WFIFOP(fd,c*104+84),psd->status.name,NAME_LENGTH);
+		ShowDebug("Accounts %d-%d-%d-%s\n",i,psd->status.account_id,psd->status.char_id,psd->status.name);
+		WFIFOL(fd, c * size + 4) = psd->status.account_id;
+		WFIFOL(fd, c * size + 8) = psd->status.char_id;
+		WFIFOW(fd, c * size + 12) = psd->status.hair;
+		WFIFOW(fd, c * size + 14) = psd->status.hair_color;
+		WFIFOW(fd, c * size + 16) = psd->status.sex;
+		WFIFOW(fd, c * size + 18) = psd->status.class;
+		WFIFOW(fd, c * size + 20) = psd->status.base_level;
+		WFIFOL(fd, c * size + 22) = data->kills;
+		WFIFOL(fd, c * size + 26) = 1;
+		WFIFOL(fd, c * size + 30) = data->leader ? 0 : 1;
+#if PACKETVER < 20161026
+		if (data->flag.ebg_afk) {
+			memset(WFIFOP(fd, c * size + 34), "AFK", 50);
+		} else {
+			memset(WFIFOP(fd, c * size + 34), 0, 50);
+		}
+		memcpy(WFIFOP(fd, c * size + 84), psd->status.name, NAME_LENGTH);
+#else
+		WFIFOL(fd, c * size + 34) = psd->status.last_login;
+#endif
+
 		c++;
 	}
-	WFIFOW(fd, 2)=c*104+4;
-	WFIFOSET(fd,WFIFOW(fd,2));
+	WFIFOW(fd, 2) = c * size + 4;
+	WFIFOSET(fd, c * size + 4);
 }
 
 /**
@@ -3635,52 +3654,72 @@ void send_bg_basicinfo(struct map_session_data **sd_)
 	struct guild *g;
 	struct battleground_data *bgd;
 	struct sd_p_data *sd_data;
-#ifdef VIRT_GUILD
 	struct bg_extra_info *bg_data_t;
+#if PACKETVER < 20160622
+	const int cmd = 0x1b6;  //0x150; [4144] this is packet for older versions?
+#else
+	const int cmd = 0xa84;
 #endif
 
 	nullpo_retv(sd);
+
 	fd = sd->fd;
 	sd_data = pdb_search(sd, false);
 
-#ifdef VIRT_GUILD
-	if (sd_data && sd->bg_id) {
-		bg_data_t = bg_extra_create(bg->team_search(sd->bg_id), false);
-		if (bg_data_t == NULL || !bg_data_t->g)
+	if (!sd->bg_id || (bgd = bg->team_search(sd->bg_id)) == NULL)
+		return;
+
+	if (sd_data) {
+		bg_data_t = bg_extra_create(bgd, false);
+		if (bg_data_t == NULL)
 			return;
 	} else {
 		return;
 	}
 
+#ifdef VIRT_GUILD
 	g = bg_data_t->g;
 #else
-	if ((g = sd->guild) == NULL)
-		return;
+	g = sd->guild;
 #endif
 
-	if (!sd->bg_id || (bgd = bg->team_search(sd->bg_id)) == NULL)
+	if (g == NULL)
 		return;
 	
-	WFIFOHEAD(fd,(clif->packet(0x1b6))->len);
-	WFIFOW(fd, 0)=0x1b6;    //0x150;
-	WFIFOL(fd, 2)=g->guild_id;
-	WFIFOL(fd, 6)=g->guild_lv;
-	WFIFOL(fd,10)=bgd->count;
-	WFIFOL(fd,14)=g->max_member;
-	WFIFOL(fd,18)=g->average_lv;
-	WFIFOL(fd,22)=(uint32)cap_value(g->exp,0,INT32_MAX);
-	WFIFOL(fd,26)=g->next_exp;
-	WFIFOL(fd,30)=0;    // Tax Points
-	WFIFOL(fd,34)=0;    // Honor: (left) Vulgar [-100,100] Famed (right)
-	WFIFOL(fd,38)=0;    // Virtue: (down) Wicked [-100,100] Righteous (up)
-	WFIFOL(fd,42)=g->emblem_id;
-	memcpy(WFIFOP(fd,46),g->name, NAME_LENGTH);
-	memcpy(WFIFOP(fd,70),g->master, NAME_LENGTH);
+	WFIFOHEAD(fd, (clif->packet(cmd))->len);
+	WFIFOW(fd, 0) = cmd;
+	WFIFOL(fd, 2) = g->guild_id;
+	WFIFOL(fd, 6) = g->guild_lv;
+	WFIFOL(fd,10) = bgd->count;
+	WFIFOL(fd,14) = g->max_member;
+	WFIFOL(fd,18) = g->average_lv;
+	WFIFOL(fd,22) = (uint32) cap_value(g->exp,0,INT32_MAX);
+	WFIFOL(fd,26) = g->next_exp;
+	WFIFOL(fd,30) = 0;    // Tax Points
+	WFIFOL(fd,34) = 0;    // Honor: (left) Vulgar [-100,100] Famed (right)
+	WFIFOL(fd,38) = 0;    // Virtue: (down) Wicked [-100,100] Righteous (up)
+	WFIFOL(fd,42) = g->emblem_id;
+	memcpy(WFIFOP(fd, 46), g->name, NAME_LENGTH);
+#if PACKETVER < 20160622
+	memcpy(WFIFOP(fd, 70), g->master, NAME_LENGTH);
+	safestrncpy(WFIFOP(fd, 94), msg_sd(sd, 300 + guild->checkcastles(g)), 16);  // "'N' castles"
+	WFIFOL(fd, 110) = 0;  // zeny
+#else
+	safestrncpy(WFIFOP(fd, 70), msg_sd(sd, 300 + guild->checkcastles(g)), 16);  // "'N' castles"
+	WFIFOL(fd, 86) = 0;  // zeny
+#ifdef LEADER_INT
+	WFIFOL(fd, 90) = bg_data_t->leader;
+	bg_data_t->leader = bg_sd->status.char_id;
+#else
+	if (bg_data_t->leader != NULL) {
+		WFIFOL(fd, 90) = bg_data_t->leader->char_id;
+	} else {
+		WFIFOL(fd, 90) = 0;
+	}
+#endif
+#endif
 
-	safestrncpy((char*)WFIFOP(fd,94),msg_sd(sd,300+guild->checkcastles(g)),16);    // "'N' castles"
-	WFIFOL(fd,110) = 0;    // zeny
-
-	WFIFOSET(fd,(clif->packet(0x1b6))->len);
+	WFIFOSET(fd, (clif->packet(cmd))->len);
 	hookStop();
 }
 
