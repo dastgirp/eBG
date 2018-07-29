@@ -3627,13 +3627,13 @@ void send_bg_memberlist(struct map_session_data *sd)
 		WFIFOL(fd, c * size + 30) = data->leader ? 0 : 1;
 #if PACKETVER < 20161026
 		if (data->flag.ebg_afk) {
-			memset(WFIFOP(fd, c * size + 34), "AFK", 50);
+			safestrncpy(WFIFOP(fd, c * size + 34), "AFK", 50);
 		} else {
 			memset(WFIFOP(fd, c * size + 34), 0, 50);
 		}
-		memcpy(WFIFOP(fd, c * size + 84), psd->status.name, NAME_LENGTH);
+		safestrncpy(WFIFOP(fd, c * size + 34), psd->status.name, NAME_LENGTH);
 #else
-		WFIFOL(fd, c * size + 34) = psd->status.last_login;
+		WFIFOL(fd, c * size + 34) = (int)psd->status.last_login;
 #endif
 
 		c++;
