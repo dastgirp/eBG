@@ -1,40 +1,49 @@
 language: c
 sudo: false
+dist: trusty
 addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - gcc-5
-    - gcc-6
+  coverity_scan:
+    project:
+      name: "dastgirp/eBG"
+      description: "ExtendedBG"
+    notification_email: "ebg@ragemu.org"
+    build_command_prepend: "./configure --enable-debug; make clean"
+    build_command: "make plugin.ExtendedBG plugin.ExtendedBG-char"
+    branch_pattern: coverity_scan
 
 before_script:
   - uname -a
   - chmod a+x travis-eBG.sh
   - ./travis-eBG.sh getrepo || true
-  - ./travis-eBG.sh createdb ragnarok root
-  - ./travis-eBG.sh importdb ragnarok travis
-  - mysql -u root -e "SET PASSWORD FOR 'travis'@'localhost' = PASSWORD('travis');"
+
+env:
+  global:
+   - secure: "FYZw6cQsVhV/pffrGdWWWTnfZsINhJc8rfijmNXimY36lIcVI1KrMXP1INU2ZQ4y1uJGTbWI2aRy6BfexNzPMhxDs8ej7+mIcq79HW/cDNQ/8o02NlAP/FELZF7hkbOt5H8HRZU5Gqtv2sT5Nlji26vN3as9bWAzcRGsPeLdRbgcuICGCn8IP1FsQWXydNqTW2oel/i73/9MvemNjAoiC5zoMVitwD8Zs8AbXEyUpUTyGr53AhZnSeBtiVThFx1BaxGiDwigzRD0YmcjTC9nPARCmglkgkwrtrDQ04asag6mbzJ2DvqFXK2wiaSx/L1SCCKhMhexQc59rwsQ9Zvt6flPNZS2e+CDVTY5ILKvZ864WKBb4MTf9c3ynuTRpO6Jo6UVYK10ShaddNk+PztmFUWI5gvFVXldcJvLaGHsGcZfjDauJKfpil2vMSRucKGi71cWWiPcxiwrE8+DKyGPevmFwD9JxnazeT4E2YrFwZjbR4xuC5m10uYpLbJj8Nt7fEqf2IhAvZhWHZ2GAphyIBCM68SUJ1z22rqfYCcpBpsQT47+mHp/HKcl1q+40J+ed4Rs7eLUaQs+SPbUIUEibV9tTiaraeQFzE/P3DvBo+I5LErg9j6WC6K9maM8EOPYxiytLw60wT6NLUkcBwyhRdmC0tjIBfejTYCIdlRoA3k="
+
+before_install:
+  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 script:
-  - ./travis-eBG.sh build $CONFIGURE_FLAGS
-  - ./travis-eBG.sh test ragnarok travis travis
+  - true
+
+compiler: false
 
 matrix:
+  allow_failures:
+  - compiler: clang
+    env: CONFIGURE_FLAGS="--enable-debug CC=clang-5.0 --enable-Werror --enable-buildbot"
+  - compiler: clang
+    env: CONFIGURE_FLAGS="--enable-debug CC=clang-5.0 --disable-renewal --enable-Werror --enable-buildbot"
+  - compiler: clang
+    env: CONFIGURE_FLAGS="--enable-debug CC=clang-4.0 --enable-Werror --enable-buildbot"
+  - compiler: clang
+    env: CONFIGURE_FLAGS="--enable-debug CC=clang-4.0 --disable-renewal --enable-Werror --enable-buildbot"
   exclude:
   - env: ignore=this
+  - compiler: false
   include:
-  - compiler: clang
-    env: CONFIGURE_FLAGS="--enable-debug --enable-Werror --enable-buildbot"
   - compiler: gcc
-    env: CONFIGURE_FLAGS="--enable-debug --enable-Werror --enable-buildbot"
-  allow_failures:
-  - compiler: gcc
-    env: LDFLAGS="-fuse-ld=gold" CONFIGURE_FLAGS="--enable-debug --enable-sanitize=full CC=gcc-5 --disable-manager --enable-Werror --enable-buildbot"
-  - compiler: gcc
-    env: LDFLAGS="-fuse-ld=gold" CONFIGURE_FLAGS="--enable-debug --enable-sanitize=full CC=gcc-6 --disable-manager --enable-Werror --enable-buildbot"
-  - compiler: gcc
-    env: LDFLAGS="-fuse-ld=gold" CONFIGURE_FLAGS="--enable-debug --enable-sanitize=full CC=gcc-6 --disable-manager --disable-renewal --enable-Werror --enable-buildbot"
-  
+    env: CONFIGURE_FLAGS="--enable-debug"
+
 notifications:
   email: false
