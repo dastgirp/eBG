@@ -3998,7 +3998,7 @@ void unit_guild_skill(int *fd_, struct map_session_data **sd_)
 			return;
 	} else if (DIFF_TICK(tick, sd->ud.canact_tick) < 0) {
 		if (sd->skillitem != skill_id) {
-			clif->skill_fail(sd, skill_id, USESKILL_FAIL_SKILLINTERVAL, 0);
+			clif->skill_fail(sd, skill_id, USESKILL_FAIL_SKILLINTERVAL, 0, 0);
 			return;
 		}
 	}
