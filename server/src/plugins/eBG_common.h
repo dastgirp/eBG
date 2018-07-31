@@ -18,7 +18,7 @@
 #define BMAX_EFFECT 2
 
 /// Maximum Condition Checking from timer.
-#define BNPC_MAX_CONDITION 7
+#define BNPC_MAX_CONDITION 8
 
 /// Maximum Values a NPC can save(used in bg_npc_data)
 #define BEXTRA_MAX_VALUE 7

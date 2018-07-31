@@ -274,8 +274,10 @@ int ebg_char_p_fame_data(int fd) {
 			SQL->GetData(inter->sql_handle, 0, &data, NULL); bgrank_fame_list[i].id = atoi(data);
 			SQL->GetData(inter->sql_handle, 1, &data, NULL); bgrank_fame_list[i].fame = atoi(data);
 			SQL->GetData(inter->sql_handle, 2, &data, &len); 
-			if (data == NULL)
-				data = "Name-NULL";
+			if (data == NULL) {
+				data = "Unknown Character";
+				len = strlen(data);
+			}
 			memcpy(bgrank_fame_list[i].name, data, min_num(len, NAME_LENGTH));
 		}
 		SQL->FreeResult(inter->sql_handle);
@@ -289,8 +291,10 @@ int ebg_char_p_fame_data(int fd) {
 			SQL->GetData(inter->sql_handle, 0, &data, NULL); bg_fame_list[i].id = atoi(data);
 			SQL->GetData(inter->sql_handle, 1, &data, NULL); bg_fame_list[i].fame = atoi(data);
 			SQL->GetData(inter->sql_handle, 2, &data, &len);
-			if (data == NULL)
-				data = "Name-NULL";
+			if (data == NULL) {
+				data = "Unknown Character";
+				len = strlen(data);
+			}
 			memcpy(bg_fame_list[i].name, data, min_num(len, NAME_LENGTH));
 		}
 		SQL->FreeResult(inter->sql_handle);
@@ -308,7 +312,7 @@ int inter_parse_frommap_pre(int *fd_)
 	int len = 0;
 
 	cmd = RFIFOW(fd, 0);
-	if (cmd < EBG_PACKET_MIN_MAP || cmd > EBG_PACKET_MAX_MAP) {
+	if (cmd <= EBG_PACKET_MIN_MAP || cmd >= EBG_PACKET_MAX_MAP) {
 		//ShowDebug("ExtendedBG-char: Invalid Packet %d\n", cmd); // No error, can be map-char packet, not related to eBG
 		return 1;
 	}

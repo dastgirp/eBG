@@ -2221,6 +2221,7 @@ void bg_team_rewards(int bg_id, int nameid, int amount, int kafrapoints, int que
 		struct map_session_data *sd;
 		struct sd_p_data *data;
 		int *point,*point_,*leader_stat = NULL;
+		bool is_leader = false;
 		if ((sd = bgd->members[j].sd) == NULL)
 			continue;
 		
@@ -2236,6 +2237,9 @@ void bg_team_rewards(int bg_id, int nameid, int amount, int kafrapoints, int que
 				if (i < fame_list_size_bg)
 					rank = true;
 			}
+		}
+		if (data != NULL && data->leader) {
+			is_leader = data->leader;
 		}
 
 		if (quest_id)
@@ -2263,9 +2267,10 @@ void bg_team_rewards(int bg_id, int nameid, int amount, int kafrapoints, int que
 		switch (bg_win_loss) {
 		case BGC_WON: // Won
 			SET_VARIABLE_ADD(sd, point_, BG_WON, 1, int);
-			if (data->leader)
+			if (is_leader) {
 				SET_VARIABLE_ADD(sd, leader_stat, BG_LEADER_WON, 1, int);
-			pc_addpoint_bg(sd, 100, type, data->leader, 25);
+			}
+			pc_addpoint_bg(sd, 100, type, is_leader, 25);
 			switch (bg_a_type) {
 				case BGT_EOS:
 					SET_VARIABLE_ADD(sd, point, BG_EOS_WON, 1, int);
@@ -2298,9 +2303,10 @@ void bg_team_rewards(int bg_id, int nameid, int amount, int kafrapoints, int que
 			break;
 		case BGC_TIE: // Tie
 			SET_VARIABLE_ADD(sd, point, BG_TIE, 1, int);
-			if (data->leader)
+			if (is_leader) {
 				SET_VARIABLE_ADD(sd, leader_stat, BG_LEADER_TIE, 1, int);
-			pc_addpoint_bg(sd, 75, type, data->leader, 10);
+			}
+			pc_addpoint_bg(sd, 75, type, is_leader, 10);
 			switch (bg_a_type) {
 				case BGT_EOS:
 					SET_VARIABLE_ADD(sd, point, BG_EOS_TIE, 1, int);
@@ -2328,9 +2334,10 @@ void bg_team_rewards(int bg_id, int nameid, int amount, int kafrapoints, int que
 			break;
 		case BGC_LOSS: // Lost
 			SET_VARIABLE_ADD(sd, point_, BG_LOSS, 1, int);
-			if (data->leader)
+			if (is_leader) {
 				SET_VARIABLE_ADD(sd, leader_stat, BG_LEADER_LOSS, 1, int);
-			pc_addpoint_bg(sd, 50, type, data->leader, 0);
+			}
+			pc_addpoint_bg(sd, 50, type, is_leader, 0);
 			switch (bg_a_type) {
 				case BGT_EOS:
 					SET_VARIABLE_ADD(sd, point, BG_EOS_LOSS, 1, int);
@@ -2798,7 +2805,7 @@ int bg_ipcheck(struct map_session_data *sd, bool same_map, const char* map_name)
 		struct s_mapiterator* iter;
 		iter = mapit_getallusers();
 		for (pl_sd = (struct map_session_data *)mapit->first(iter); mapit->exists(iter); pl_sd = (struct map_session_data *)mapit->next(iter)) {
-			if (!(pl_sd->bg_id || map->list[pl_sd->bl.m].flag.battleground || (same_map && pl_sd->bl.m == m)))
+			if (!(pl_sd->bg_id || map->list[pl_sd->bl.m].flag.battleground))
 				continue;
 			if (sockt->session[sd->fd]->client_addr == sockt->session[pl_sd->fd]->client_addr)
 				c++;
@@ -3213,11 +3220,11 @@ void bg_guild_build_data(void) {
 		int j = i - 1;
 #ifdef VIRT_GUILD
 		g = &bg_guild[j];
-		g->guild_id = GET_EBG_GUILD_ID(j); // Last 13 ID's
 		if (g == NULL) {
 			ShowError("Guild %d:%d Doesnt Exist\n", j, GET_EBG_GUILD_ID(j));
 			continue;
 		}
+		g->guild_id = GET_EBG_GUILD_ID(j); // Last 13 ID's
 #else
 		g = guild->search(GET_EBG_GUILD_ID(i));
 		if (g == NULL) {
@@ -4007,7 +4014,7 @@ void unit_guild_skill(int *fd_, struct map_session_data **sd_)
 		return;
 
 	eShowDebug("UGS: 8\n");
-	if (sd->sc.data[SC_BASILICA] && (skill_id != HP_BASILICA || sd->sc.data[SC_BASILICA]->val4 != sd->bl.id))
+	if (sd->sc.data[SC_BASILICA])
 		return; // On basilica only caster can use Basilica again to stop it.
 
 	sd->skillitem = sd->skillitemlv = 0;
@@ -4045,6 +4052,8 @@ int skill_castend_guild(struct block_list **src_, struct block_list **bl_, uint1
 	if (src->type == BL_PC) {
 		struct map_session_data *sd = BL_CAST(BL_PC, src);
 		struct sd_p_data *data = pdb_search(sd, false);
+		if (sd == NULL)
+			return 0;
 		if (data == NULL || !data->eBG || !data->leader || !map->list[sd->bl.m].flag.battleground)
 			return 0;
 		
@@ -4060,8 +4069,7 @@ int skill_castend_guild(struct block_list **src_, struct block_list **bl_, uint1
 				return 0;
 			count = bgd->count;
 #else
-			struct guild *g = NULL;
-			g = sd ? sd->guild : NULL;
+			struct guild *g = sd->guild;
 			if (g == NULL)
 				return 0;
 			count = g->max_member;
@@ -4085,8 +4093,8 @@ int skill_castend_guild(struct block_list **src_, struct block_list **bl_, uint1
 					pc->setpos(dstsd, map_id2index(src->m), src->x + dx[j], src->y + dy[j], CLR_RESPAWN);
 				}
 			}
-			if (sd)
-				guild->block_skill(sd, skill->get_time2(*skill_id,*skill_lv));
+
+			guild->block_skill(sd, skill->get_time2(*skill_id,*skill_lv));
 			hookStop();
 		}
 	}
@@ -4297,9 +4305,10 @@ void bg_updatescore_team(struct battleground_data *bgd) {
 
 	nullpo_retv(bgd);
 
-	buf = (char*) malloc(len);
 	if (!(m = map->mapindex2mapid(bgd->mapindex)))
 		return;
+
+	buf = (char*) malloc(len);
 	
 	for (i = 0; i < MAX_BG_MEMBERS; i++) {
 		if ((sd = bgd->members[i].sd) == NULL || sd->bl.m != m)
@@ -4434,12 +4443,12 @@ void clif_charname_virt(struct map_session_data **ssd_) {
 	if (bg_data_t->g == NULL)
 		return;
 
-	buf = (unsigned char*)malloc(len);
-
 	if (ssd->fakename[0]) {
 		hookStop();
 		return; //No need to update as the party/guild was not displayed anyway.
 	}
+
+	buf = (unsigned char*)malloc(len);
 
 	WBUFW(buf,0) = cmd;
 	WBUFL(buf,2) = ssd->bl.id;

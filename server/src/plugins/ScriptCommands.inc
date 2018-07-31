@@ -843,7 +843,7 @@ BUILDIN(bg_npc_cond_hpsp)
 	if (script_hasdata(st, 6) && script_isinttype(st, 6))
 		index_at = script_getnum(st,6);
 	
-	if (index < 0 || index > BNPC_MAX_CONDITION){
+	if (index < 0 || index >= BNPC_MAX_CONDITION){
 		ShowError("bg_npc_cond_hpsp: Index(%d) Larger than limit(%d).\n",index,BNPC_MAX_CONDITION);
 		return false;
 	}
@@ -879,7 +879,7 @@ BUILDIN(bg_player_cond_timer) {
 	if (script_hasdata(st, 10) && script_isinttype(st, 10))
 		add_op = script_getnum(st, 10);
 	
-	if (index < 0 || index > BNPC_MAX_CONDITION){
+	if (index < 0 || index >= BNPC_MAX_CONDITION){
 		ShowError("bg_player_cond_timer: Index(%d) Larger than limit(%d).\n",index,BNPC_MAX_CONDITION);
 		return false;
 	}
@@ -930,7 +930,7 @@ BUILDIN(bg_npc_cond_timer) {
 	if (script_hasdata(st, 9) && script_isinttype(st, 9))
 		add_op = script_getnum(st, 9);
 	
-	if (index < 0 || index > BNPC_MAX_CONDITION){
+	if (index < 0 || index >= BNPC_MAX_CONDITION){
 		ShowError("bg_npc_cond_timer: Index(%d) Larger than limit(%d).\n",index,BNPC_MAX_CONDITION);
 		return false;
 	}
@@ -1051,7 +1051,7 @@ BUILDIN(bg_npc_data)
 		index = script_getnum(st,3);
 	}
 	
-	if (index < 0 || index > BEXTRA_MAX_VALUE){
+	if (index < 0 || index >= BEXTRA_MAX_VALUE){
 		ShowError("bg_npc_data: Index(%d) Larger than limit(%d).\n",index,BEXTRA_MAX_VALUE);
 		return false;
 	}
@@ -1081,7 +1081,7 @@ BUILDIN(bg_get_npc_data)
 		index = script_getnum(st,2);
 	}
 	
-	if (index < 0 || index > BEXTRA_MAX_VALUE){
+	if (index < 0 || index >= BEXTRA_MAX_VALUE){
 		ShowError("bg_get_npc_data: Index(%d) Larger than limit(%d).\n",index,BEXTRA_MAX_VALUE);
 		script_pushint(st, 0);
 		return false;

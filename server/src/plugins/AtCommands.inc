@@ -112,7 +112,7 @@ ACMD(debug_time2)
 	}
 	sprintf(output, "UID: %d, Operation: %d, timer_id: %d, Timer: %d, ParentUID: %d, Random Timer: %d~%d s", uid, tdb->operations, tdb->timer_id, tdb->timer_, tdb->parent_uid, tdb->random_timer[0], tdb->random_timer[1]);
 	clif->message(fd, output);
-	for (i = BG_T_O_MIN; i < BG_T_O_MAX; i = (i << 1)) {
+	for (i = BG_T_O_MIN + 1; i < BG_T_O_MAX; i = (i << 1)) {
 		if (tdb->operations&i) {
 			sprintf(output, "  Operation: %d:", i);
 			clif->message(fd, output);
@@ -321,8 +321,8 @@ ACMD(reportafk)
 		return false;
 	}
 	if (!*message) {
-		return false;
 		clif->message(fd, "Please, enter the character name (usage: @reportafk <name>).");
+		return false;
 	}
 	if ((pl_sd = map->nick2sd(message)) == NULL) {
 		clif->message(fd, msg_txt(3)); // Character not found.

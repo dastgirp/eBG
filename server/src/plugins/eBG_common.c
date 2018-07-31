@@ -702,7 +702,6 @@ void *bg_get_variable_common(struct ebg_save_data *esdb, int type, bool create, 
 		BG_CREATE_DATA_CHAR(bgd, rush, rush_bg_data, 1)
 		SET_SAVE_FLAG(save_flag, EBG_SAVE_RUSH);
 		return (&bgd->rush->emp_captured);
-		break;
 	case BG_RUSH_WON:
 	case BG_RUSH_LOSS:
 		CHECK_CREATE(bgd->rush)
