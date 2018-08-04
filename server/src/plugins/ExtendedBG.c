@@ -4879,7 +4879,7 @@ bool ebg_clif_send(const void* buf, int len, struct block_list* bl, enum ebg_tar
 
 /// Send broadcast message with font formatting (ZC_BROADCAST2).
 /// Format: 01c3 <packet len>.W <fontColor>.L <fontType>.W <fontSize>.W <fontAlign>.W <fontY>.W <message>.?B
-void ebg_broadcast2(struct block_list* bl, const char* mes, size_t len, unsigned int fontColor, short fontType, short fontSize, short fontAlign, short fontY, enum ebg_target target)
+void ebg_broadcast2(struct block_list* bl, const char* mes, int len, unsigned int fontColor, short fontType, short fontSize, short fontAlign, short fontY, enum ebg_target target)
 {
 	unsigned char *buf;
 

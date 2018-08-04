@@ -59,7 +59,7 @@ prontera,150,150,5	script	Join Battleground	4_F_SURA,{
 	.@bg_type = .bg_change;	// Save .bg_change into temporary variable.
 	mes("[Battleground Helper]");
 	mes("Would you like to join the Battleground?");
-	mes("Current BG: "+ .bg_name$[.@bg_type]);
+	mes("Current BG: "+ getelementofarray(getvariableofnpc(.bg_name$, "BG_Settings"), .@bg_type));
 	mes("Status: "+ callfunc("F_eBG_Status",$@eBG_start[.@bg_type]));
 	if (bg_join_time > gettimetick(2)) { // BG Cooldown is remaining
 		mes("Please wait for "+ (bg_join_time - gettimetick(2)) +" Seconds, to join the bg again");
