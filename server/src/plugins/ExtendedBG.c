@@ -909,7 +909,7 @@ int bg_timer_create(int timer_, int interval, int oid, int parent_uid, int op, b
 	
 	if (random) {
 		int range = etimer_db->random_timer[1] - etimer_db->random_timer[0] + 1;
-		orig_timer = timer_ = (rand()%range + etimer_db->random_timer[0])*1000;
+		orig_timer = timer_ = (rnd()%range + etimer_db->random_timer[0])*1000;
 	}
 	
 	if (interval > 0) {
@@ -1027,8 +1027,8 @@ int eBG_warp_eos(struct block_list *bl, va_list ap)
 
 		/// find a suitable map cell
 		do {
-			tx = rand() % (x3 - x2 + 1) + x2;
-			ty = rand() % (y3 - y2 + 1) + y2;
+			tx = rnd() % (x3 - x2 + 1) + x2;
+			ty = rnd() % (y3 - y2 + 1) + y2;
 			j++;
 		} while(map->getcell(index,bl,tx,ty,CELL_CHKNOPASS) && j < max);
 
@@ -2725,7 +2725,7 @@ void area_flooritem(int m, short x, short y, int itemid, int amount)
 	item_tmp.nameid = itemid;
 	item_tmp.identify = 1;
 
-	range = (int)sqrt(amount) + rand()%2;
+	range = (int)sqrt(amount) + rnd()%2;
 	for (i = 0; i < amount; i++) {
 		map->search_freecell(NULL, m, &x, &y, range, range, 1);
 		map->addflooritem(NULL, &item_tmp, 1, m, x, y, 0, 0, 0, 0, false); //ToDo: Greed Check
@@ -3621,7 +3621,7 @@ void send_bg_memberlist(struct map_session_data *sd)
 		data = pdb_search(psd, false);
 		if (data == NULL)
 			continue;
-		ShowDebug("Accounts %d-%d-%d-%s\n",i,psd->status.account_id,psd->status.char_id,psd->status.name);
+		eShowDebug("Accounts %d-%d-%d-%s\n",i,psd->status.account_id,psd->status.char_id,psd->status.name);
 		WFIFOL(fd, c * size + 4) = psd->status.account_id;
 		WFIFOL(fd, c * size + 8) = psd->status.char_id;
 		WFIFOW(fd, c * size + 12) = psd->status.hair;
@@ -3638,7 +3638,7 @@ void send_bg_memberlist(struct map_session_data *sd)
 		} else {
 			memset(WFIFOP(fd, c * size + 34), 0, 50);
 		}
-		safestrncpy(WFIFOP(fd, c * size + 34), psd->status.name, NAME_LENGTH);
+		safestrncpy(WFIFOP(fd, c * size + 84), psd->status.name, NAME_LENGTH);
 #else
 		WFIFOL(fd, c * size + 34) = (int)psd->status.last_login;
 #endif
