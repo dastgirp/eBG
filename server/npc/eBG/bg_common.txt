@@ -601,7 +601,7 @@ OnWhisperGlobal:
 		mes("------------------------");
 		mesf("Current BG: %s", .bg_mapname$[.bg_change]);
 		mes("------------------------");
-		mes("Format: <ID>.) <MapName> : <Start Status>")
+		mes("Format: <ID>.) <MapName> : <Start Status>");
 		for (.@i = BGT_CTF; .@i <= .bg_common[0]; ++.@i) {
 			mesf("%d.) %s : %d", .@i, .bg_mapname$[.@i], $@eBG_start[.@i]);
 		}
