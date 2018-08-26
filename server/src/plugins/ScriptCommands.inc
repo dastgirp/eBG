@@ -1364,7 +1364,7 @@ BUILDIN(bg_announce) {
 	int fontSize = scrpt_data(6, 12); // default fontSize
 	int fontAlign = scrpt_data(7, 0); // default fontAlign
 	int fontY = scrpt_data(8, 0); // default fontY
-	ebg_target target;
+	ebg_target target = SELF_EBG;
 	struct block_list *bl = NULL; // use NPC as broadcast source
 	if (flag&BC_NPC) {
 		// If bc_npc flag is set, use NPC as broadcast source
@@ -1377,9 +1377,12 @@ BUILDIN(bg_announce) {
 	if (bl == NULL)
 		return true;
 
-	switch( flag&BC_TARGET_MASK ) {
-		case BC_EBG:  target = ANNOUNCE_EBG; break;
-		default:      target = CLIENT_EBG;	break;
+	if (flag & BC_EBG) {
+		target = ANNOUNCE_EBG;
+	} else if (flag & BC_TEAMEBG) {
+		target = CLIENT_EBG;
+	} else if (flag & BC_SELFEBG) {
+		target = SELF_EBG;
 	}
 
 	if (fontColor)

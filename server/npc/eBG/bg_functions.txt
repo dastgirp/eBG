@@ -486,8 +486,8 @@ function	script	F_queueclear	{
 			if (attachrid(.@p)) {
 				@BG_Team = 0;
 				callfunc("F_ValidateeBG", @BG_ID, 1);
+				bg_join_time = gettimetick(2) + .bg_maxtime[@BG_ID];	// Sets Time to join Again
 			}
-			bg_join_time = gettimetick(2) + .bg_maxtime[@BG_ID];	//Sets Time to join Again
 			queueremove(.@queue,.@p);
 		}
 	}

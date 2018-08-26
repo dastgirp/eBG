@@ -77,6 +77,7 @@ bool debug_mode = false;
 typedef enum ebg_target {
 	CLIENT_EBG = 1,       ///< Send to same team member on eBG 
 	ANNOUNCE_EBG,         ///< Send to everyone who isn't ignoring
+	SELF_EBG,             ///< Send to oneself, if not ignoring
 } ebg_target;
 
 typedef enum ebg_bc_types {
@@ -84,7 +85,9 @@ typedef enum ebg_bc_types {
 	 * Announce Type (Triggers ANNOUNCE_EBG)
 	 * @see ebg_target
 	 */
-	BC_EBG = 1,            ///< Announce only on eBG
+	BC_EBG = 0x1,            ///< Announce to all clients without @bgignore
+	BC_TEAMEBG = 0x2,        ///< Announce to team members
+	BC_SELFEBG = 0x4,        ///< Announce to self
 } ebg_bc_types;
 
 #ifdef CHAR_SERVER_SAVE

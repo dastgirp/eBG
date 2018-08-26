@@ -2037,10 +2037,32 @@ int pc_setpos_pre(struct map_session_data **sd, unsigned short *map_index_, int 
  **/
 int skill_notok_pre(uint16 *skill_id, struct map_session_data **sd)
 {
+	int16 idx;
+	nullpo_retr(1, *sd);
+
+	idx = skill->get_index(*skill_id);
+
 	if (get_itemskill_restriction(*sd)) {
 		hookStop();
 		return 1;
 	}
+
+	if (idx == 0 || pc_has_permission(*sd, PC_PERM_DISABLE_SKILL_USAGE))
+		return 1;
+
+	if ((*sd)->blockskill[idx]) {
+		clif->skill_fail(*sd, *skill_id, USESKILL_FAIL_SKILLINTERVAL, 0, 0);
+		return 1;
+	}
+
+	if ((*sd)->skillitem == *skill_id) {
+		return 0;
+	}
+
+	if ((*sd)->sc.data[SC_ALL_RIDING]) {
+		return 1;
+	}
+
 	eShowDebug("NotOk: Emergency Skill1 - 1\n");
 	if (*skill_id == GD_EMERGENCYCALL) {
 		struct sd_p_data *data = pdb_search(*sd, false);
@@ -2053,7 +2075,7 @@ int skill_notok_pre(uint16 *skill_id, struct map_session_data **sd)
 		}
 
 		eShowDebug("NotOk: Emergency Skill1 - 2: %d\n", (data && data->leader)? 1: 0);
-		if (data && map->list[(*sd)->bl.m].flag.battleground && data->eBG == true && data->leader) {
+		if (data != NULL && map->list[(*sd)->bl.m].flag.battleground && data->eBG == true && data->leader) {
 			eShowDebug("NotOk: Emergency Skill1 - 3\n");
 			hookStop();
 			return 0;
@@ -3159,20 +3181,16 @@ int bg_e_team_join(int bg_id, struct map_session_data *sd, int guild_id)
 		memcpy(&bgd->members[i].source,&sd->status.last_point,sizeof(struct point));
 	bgd->count++;
 
-	if (mapreg->readreg(script->add_str("$BGRanked")) && bg_ranked_mode && data->esd->bg.ranked_games < bg_max_rank_game  &&  (int)DIFF_TICK(timer->gettick(), bg_data_t->creation_time) < 60) {	//60 Seconds Time Limit for Getting Ranked.
+	if (mapreg->readreg(script->add_str("$BGRanked")) && bg_ranked_mode &&
+		data->esd->bg.ranked_games < bg_max_rank_game && (int)DIFF_TICK(timer->gettick(), bg_data_t->creation_time) < 60) {	// 60 Seconds Time Limit for Getting Ranked.
 		int *total_ranked_game;
 		char output[128];
-		time_t clock;
-		struct tm *t;
-		
-		time(&clock);
-		t = localtime(&clock);
 		
 		data->ranked.match = true;
 		data->esd->bg.ranked_games++;
 		SET_VARIABLE_ADD(sd, total_ranked_game, BG_TOTAL_RANKED_GAMES, 1, int);
 		
-		pc_setglobalreg(sd,script->add_str("bg_ranked"),t->tm_mday);
+		pc_setglobalreg(sd, script->add_str("bg_ranked"), mapreg->readreg(script->add_str("$BGRanked_")));
 		sprintf(output,"-- Ranked Battleground Match %d Of %d --", data->esd->bg.ranked_games, bg_max_rank_game);
 		clif->message(sd->fd,output);
 	}
@@ -4840,19 +4858,19 @@ bool ebg_clif_send(const void* buf, int len, struct block_list* bl, enum ebg_tar
 	struct sd_p_data *data;
 	
 	switch(type) {
-		case ANNOUNCE_EBG:
+		case ANNOUNCE_EBG: // All Clients without @bgignore
 			iter = mapit_getallusers();
 			while( (tsd = (struct map_session_data *)mapit->next(iter)) != NULL) {
 				data = pdb_search(tsd, false);
 				if (data == NULL || !data->ignore) {
 					WFIFOHEAD(tsd->fd, len);
-					memcpy(WFIFOP(tsd->fd,0), buf, len);
-					WFIFOSET(tsd->fd,len);
+					memcpy(WFIFOP(tsd->fd, 0), buf, len);
+					WFIFOSET(tsd->fd, len);
 				}
 			}
 			mapit->free(iter);
 			break;
-		case CLIENT_EBG: {
+		case CLIENT_EBG: { // Same Battleground player
 			struct map_session_data *sd = BL_CAST(BL_PC, bl);
 			int bg_id;
 			
@@ -4863,15 +4881,26 @@ bool ebg_clif_send(const void* buf, int len, struct block_list* bl, enum ebg_tar
 			bg_id = sd->bg_id;
 			iter = mapit_getallusers();
 
-			while( (tsd = (struct map_session_data *)mapit->next(iter)) != NULL) {
+			while ((tsd = (struct map_session_data *)mapit->next(iter)) != NULL) {
 				if ((data = pdb_search(tsd, false)) != NULL && data->eBG && bg_id == tsd->bg_id) {
 					WFIFOHEAD(tsd->fd, len);
-					memcpy(WFIFOP(tsd->fd,0), buf, len);
-					WFIFOSET(tsd->fd,len);
+					memcpy(WFIFOP(tsd->fd, 0), buf, len);
+					WFIFOSET(tsd->fd, len);
 				}
 			}
 			mapit->free(iter);
 		}
+			break;
+		case SELF_EBG:
+			tsd = BL_CAST(BL_PC, bl);
+			
+			nullpo_ret(tsd);
+			data = pdb_search(tsd, false);
+			if (data == NULL || !data->ignore) {
+				WFIFOHEAD(tsd->fd, len);
+				memcpy(WFIFOP(tsd->fd, 0), buf, len);
+				WFIFOSET(tsd->fd, len);
+			}
 			break;
 	}
 	return true;
@@ -6025,6 +6054,11 @@ void bg_initialize_constants(void)
 	/// bg_can_move Constants
 	script->set_constant("EBG_MOVABLE", 1, false, false);
 	script->set_constant("EBG_IMMOVABLE", 0, false, false);
+
+	/// bg_announce flag constants
+	script->set_constant("BC_EBG", BC_EBG, false, false);                                 ///< 0x1
+	script->set_constant("BC_TEAMEBG", BC_TEAMEBG, false, false);                         ///< 0x2
+	script->set_constant("BC_SELFEBG", BC_SELFEBG, false, false);                         ///< 0x2
 }
 
 #include "eBG_common.c"

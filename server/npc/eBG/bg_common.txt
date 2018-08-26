@@ -101,28 +101,26 @@ prontera,150,150,5	script	Join Battleground	4_F_SURA,{
 	end;
 OnInit:
 	// Names of BG.
-	// MapName of BG
-	// NPCNames of BG
 	setarray .bg_name$[BGT_CTF],	"Flavius - CTF"	,"Tierra - Bossnia"	,"Tierra - Triple Infierno"	,"Tierra - Eye of Storm","Flavius - Team Deathmatch","Flavius - Stone Control"	,"Conquest"		,"Rush"		,"Tierra - Domination"	, "Fumbi - Touchdown";
+	// MapName of BG
 	setarray .bg_mapname$[BGT_CTF],	"ebg_ctf"		,"ebg_boss"			,"ebg_tti"					,"ebg_eos"				,"ebg_td"					,"ebg_sc"					,"ebg_conquest"	,"ebg_rush"	,"ebg_dom"				, "ebg_tunnel";
+	// NPCNames of BG
 	setarray .bg_npcname$[BGT_CTF],	"CTF_Flavius"	,"BOSS_Tierra"		,"TI_Tierra"				,"EOS_Tierra"			,"TDM_Flavius"				,"SC_Flavius"				,"eBG_Conquest"	,"eBG_Rush"	,"DOM_Tierra"			, "eBG_Touchdown";
 	// Time to Join Again
 	setarray .bg_maxtime[BGT_CTF],		5*60			,5*60				,5*60					,5*60					,5*60						,5*60						,6*60			,7*60		,5*60					, 10*60+10;    // Delay to Join again after leaving BG
 	// Time after which BG will end (in minutes)
 	setarray .bg_time[BGT_CTF],			15				,15					,15						,0						,15							,15							,6				,7			,0						, 0;
-	// Which BG Types to be Enabled(@joinbg)
+	// Which BG Types to be Enabled
+	// Set to false if you want to disable that type altogether.
 	setarray .bg_enabled[BGT_CTF],		true			,true				,true					,true					,true						,true						,true			,true		,true					, true;
 	// (@joinbg_party)
 	setarray .bg_enabled_p[BGT_CTF],	true			,true				,true					,true					,true						,true						,true			,true		,true					, true;
 	// (@joinbg_guild)
 	setarray .bg_enabled_g[BGT_CTF],	true			,true				,true					,true					,true						,true						,true			,true		,true					, true;
 	/**
-	 * Minimum Players Required
-	 * Currently MinPlayer is Total Min Player.
-	 * ToDo: Make it MinPlayer per Team.
+	 * Required number of players per team to start BG
 	 */
 	setarray .bg_minplayer[BGT_CTF],1				,1					,3							,1						,1							,1							,1				,1			,1                    , 1;
-	//setarray .bg_minplayer[BGT_CTF],1				,5					,5							,5						,5							,5							,20				,15			,5                    , 2;
 	// Maximum Players
 	setarray .bg_maxplayer[BGT_CTF],35				,35					,35							,35						,35							,35							,50				,30			,35                   , 40;
 	// Teams in BG
@@ -132,8 +130,10 @@ OnInit:
 	/**
 	 *	[0] = Maximum BG Types(Starting from 1).
 	 *	[1] = Max Player PER IP.
+	 *	[2] = Time after which BG should rotate if not enough players (in minutes).
+	 *	[3] = Reserved
 	 */
-	setarray .bg_common, BGT_TOUCHDOWN, 3;
+	setarray .bg_common, BGT_TOUCHDOWN, 3, 5, -1;
 	
 	/**
 	 *	$@eBG_start - To Track Start/End status of BG.
@@ -310,14 +310,13 @@ OnInit:
 	// Battleground ID
 	.bg_id = 0;
 	// Ranking System.
-	.hour = 25;             // >24 hours.
 	callsub(OnChangeBG);    // Randomize
-	// CTF, SC, BOSS, EOS(Half), TD, CONQ, RUSH
-	// DOM, TI, Touchdown
 	// Set Ranked to 0
 	$BGRanked = 0;
 	callsub(OnMinute00Sub);  // Set Ranked Status
 	callsub(OnWarpOut);      // Warp Everyone out of BG
+	// Change Every x minutes if not enough players
+	initnpctimer;
 	end;
 
 // @bgtime command
@@ -363,32 +362,54 @@ OnMinute00Sub: // Called by callsub
 	.@ret = true;
 	// Fallthrough
 OnMinute00:
-	if (gettime(GETTIME_HOUR) < 4) // Don't Choose Ranked Time if it is 12:00AM ~ 4:00 AM
+	if (gettime(GETTIME_HOUR) < 4) // Don't Choose Ranked Time if it is 12:00AM ~ 4:00 AM (Less players)
 		end;
 	.@year = $BGRanked_ / 1000000;
 	.@month = ($BGRanked_ % 1000000) / 10000;
 	.@day = ($BGRanked_ % 10000) / 100;
 	.@hour = $BGRanked_ % 100;
 	if (.@year == gettime(GETTIME_YEAR) && .@month == gettime(GETTIME_MONTH) && .@day == gettime(GETTIME_DAYOFMONTH)) {
-		if (.@hour < gettime(GETTIME_HOUR)) // Time has Passed
-			$BGRanked = 0;
-		else if (.@hour == gettime(GETTIME_HOUR)) // Ranked Matches
+		if (.@hour == gettime(GETTIME_HOUR)) // Ranked Matches
 			$BGRanked = 1;
+		else // Time has passed or yet to arrive
+			$BGRanked = 0;
 	} else {
 		.@hour = rand(gettime(GETTIME_HOUR), 23);
 		$BGRanked_ = gettime(GETTIME_YEAR) * 1000000 + gettime(GETTIME_MONTH) * 10000 + gettime(GETTIME_DAYOFMONTH) * 100 + .@hour;
 		if (.@hour == gettime(GETTIME_HOUR))
 			$BGRanked = 1;
+		else
+			$BGRanked = 0;
 	}
 	if (.@ret)
 		return;
 	end;
-	
+
+OnResetChangeTimer:
+	.bg_common[3] = 0;
+	initnpctimer;
+	return;
+
+OnTimer60000:
+	initnpctimer;
+
+	// eBG is running, don't change.
+	if ($@eBG_start[.bg_change] != EBG_NOT_STARTED)
+		end;
+
+	// Increment the timer.
+	.bg_common[3]++;
+
+	// Timer is less than required, end.
+	if (.bg_common[3] < .bg_common[2]) {
+		end;
+	}
+	// Fallthrough
 OnChangeBGS: // End instead of return
 	.@end = 1;
 	// Fallthrough
 OnChangeBG:  // Called by callsub
-	debugmes("BG Changing Start: "+ .bg_change);
+	callsub(OnResetChangeTimer);
 	do {
 		.bg_change = rand(BGT_CTF, .bg_common[0]);	//Random Rotation.
 	} while(.bg_enabled[.bg_change] == false);
@@ -409,24 +430,33 @@ OnChangeBG:  // Called by callsub
 				$bg_rush_rotate = 0;
 			break;
 	}
-	debugmes("BG Changing End: "+ .bg_change);
 	// Clearing the Variables
 	deletearray($@eBG_member);
 	deletearray($@eBG_member_group);
 	deletearray($@eBG_member_type);
 	$@eBG_member_size = 0;
+	// Clear the Queue
+	for (.@i = 0; .@i <= 2; ++.@i) {
+		callfunc("F_queueclear", .@i);
+	}
 	callsub(OnBGAnnounce, 0);
 	if (.@end)
 		end;
 	return;
 
 OnBGAnnounce: // Announce remaining players
-	.@end = getarg(0, 1);	// Only takes action if Announcement is done.
+	.@end = getarg(0, 1);	   // terminates the script if not enough player
+	.@onlyself = getarg(1, 0); // announce to self.
 	//.@min_p = .bg_minplayer[.bg_change]; // * .bg_teams[.bg_change]	(remove on Release ToDo)
 	.@min_p = .bg_minplayer[.bg_change] * .bg_teams[.bg_change];
 	.@player_joined = queuesize(.queue[0]) + queuesize(.queue[1]) + queuesize(.queue[2]);
 	if ($@eBG_start[.bg_change] == EBG_NOT_STARTED && .@player_joined < .@min_p) {
-		bg_announce("ExtendedBG -- " + .bg_name$[.bg_change] + " -- " + (.@min_p - .@player_joined) + " more players to start.", 1 | bc_npc, .bg_colors$[.bg_change]);	// All Clients
+		if (.@onlyself == 1) {
+			.@type = BC_SELFEBG;
+		} else {
+			.@type = BC_EBG; // All Clients
+		}
+		bg_announce("ExtendedBG -- " + .bg_name$[.bg_change] + " -- " + (.@min_p - .@player_joined) + " more players to start.", .@type | bc_npc, .bg_colors$[.bg_change]);
 		if (.@end == 1) {
 			end;
 		}
@@ -510,6 +540,8 @@ OnJoinBG2:
 	// Fallthrough
 OnStartBG:
 	callsub(OnBGAnnounce, 1);
+
+	callsub(OnResetChangeTimer);
 	
 	// Initiate Variables
 	setarray .@bg_guild[1], 1, 2, 3;	//1 = blue
@@ -552,8 +584,10 @@ OnReadyCheck:
 
 // Reset ranked game stats
 OnPCLoginEvent:
-	bg_join_time = 0;
+	callsub(OnBGAnnounce, 0, 1); // Announce to self only
+	// Change BG_ID
 	@BG_ID = BGT_MAX;
+	// Reset the Ranking if day is different
 	if (bg_ranked != $BGRanked_) {
 		bg_reset_rank_stat();
 	}
@@ -565,36 +599,32 @@ OnWhisperGlobal:
 		end;
 	while(1) {
 		mes("------------------------");
-		mes("Current BG: "+ .bg_mapname$[.bg_change]);
+		mesf("Current BG: %s", .bg_mapname$[.bg_change]);
 		mes("------------------------");
+		mes("Format: <ID>.) <MapName> : <Start Status>")
 		for (.@i = BGT_CTF; .@i <= .bg_common[0]; ++.@i) {
-			mes("Status of "+ .bg_mapname$[.@i] +"-"+ .@i +":"+ $@eBG_start[.@i]);
+			mesf("%d.) %s : %d", .@i, .bg_mapname$[.@i], $@eBG_start[.@i]);
 		}
 		mes("------------------------");
 		mes("Ranking Info: ");
-		mes("Day: "+ $BGRanked_);
-		mes("Hour: "+ $BGRanked);
-		mes("Current .Hour: "+ .hour);
-		mes("Server Time(in hour): "+ gettime(3));
-		mes("True:"+ true);
-		mes("False:"+ false);
-		switch(select("Close:Change .hour:Execute OnMinute00:Enable/Disable BGRanked:RotateBG:Set BGType")) {
+		mesf("Last Ranked Time: %d", $BGRanked_);
+		mesf("Current Status: %s", ($BGRanked == 1) ? "ON" : "OFF");
+		mes("------------------------");
+		mesf("Server Time(in hour): %d", gettime(3));
+		switch(select("Close", "Execute OnMinute00", "Enable/Disable BGRanked", "RotateBG", "Set BGType")) {
 			case 1:
 				close;
 			case 2:
-				.hour = rand(0, 23);
-				break;
-			case 3:
 				callsub(OnMinute00Sub);
 				break;
-			case 4:
+			case 3:
 				$BGRanked = !$BGRanked;
 				break;
-			case 5:
+			case 4:
 				.bg_change = rand(BGT_CTF, .bg_common[0]);	// Random Rotation.
 				break;
-			case 6:
-				input .bg_change;
+			case 5:
+				input(.bg_change);
 				break;
 		}
 		next;
