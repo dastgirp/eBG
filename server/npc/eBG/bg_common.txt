@@ -454,9 +454,9 @@ OnBGAnnounce: // Announce remaining players
 		if (.@onlyself == 1) {
 			.@type = BC_SELFEBG;
 		} else {
-			.@type = BC_EBG; // All Clients
+			.@type = BC_EBG | bc_npc; // All Clients
 		}
-		bg_announce("ExtendedBG -- " + .bg_name$[.bg_change] + " -- " + (.@min_p - .@player_joined) + " more players to start.", .@type | bc_npc, .bg_colors$[.bg_change]);
+		bg_announce("ExtendedBG -- " + .bg_name$[.bg_change] + " -- " + (.@min_p - .@player_joined) + " more players to start.", .@type, .bg_colors$[.bg_change]);
 		if (.@end == 1) {
 			end;
 		}

@@ -1571,20 +1571,20 @@ void ebg_battleconf(const char *key, const char *val)
 		settingVariable = battle_conf_check(val, minVal, maxVal, settingName); \
 		return; \
 	}
-	BC_CHECK("battle_configuration/bg_reward_rates", bg_reward_rates, 0, 1000000);     ///< bg_reward_rates - Rates to be given upon reward, Default: 100x
+	BC_CHECK("battle_configuration/bg_reward_rates", bg_reward_rates, 0, INT_MAX);     ///< bg_reward_rates - Rates to be given upon reward, Default: 100x
 	BC_CHECK("battle_configuration/bg_ranked_mode", bg_ranked_mode, 0, 1);             ///< bg_ranked_mode - Enable Ranked mode? (1=Yes,0=No), Default: 1
 	BC_CHECK("battle_configuration/bg_rank_bonus", bg_rank_bonus, 0, 1);               ///< bg_rank_bonus - Enable Ranked Bonus? (1=Yes,0=No), Default: 1
-	BC_CHECK("battle_configuration/bg_rank_rates", bg_rank_rates, 0, 10000000);        ///< bg_rank_rates - Rates to be given upon reward(Ranked Mode), Default: 150x
-	BC_CHECK("battle_configuration/bg_max_rank_game", bg_max_rank_game, 0, 10000000);  ///< bg_max_rank_game - Maximum Rank Games that a Player can play(in a day), Default: 50
+	BC_CHECK("battle_configuration/bg_rank_rates", bg_rank_rates, 0, INT_MAX);         ///< bg_rank_rates - Rates to be given upon reward(Ranked Mode), Default: 150x
+	BC_CHECK("battle_configuration/bg_max_rank_game", bg_max_rank_game, 0, INT_MAX);   ///< bg_max_rank_game - Maximum Rank Games that a Player can play(in a day), Default: 50
 	BC_CHECK("battle_configuration/bg_queue_townonly", bg_queue_townonly, 0, 1);       ///< bg_queue_townonly - Can Only Join from Town? Default: 1
-	BC_CHECK("battle_configuration/bg_idle_announce", bg_idle_announce, 0, 86400);     ///< bg_idle_announce - Time after which player is marked as afk. Default: 300
+	BC_CHECK("battle_configuration/bg_idle_announce", bg_idle_announce, 0, INT_MAX);   ///< bg_idle_announce - Time after which player is marked as afk. Default: 300
 	BC_CHECK("battle_configuration/bg_kick_idle", bg_kick_idle, 0, 1);                 ///< bg_kick_idle - AutoKick Idle Player
 	BC_CHECK("battle_configuration/bg_reportafk_leader", bg_reportafk_leader, 0, 1);   ///< bg_reportafk_leader - Only leader can use @reportafk
 #ifdef EBG_RANKING
 	BC_CHECK("battle_configuration/bg_log_kill", bg_log_kill, 0, 1);                   ///< bg_log_kill - Log Kills
 #endif
-	BC_CHECK("battle_configuration/bg_reserved_char_id", bg_reserved_char_id, 0, 1);   ///< bg_reserved_char_id - BG CharID for Items
-	BC_CHECK("battle_configuration/woe_reserved_char_id", woe_reserved_char_id, 0, 1); ///< woe_reserved_char_id - WoE CharID for Items
+	BC_CHECK("battle_configuration/bg_reserved_char_id", bg_reserved_char_id, 0, INT_MAX);   ///< bg_reserved_char_id - BG CharID for Items
+	BC_CHECK("battle_configuration/woe_reserved_char_id", woe_reserved_char_id, 0, INT_MAX); ///< woe_reserved_char_id - WoE CharID for Items
 
 #undef BC_CHECK
 	ShowWarning("ebg_battleconf: Unknown Config '%s'.\n", key);
