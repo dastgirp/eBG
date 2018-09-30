@@ -1,6 +1,6 @@
 // Battle Ground - Flavius Team DeathMatch(TDM)
 
--	script	TDM_Flavius	-1,{
+-	script	TDM_Flavius	FAKE_NPC,{
 	end;
 	
 OnPCDieEvent:
@@ -10,34 +10,26 @@ OnPCLogoutEvent:
 		.@team = callfunc("F_ValidateeBG",BGT_TD,0);
 		if (.@team != GUILLAUME && .@team != CROIX)
 			end;
-		callsub(OnTeamOff, .@die, .@team);
+		if (.@die) {
+			callsub(OnTeamOff, .@team);
+		}
 		callfunc("F_warpDie", BGT_TD, .@team);
 	}
 	end;
-OnTeam1Off:
-	callsub(OnTeamOff, false, GUILLAUME);
-	end;
-OnTeam2Off:
-	callsub(OnTeamOff, false, CROIX);
-	end;
 
 OnTeamOff:
-	.@die = getarg(0);
-	.@team = getarg(1);
+	.@team = getarg(0);
 	.@account_id = getcharid(3);
-	if (.@team == GUILLAUME)
-		.Team1_Score--;
-	else if (.@team == CROIX)
-		.Team2_Score--;
-	else
+	if (.@team != GUILLAUME && .@team != CROIX)
 		end;
-	if (.@die == true) {
-		bg_addpoints BG_TD_DIE, 1, 1;
-		if (attachrid(killerrid)) {
-			bg_addpoints BG_TD_KILL, 1, 1;
-		}
+	setd(".Team"+ .@team +"_Score", getd(".Team"+ .@team +"_Score") - 1);
+
+	bg_addpoints BG_TD_DIE, 1, 1;
+	if (attachrid(killerrid)) {
+		bg_addpoints BG_TD_KILL, 1, 1;
 	}
 	attachrid(.@account_id);
+
 	callsub(OnValidateScore, 0);
 	return;
 

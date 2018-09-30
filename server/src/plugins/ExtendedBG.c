@@ -676,7 +676,7 @@ void insert_timerlog(int uid, char log[]) {
 	tdblog[uid].sequence = timer_seq++;
 	tdblog[uid].init = true;
 	tdblog[uid].removed = 0;
-	ShowDebug("insert_timerlog: Inserted %d(Reason:%s, Sequence: %d)\n",uid,log,timer_seq);
+	eShowDebug("insert_timerlog: Inserted %d(Reason:%s, Sequence: %d)\n",uid,log,timer_seq);
 }
 
 void check_timerlog(int uid) {
@@ -685,10 +685,10 @@ void check_timerlog(int uid) {
 		return;
 	} else {
 		if (!tdblog[uid].init && rtdblog[uid].sequence > 0) {
-			ShowDebug("check_timerlog: Previously been removed,\n");
-			ShowDebug("Log: %d:%d:%d, Reason: %s, Removed: %d\n",uid, rtdblog[uid].sequence, timer_seq, rtdblog[uid].log, rtdblog[uid].removed);
+			eShowDebug("check_timerlog: Previously been removed,\n");
+			eShowDebug("Log: %d:%d:%d, Reason: %s, Removed: %d\n",uid, rtdblog[uid].sequence, timer_seq, rtdblog[uid].log, rtdblog[uid].removed);
 		}
-		ShowDebug("check_timerlog: No Log found for UID:%d\n",uid);
+		eShowDebug("check_timerlog: No Log found for UID:%d\n",uid);
 	}
 }
 #endif
@@ -2221,7 +2221,7 @@ void bg_team_rewards(int bg_id, int nameid, int amount, int kafrapoints, int que
 	bool rank = false;
 
 	if ((bgd = bg->team_search(bg_id)) == NULL || itemdb->exists(nameid) == NULL) {
-		ShowDebug("bg_team_rewards: Cannot give x%d %d to BG_ID: %d\n", amount, nameid, bg_id);
+		ShowWarning("bg_team_rewards: Cannot give x%d %d to BG_ID: %d\n", amount, nameid, bg_id);
 		return;
 	}
 
@@ -2437,7 +2437,7 @@ void ebg_kill(struct map_session_data *killed, struct map_session_data *killer)
 		SQL->EscapeStringLen(map->mysql_handle, killer_name, killer->status.name, strnlen(killer->status.name, NAME_LENGTH));
 		SQL->EscapeStringLen(map->mysql_handle, killed_name, killed->status.name, strnlen(killed->status.name, NAME_LENGTH));
 		
-		ShowDebug("%s Killed %s by %d", killer_name, killed_name, (int)skill_id);
+		eShowDebug("%s Killed %s by %d", killer_name, killed_name, (int)skill_id);
 
 		if (SQL_ERROR == SQL->Query(map->mysql_handle,
 									"INSERT INTO `char_kill_log` (`time`,`killer_name`,`killer_id`,`killed_name`,`killed_id`,`map`,`skill`,`map_type`) VALUES (NOW(), '%s', '%d', '%s', '%d', '%s', '%d', '%d')",

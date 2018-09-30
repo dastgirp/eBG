@@ -222,8 +222,8 @@ int ebg_char_p_save_data(int fd)
 	if (char_id && type) {
 		if ((bgdb = bg_char_search(char_id)) == NULL) {	// Create SQL
 			bgdb = ebg_fetch_sql_db(char_id, false);
-			ShowDebug("ebg_char_p_save_data: Player tried to save data without any previous history(CharID:%d, Type:'%"PRId64"')\n", char_id, type);
-			ShowDebug("Most Probably, the char-server went down. Trusting map-server data without any verification.\n");
+			ShowWarning("ebg_char_p_save_data: Player tried to save data without any previous history(CharID:%d, Type:'%"PRId64"')\n", char_id, type);
+			ShowWarning("Most Probably, the char-server went down. Trusting map-server data without any verification.\n");
 		}
 		RFIFOSKIP(fd, 18);	// Skip the 18 bytes that are already read, then continue reading other.
 		bg_load_char_data_sub(inter->sql_handle, bgdb, char_id, fd, false, type);
@@ -318,7 +318,7 @@ int inter_parse_frommap_pre(int *fd_)
 	}
 
 	if ((len = inter->check_length(fd, packets_ebg_len[cmd - EBG_PACKET_MIN_MAP - 1])) == 0) {
-		ShowDebug("ExtendedBG-char: Invalid Packet Length(%d) for Packet %d\n", len, cmd);
+		ShowError("ExtendedBG-char: Invalid Packet Length(%d) for Packet %d\n", len, cmd);
 		hookStop();
 		return 2;
 	}

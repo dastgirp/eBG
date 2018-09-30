@@ -422,9 +422,9 @@ function	script	F_MapToId	{
 	return BGT_MAX;
 }
 
-/*
-	Checks if Person is on BG , and nullify's the variables, and returns the teamID.
-*/
+/**
+ * Checks if Person is on BG , and nullify's the variables, and returns the teamID.
+ */
 function	script	F_ValidateeBG	{
 	.@type = getarg(0);		//BGT_xxx
 	.@clear = getarg(1, 0);	//Clear the Variables?
@@ -439,10 +439,11 @@ function	script	F_ValidateeBG	{
 	
 	if (.@check > 0 && .@clear > 0){
 		@BG_TeamJoin = 0;
-		@BG_ID = BGT_MAX;
+		//@BG_ID = BGT_MAX; // Handled by bg_common OnPCLogoutEvent
 		@BG_TeamID = 0;
 		@BG_Team = 0;
 		@bg_killer_id = 0;
+		@BG_GlobalQueueID = 0;
 	}
 	return .@check;
 }
@@ -452,7 +453,6 @@ function	script	F_resetBases	{
 	switch(.@type) {
 		case BGT_CTF:
 		case BGT_SC:
-		case BGT_TD:
 		case BGT_EOS:
 			getmapxy(.@mn$, @ebg_x, @ebg_y, UNITTYPE_PC);
 			doevent(getvariableofnpc(.bg_npcname$[.@type], "BG_Settings") +"::OnTeam"+ @BG_Team +"Off");
@@ -460,6 +460,7 @@ function	script	F_resetBases	{
 		case BGT_TOUCHDOWN:
 			setlook(LOOK_CLOTHES_COLOR, eBG_tod_pallete);
 			return 1;
+		case BGT_TD:    // Don't do OnTeamOff event, can be abused
 		case BGT_CONQ:
 		case BGT_BOSS:
 		case BGT_RUSH:

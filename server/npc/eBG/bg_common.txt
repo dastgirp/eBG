@@ -1,9 +1,4 @@
 /*
-Done:
-	pc_block_si
-	bg_addpoints
-	bg_reward
-	Quest 8506 = bg_join_time(Variable)
 Remaining:
 	maprespawnguildid
 	noemergencycall MapFlag
@@ -59,10 +54,10 @@ prontera,150,150,5	script	Join Battleground	4_F_SURA,{
 	.@bg_type = .bg_change;	// Save .bg_change into temporary variable.
 	mes("[Battleground Helper]");
 	mes("Would you like to join the Battleground?");
-	mes("Current BG: "+ getelementofarray(getvariableofnpc(.bg_name$, "BG_Settings"), .@bg_type));
-	mes("Status: "+ callfunc("F_eBG_Status",$@eBG_start[.@bg_type]));
+	mesf("Current BG: %d", getelementofarray(getvariableofnpc(.bg_name$, "BG_Settings"), .@bg_type));
+	mesf("Status: %s", callfunc("F_eBG_Status", $@eBG_start[.@bg_type]));
 	if (bg_join_time > gettimetick(2)) { // BG Cooldown is remaining
-		mes("Please wait for "+ (bg_join_time - gettimetick(2)) +" Seconds, to join the bg again");
+		mesf("Please wait for %d Seconds, to join the bg again", bg_join_time - gettimetick(2));
 		close;
 	}
 	if (callfunc("F_eBG_WR", .@bg_type)) { // WaitingRoom(WR) is not allowed for this BG.
@@ -73,7 +68,7 @@ prontera,150,150,5	script	Join Battleground	4_F_SURA,{
 		mes("NOTE: ^FF0000 Not Accepting New Entries ^000000");
 		close;
 	}
-	switch(select("Join the BG!!: Wait, BG, ehh... No")) {
+	switch(select("Join the BG!!", "Wait, BG, ehh... No")) {
 	case 2:
 		close;
 	case 1:
@@ -132,8 +127,10 @@ OnInit:
 	 *	[1] = Max Player PER IP.
 	 *	[2] = Time after which BG should rotate if not enough players (in minutes).
 	 *	[3] = Reserved
+	 *	[4] = Announce Every x minutes (Players currently playing)
+	 *	[5] = Reserved
 	 */
-	setarray .bg_common, BGT_TOUCHDOWN, 3, 5, -1;
+	setarray .bg_common, BGT_DOM, 3, 5, -1, 1, -1;
 	
 	/**
 	 *	$@eBG_start - To Track Start/End status of BG.
@@ -393,9 +390,16 @@ OnResetChangeTimer:
 OnTimer60000:
 	initnpctimer;
 
+	.bg_common[5]++;
+	if (.bg_common[5] >= .bg_common[4] && $@eBG_start[.bg_change] != EBG_NOT_STARTED) {
+		callsub(OnBGAnnounce, 0, 0);
+		.bg_common[5] = 0;
+	}
+
 	// eBG is running, don't change.
-	if ($@eBG_start[.bg_change] != EBG_NOT_STARTED)
+	if ($@eBG_start[.bg_change] != EBG_NOT_STARTED) {
 		end;
+	}
 
 	// Increment the timer.
 	.bg_common[3]++;
@@ -447,19 +451,31 @@ OnChangeBG:  // Called by callsub
 OnBGAnnounce: // Announce remaining players
 	.@end = getarg(0, 1);	   // terminates the script if not enough player
 	.@onlyself = getarg(1, 0); // announce to self.
-	//.@min_p = .bg_minplayer[.bg_change]; // * .bg_teams[.bg_change]	(remove on Release ToDo)
+
 	.@min_p = .bg_minplayer[.bg_change] * .bg_teams[.bg_change];
 	.@player_joined = queuesize(.queue[0]) + queuesize(.queue[1]) + queuesize(.queue[2]);
+
+	// Type of announcement, Self or all clients
+	if (.@onlyself == 1) {
+		.@type = BC_SELFEBG;
+	} else {
+		.@type = BC_EBG | bc_npc; // All Clients
+	}
+
 	if ($@eBG_start[.bg_change] == EBG_NOT_STARTED && .@player_joined < .@min_p) {
-		if (.@onlyself == 1) {
-			.@type = BC_SELFEBG;
-		} else {
-			.@type = BC_EBG | bc_npc; // All Clients
-		}
-		bg_announce("ExtendedBG -- " + .bg_name$[.bg_change] + " -- " + (.@min_p - .@player_joined) + " more players to start.", .@type, .bg_colors$[.bg_change]);
+		bg_announce(sprintf("ExtendedBG -- %s -- %d more players to start.", .bg_name$[.bg_change], (.@min_p - .@player_joined)), .@type, .bg_colors$[.bg_change]);
 		if (.@end == 1) {
 			end;
 		}
+	} else if ($@eBG_start[.bg_change] != EBG_NOT_STARTED) {
+		.@map$ = callsub(OnGetAltMapName, .bg_change);
+		.@msg$ = "";
+		for (.@i = 1; .@i <= .bg_teams[.bg_change]; .@i++) {
+			if (.@i != 1)
+				.@msg$ += " vs ";
+			.@msg$ += bg_get_data(getd("$@"+ .bg_mapname$[.bg_change] +"_BG_id"+ .@i), 0) +"/"+ .bg_maxplayer[.bg_change];
+		}
+		bg_announce(sprintf("ExtendedBG -- %s -- %s Playing", .bg_name$[.bg_change], .@msg$), .@type, .bg_colors$[.bg_change]);
 	}
 	return;
 	
@@ -467,17 +483,17 @@ OnCheckBGEnabled:
 	.@type = getarg(0);	// 2 = Party, 1 = Guild, 0 = None
 	if (.@type == 2) {	// Party
 		if (.bg_enabled_p[.bg_change] == false) {
-			dispbottom("Party Join is disabled for "+ .bg_name$[.bg_change] +" BG.");
+			dispbottom(sprintf("Party Join is disabled for %s BG.", .bg_name$[.bg_change]));
 			return false;
 		}
 	} else if (.@type == 1) { // Guild
 		if (.bg_enabled_g[.bg_change] == false) {
-			dispbottom("Guild Join is disabled for "+ .bg_name$[.bg_change] +" BG.");
+			dispbottom(sprintf("Guild Join is disabled for %s BG.", .bg_name$[.bg_change]));
 			return false;
 		}
 	} else if (.@type == 0) {
 		if (.bg_enabled[.bg_change] == false) {
-			dispbottom("Individual Join is disabled for "+ .bg_name$[.bg_change] +" BG.");
+			dispbottom(sprintf("Individual Join is disabled for %s BG.", .bg_name$[.bg_change]));
 			return false;
 		}
 	}
@@ -505,16 +521,20 @@ OnJoinBGG: // joinbg_guild: .@type = 1
 OnJoinBG: // joinbg: .@type = 0
 	if (callsub(OnCheckBGEnabled, .@type) == false)
 		end;
-	@BG_TeamJoin = 0;
+	if (@BG_GlobalQueueID > 0) {
+		dispbottom("You are already queued.");
+		end;
+	}
 	dispbottom("EBG: "+ on_ebg());
 	if (on_ebg() == true) {
 		dispbottom("You are Already on BG");
 		end;
 	}
 	if (bg_join_time > gettimetick(2)) {
-		dispbottom("Please wait for "+ (bg_join_time - gettimetick(2)) +" Seconds, to join the bg again");
+		dispbottom(sprintf("Please wait for %d Seconds, to join the bg again", (bg_join_time - gettimetick(2))));
 		end;
 	}
+	@BG_TeamJoin = 0;
 	switch(.bg_change) {
 	case BGT_RUSH:
 		.@bg_map$ = "ebg_rush0"+ ($bg_rush_rotate + 1);
@@ -536,6 +556,7 @@ OnJoinBG: // joinbg: .@type = 0
 	}
 	// Fallthrough
 OnJoinBG2:
+	@BG_GlobalQueueID = .@type + 1;
 	queueadd(.queue[.@type], getcharid(3));
 	// Fallthrough
 OnStartBG:
@@ -641,7 +662,6 @@ OnLeaveBGSource:	// called from Source
 		end;
 	}
 
-
 	callfunc("F_resetBases", .@BG_ID);
 
 	bg_hpsp_time_del(EBG_HP_TIME | EBG_SP_TIME | EBG_EXTRA_TIME);
@@ -680,13 +700,15 @@ OnLeaveBGSource:	// called from Source
 		return;
 	end;
 
+OnPCLogoutEvent: // Leave the BG and set the timer
+	callsub(OnLeaveBGSub, true, true);
+	end;
+
 OnLeaveBGSub:
 	.@dont_warn = getarg(0, 1);
 	.@ret_func = getarg(1, 1);
 	// Fallthrough
-OnLeaveBG:	// Replicate in bg_team_delete_pre (called when used .@leavebg/leaved bg via logout/mapchange)
-	dispbottom("TeamID: "+ @BG_Team);
-	dispbottom("EBG: "+ on_ebg());
+OnLeaveBG:	// Replicate in bg_team_delete_pre (called when used .@leavebg/leaved bg via logout/mapchange)	
 	if (on_ebg() == false) {
 		if (!.@dont_warn)
 			dispbottom("You are Not on Any Kind of BG");
@@ -737,7 +759,6 @@ OnBGStart:	// BG Starts
 	if (.uid[.@id])
 		callsub(OnBGStopSub);	//Restarts the Timer
 	.uid[.@id] = bg_timer_start(24000, 1);
-	debugmes("Map: "+ strnpcinfo(4) +" ID: "+ .@id);
 	switch(.@id) {
 		/* CTF: 1, 2 */
 		/* SC: 12, 13 */
@@ -799,8 +820,8 @@ OnBGStart:	// BG Starts
 		case 15: // Red Team
 			.@index = $bg_conquest_rotate; // Check map index
 			.@Castle$ = "ebg_conq0"+ (.@index + 1);
-			.@announce$ = "-- Reinforcements entering the Battle of Conquest --";
-			.@color$ = "0xFFA500"; // Color of Announce
+			.@announce$ = _("-- Reinforcements entering the Battle of Conquest --");
+			.@color$ = _("0xFFA500"); // Color of Announce
 			// Warp positions for Attacker and Defender
 			setarray .@bg_conquest_Defender_XY[0],	120, 129,  // ebg_conq01
 													136, 188,  // ebg_conq02
@@ -885,8 +906,8 @@ OnBGStart:	// BG Starts
 			// Rush Map Index
 			.@index = $bg_rush_rotate;
 			.@Castle$ = "ebg_rush0"+ (.@index + 1);
-			.@announce$ = "-- Reinforcements entering the Battle of Rush --";
-			.@color$ = "0xDDA0DD";
+			.@announce$ = _("-- Reinforcements entering the Battle of Rush --");
+			.@color$ = _("0xDDA0DD");
 			// Defender BG Id
 			.@Defender = getvariableofnpc(.Defender, "eBG_Rush");
 
@@ -966,7 +987,6 @@ OnBGStart:	// BG Starts
 	}
 	// Start the Timer
 	bg_timer_child(.uid[.@id], 1000, .@operations);
-	debugmes("UID Created: "+ .uid[.@id] +" ID: "+ .@id);
 	end;
 
 OnBGStopSub:	//called via callsub(returns instead of end)
@@ -980,7 +1000,6 @@ OnBGStop:	//BG Stops
 		end;
 	}
 	// Stop BG Timer
-	debugmes("UID Stop: "+ .uid[.@id] +" ID: "+ .@id);
 	bg_timer_stop(.uid[.@id]);
 	// Unique Timer ID = 0
 	.uid[.@id] = 0;
