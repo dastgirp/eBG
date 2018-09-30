@@ -92,28 +92,28 @@ OnGuardianSBuild:
 	 */
 	switch(.@castle) {
 		case 0:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 27, 35, "1st Guardian Stone", S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 27, 35, _("1st Guardian Stone"), S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
 			.@mob[1] = bg_monster(.Defender, .Castle$, 207, 75, "2st Guardian Stone", S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
 			break;
 		case 1:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 231, 58, "1st Guardian Stone", S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
-			.@mob[1] = bg_monster(.Defender, .Castle$, 335, 230, "2nd Guardian Stone", S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 231, 58, _("1st Guardian Stone"), S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
+			.@mob[1] = bg_monster(.Defender, .Castle$, 335, 230, _("2nd Guardian Stone"), S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
 			break;
 		case 2:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 242, 309, "1st Guardian Stone", S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
-			.@mob[1] = bg_monster(.Defender, .Castle$, 376, 251, "2nd Guardian Stone", S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 242, 309, _("1st Guardian Stone"), S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
+			.@mob[1] = bg_monster(.Defender, .Castle$, 376, 251, _("2nd Guardian Stone"), S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
 			break;
 		case 3:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 210, 234, "1st Guardian Stone", S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
-			.@mob[1] = bg_monster(.Defender, .Castle$, 308, 189, "2nd Guardian Stone", S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 210, 234, _("1st Guardian Stone"), S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
+			.@mob[1] = bg_monster(.Defender, .Castle$, 308, 189, _("2nd Guardian Stone"), S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
 			break;
 		case 4:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 33, 168, "1st Guardian Stone", S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
-			.@mob[1] = bg_monster(.Defender, .Castle$, 245, 168, "2nd Guardian Stone", S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 33, 168, _("1st Guardian Stone"), S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
+			.@mob[1] = bg_monster(.Defender, .Castle$, 245, 168, _("2nd Guardian Stone"), S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
 			break;
 		case 5:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 65, 171, "1st Guardian Stone", S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
-			.@mob[1] = bg_monster(.Defender, .Castle$, 212, 149, "2nd Guardian Stone", S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 65, 171, _("1st Guardian Stone"), S_EMPEL_1, "eBG_Conquest::OnGuardianStone");
+			.@mob[1] = bg_monster(.Defender, .Castle$, 212, 149, _("2nd Guardian Stone"), S_EMPEL_2, "eBG_Conquest::OnGuardianStone");
 			break;
 	}
 	.@count = mobcount(.Castle$, "eBG_Conquest::OnGuardianStone");
@@ -129,22 +129,22 @@ OnEmperiumBuild:
 	 */
 	switch(.@castle) {
 		case 0:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 120, 272, "Emperium", EMPELIUM, "eBG_Conquest::OnEmperium");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 120, 272, _("Emperium"), EMPELIUM, "eBG_Conquest::OnEmperium");
 			break;
 		case 1:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 162, 193, "Emperium", EMPELIUM, "eBG_Conquest::OnEmperium");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 162, 193, _("Emperium"), EMPELIUM, "eBG_Conquest::OnEmperium");
 			break;
 		case 2:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 338, 202, "Emperium", EMPELIUM, "eBG_Conquest::OnEmperium");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 338, 202, _("Emperium"), EMPELIUM, "eBG_Conquest::OnEmperium");
 			break;
 		case 3:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 87, 219, "Emperium", EMPELIUM, "eBG_Conquest::OnEmperium");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 87, 219, _("Emperium"), EMPELIUM, "eBG_Conquest::OnEmperium");
 			break;
 		case 4:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 89, 256, "Emperium", EMPELIUM, "eBG_Conquest::OnEmperium");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 89, 256, _("Emperium"), EMPELIUM, "eBG_Conquest::OnEmperium");
 			break;
 		case 5:
-			.@mob[0] = bg_monster(.Defender, .Castle$, 141, 293, "Emperium", EMPELIUM, "eBG_Conquest::OnEmperium");
+			.@mob[0] = bg_monster(.Defender, .Castle$, 141, 293, _("Emperium"), EMPELIUM, "eBG_Conquest::OnEmperium");
 			break;
 	}
 	.@count = mobcount(.Castle$, "eBG_Conquest::OnEmperium");
@@ -276,16 +276,16 @@ OnReadyCheck:
 	// ======================================
 	donpcevent("::OnEmblemConquest");
 	sleep 4000;
-	mapannounce(.Castle$, bg_info(.Attacker, 1) + " : Move on warriors!! Let's capture this Castle!!", bc_map, bg_info(.Attacker, 2));
+	mapannounce(.Castle$, sprintf(_$("%s : Move on warriors!! Let's capture this Castle!!"), bg_info(.Attacker, 1)), bc_map, bg_info(.Attacker, 2));
 	sleep 4000;
-	mapannounce(.Castle$, bg_info(.Defender, 1) + " : Protect the Castle and it's Defences to all cost!!", bc_map, bg_info(.Defender, 2));
+	mapannounce(.Castle$, sprintf(_$("%s : Protect the Castle and it's Defences to all cost!!"), bg_info(.Defender, 1)), bc_map, bg_info(.Defender, 2));
 	end;
 	
 OnGuardianStone:
 	.Score++;
 
 	if (mobcount(.Castle$, "eBG_Conquest::OnGuardianStone"))
-		mapannounce(.Castle$, "Guardian Stone has fallen - 6 minutes to destroy the other Stone", bc_map, 0xFFA500);
+		mapannounce(.Castle$, _("Guardian Stone has fallen - 6 minutes to destroy the other Stone"), bc_map, 0xFFA500);
 
 	bg_addpoints(BG_CONQ_GUARDIAN_S, 1, 1);
 	callsub(OnCheckGStone);
@@ -296,7 +296,7 @@ OnCheckGStone:
 	.time_remaining = getvariableofnpc(.bg_time[BGT_CONQ], "BG_Settings");
 
 	if (mobcount(.Castle$, "eBG_Conquest::OnGuardianStone") == 0) {
-		mapannounce(.Castle$, "Both Guardian Stones has fallen - 6 minutes to destroy the 1st Fortress Gate", bc_map, 0xFFA500);
+		mapannounce(.Castle$, _("Both Guardian Stones has fallen - 6 minutes to destroy the 1st Fortress Gate"), bc_map, 0xFFA500);
 		killmonster(.Castle$, "eBG_Conquest::OnBarricade0");
 		delwall("conq_wall00");
 	}
@@ -309,7 +309,7 @@ OnBarricadeFall:
 	if (.@wall < 1){
 		initnpctimer;
 		.time_remaining = getvariableofnpc(.bg_time[BGT_CONQ], "BG_Settings");
-		mapannounce(.Castle$, .@barricade +""+ ((.@barricade == 1) ? "st" : ((.@barricade == 2) ? "nd" : "rd")) +" Fortress Gate has fallen - 6 minutes to destroy the "+ ((.@barricade == 1) ? "2nd" : ((.@barricade == 2) ? "3rd" : "Emperium")), bc_map, 0xFFA500);
+		mapannounce(.Castle$, sprintf(_$("%d%s Fortress Gate has fallen - 6 minutes to destroy the %s"), .@barricade, ((.@barricade == 1) ? "st" : ((.@barricade == 2) ? "nd" : "rd")), ((.@barricade == 1) ? _("2nd Barricade") : ((.@barricade == 2) ? _("3rd Barricade") : _("Emperium")))), bc_map, 0xFFA500);
 		.Score++;
 		delwall("conq_wall0"+ .@barricade);
 	}
@@ -331,18 +331,18 @@ OnBarricade3:
 OnEmperium:
 	bg_addpoints BG_CONQ_EMPERIUM, 1, 1;
 	.Score++;
-	mapannounce(.Castle$, "The " + bg_info(.Attacker,0) + " army has won the Battle and captured the Castle!!", bc_map, bg_info(.Attacker, 2));
+	mapannounce(.Castle$, sprintf(_$("The %s army has won the Battle and captured the Castle!!"), bg_info(.Attacker,0)), bc_map, bg_info(.Attacker, 2));
 	donpcevent("eBG_Conquest::OnMatchEnd");
 	end;
 
 OnTimer60000:
 	.time_remaining--;
 	if (.time_remaining != 0) {
-		mapannounce(.Castle$, "Battle of Conquest will ends in "+ .time_remaining +" Minutes!!", bc_map, 0xFFA500);
+		mapannounce(.Castle$, sprintf(_$("Battle of Conquest will ends in %d Minutes!!"), .time_remaining), bc_map, 0xFFA500);
 		initnpctimer;
 		end;
 	}
-	mapannounce(.Castle$, "The " + bg_info(.Defender,0) + " army has won the Battle and protected the Castle!!", bc_map, bg_info(.Defender, 2));
+	mapannounce(.Castle$, sprintf(_$("The %s army has won the Battle and protected the Castle!!"), bg_info(.Defender,0)), bc_map, bg_info(.Defender, 2));
 OnMatchEnd:
 OnMatchStop:
 	stopnpctimer;
@@ -413,20 +413,20 @@ ebg_conq01,106,302,0	script	eBG-LF-01#01	HIDDEN_NPC,{
 		if (.@opt == .@size)
 			close;
 		// warp map, x, y
-		warp("ebg_conq01",getd(".warp"+ (.@index + 1) +"["+ (.@opt * 2) +"]"), getd(".warp"+ (.@index + 1) +"["+ ((.@opt*2) + 1) +"]"));
+		warp("ebg_conq01", getd(".warp"+ (.@index + 1) +"["+ (.@opt * 2) +"]"), getd(".warp"+ (.@index + 1) +"["+ ((.@opt*2) + 1) +"]"));
 	}
 	end;
 	
 OnInit:
-	setarray .menu$,"First Gate House:Second Gate House",
-					"Defence Area 1-1:Defence Area 1-2",
-					"Defence Area 2-1:Defence Area 2-2",
-					"Defence Area 2-3:Defence Area 2-4",
-					"Defence Area 2-3:Defence Area 2-4",
-					"Defence Area 3-1:Defence Area 3-2",
-					"Area, Centre 1:Area, Centre 2",
-					"Area 1-1:Area 2-1:Area 3-1",
-					"Area 1-2:Area 2-3:Area 3-2";	
+	setarray .menu$,_("First Gate House:Second Gate House"),
+					_("Defence Area 1-1:Defence Area 1-2"),
+					_("Defence Area 2-1:Defence Area 2-2"),
+					_("Defence Area 2-3:Defence Area 2-4"),
+					_("Defence Area 3-1:Defence Area 3-2"),
+					_("Defence Area 3-3:Defence Area 3-4"),
+					_("Area, Centre 1:Area, Centre 2"),
+					_("Area 1-1:Area 2-1:Area 3-1"),
+					_("Area 1-2:Area 2-3:Area 3-2");	
 	setarray .warp1,19,26,
 					219,90;
 	setarray .warp2,89,43,
@@ -511,13 +511,13 @@ ebg_conq02,143,198,0	script	eBG-LF-02#11	HIDDEN_NPC,{
 	end;
 	
 OnInit:
-	setarray .menu$,"First Gate House:Second Gate House",
-					"Defence Area 1-1:Defence Area 1-2",
-					"Defence Area 2-1:Defence Area 2-2",
-					"Defence Area 3-1:Defence Area 3-2",
-					"Area, Centre 1:Area, Centre 2",
-					"Area 1-1:Area 2-1:Area 3-1",
-					"Area 1-2:Area 2-3:Area 3-2";
+	setarray .menu$,_("First Gate House:Second Gate House"),
+					_("Defence Area 1-1:Defence Area 1-2"),
+					_("Defence Area 2-1:Defence Area 2-2"),
+					_("Defence Area 3-1:Defence Area 3-2"),
+					_("Area, Centre 1:Area, Centre 2"),
+					_("Area 1-1:Area 2-1:Area 3-1"),
+					_("Area 1-2:Area 2-3:Area 3-2");
 					
 	setarray .warp1,235,44,
 					302,233;
@@ -592,15 +592,15 @@ ebg_conq03,346,211,0	script	eBG-LF-01#21	HIDDEN_NPC,{
 	end;
 	
 OnInit:
-	setarray .menu$,"First Gate House:Second Gate House",
-					"Area, Centre 1",
-					"Defence Area 2-1:Defence Area 2-2",
-					"Area, Centre 2",
-					"Defence Area 3-1:Defence Area 3-2",
-					"Area, Centre 3",
-					"Area 1-2:Area 2-2:Area 3-2",
-					"Area 2-1:Area 2-2:Area, Centre 2",
-					"Area 3-1:Area 3-2:Area, Centre 3";
+	setarray .menu$,_("First Gate House:Second Gate House"),
+					_("Area, Centre 1"),
+					_("Defence Area 2-1:Defence Area 2-2"),
+					_("Area, Centre 2"),
+					_("Defence Area 3-1:Defence Area 3-2"),
+					_("Area, Centre 3"),
+					_("Area 1-2:Area 2-2:Area 3-2"),
+					_("Area 2-1:Area 2-2:Area, Centre 2"),
+					_("Area 3-1:Area 3-2:Area, Centre 3");
 					
 	setarray .warp1,262,323,
 					378,263;
@@ -684,15 +684,15 @@ ebg_conq04,74,232,0	script	eBG-LF-01#31	HIDDEN_NPC,{
 	end;
 	
 OnInit:
-	setarray .menu$,"First Gate House:Second Gate House",
-					"Defence Area 1-1:Defence Area 1-2",
-					"Defence Area 2-1:Defence Area 2-2",
-					"Defence Area 2-3:Defence Area 2-4",
-					"Defence Area 3-1:Defence Area 3-2",
-					"Defence Area 3-3:Defence Area 3-4",
-					"Gate House Fork",
-					"Area 1-1:Area 2-1:Area 3-1",
-					"Area 1-2:Area 2-2:Area 3-3";
+	setarray .menu$,_("First Gate House:Second Gate House"),
+					_("Defence Area 1-1:Defence Area 1-2"),
+					_("Defence Area 2-1:Defence Area 2-2"),
+					_("Defence Area 2-3:Defence Area 2-4"),
+					_("Defence Area 3-1:Defence Area 3-2"),
+					_("Defence Area 3-3:Defence Area 3-4"),
+					_("Gate House Fork"),
+					_("Area 1-1:Area 2-1:Area 3-1"),
+					_("Area 1-2:Area 2-2:Area 3-3");
 					
 	setarray .warp1,158,237,
 					297,248;
@@ -778,13 +778,13 @@ ebg_conq05,98,270,0	script	eBG-LF-01#41	HIDDEN_NPC,{
 	end;
 	
 OnInit:
-	setarray .menu$,"First Gate House:Second Gate House",
-					"Defence Area 1-1:Defence Area 1-2",
-					"Defence Area 1-3:Defence Area 1-4",
-					"Defence Area 2-1:Defence Area 2-2",
-					"Defence Area 2-3:Defence Area 2-4",
-					"Defence Area 3-1:Defence Area 3-2",
-					"Area, Centre 1:Area, Centre 3";
+	setarray .menu$,_("First Gate House:Second Gate House"),
+					_("Defence Area 1-1:Defence Area 1-2"),
+					_("Defence Area 1-3:Defence Area 1-4"),
+					_("Defence Area 2-1:Defence Area 2-2"),
+					_("Defence Area 2-3:Defence Area 2-4"),
+					_("Defence Area 3-1:Defence Area 3-2"),
+					_("Area, Centre 1:Area, Centre 3");
 					
 	setarray .warp1,10,187,
 					268,187;
@@ -864,15 +864,15 @@ ebg_conq06,122,314,0	script	eBG-LF-01#51	HIDDEN_NPC,{
 	end;
 	
 OnInit:
-	setarray .menu$,"First Gate House:Second Gate House",
-					"Defence Area 1-1:Defence Area 1-2",
-					"Defence Area 1-3:Defence Area 1-4",
-					"Defence Area 2-1:Defence Area 2-2",
-					"Defence Area 2-3:Defence Area 2-4",
-					"Defence Area 3-1:Defence Area 3-2",
-					"Defence Area 1-1:Defence Area 2-1:Defence Area 3-1",
-					"Defence Area 1-2:Defence Area 2-3:Defence Area 3-2",
-					"Defence Area 1-4:Defence Area 2-4";
+	setarray .menu$,_("First Gate House:Second Gate House"),
+					_("Defence Area 1-1:Defence Area 1-2"),
+					_("Defence Area 1-3:Defence Area 1-4"),
+					_("Defence Area 2-1:Defence Area 2-2"),
+					_("Defence Area 2-3:Defence Area 2-4"),
+					_("Defence Area 3-1:Defence Area 3-2"),
+					_("Defence Area 1-1:Defence Area 2-1:Defence Area 3-1"),
+					_("Defence Area 1-2:Defence Area 2-3:Defence Area 3-2"),
+					_("Defence Area 1-4:Defence Area 2-4");
 					
 	setarray .warp1,84,158,
 					197,136;

@@ -87,11 +87,11 @@ OnCenterScore:
 	end;
 	
 OnScore:
-	.@base = getarg(0);
+	.@Base = getarg(0);
 	.@North = bg_get_npc_data(1, "North_Base#3");
 	.@South = bg_get_npc_data(1, "South_Base#4");
 	.@Center = bg_get_npc_data(1, "Center_Base#5");
-	.@Score = ((.@base == 1) ? .@North : ((.@base == 2) ? .@South : .@Center));
+	.@Score = ((.@Base == 1) ? .@North : ((.@Base == 2) ? .@South : .@Center));
 	
 	if (!.@Score)	//Should contain OwnerID
 		return;
@@ -132,13 +132,13 @@ OnValidateScore:
 	/* .@win = -1, some unknown error, don't give rewards */
 	if (.@win == -1) {
 		if (.@stop)
-			mapannounce("ebg_dom","The battle is over. Nobody won the match...!",bc_map,0x4169E1);
+			mapannounce("ebg_dom", _("The battle is over. Nobody won the match...!"), bc_map, 0x4169E1);
 	}
 
 	if (.@win)
-		mapannounce("ebg_dom","The "+ callfunc("F_eBGTeamName", .@win) +" army has won the Battle of Tierra DoM!",bc_map,callfunc("F_eBGTeamColor",.@win));
+		mapannounce("ebg_dom", sprintf(_$("The %s army has won the Battle of Tierra DoM!"), callfunc("F_eBGTeamName", .@win)), bc_map, callfunc("F_eBGTeamColor", .@win));
 	else if (.@win == 0)
-		mapannounce("ebg_dom","The battle is over. This is a Tie...!",bc_map,0x4169E1);
+		mapannounce("ebg_dom", _("The battle is over. This is a Tie...!"), bc_map, 0x4169E1);
 	
 	// =======================================================
 	.Team1_Score = 0;

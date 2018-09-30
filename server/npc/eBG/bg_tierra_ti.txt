@@ -15,7 +15,7 @@ OnInit:
 OnPCDieEvent:
 	/* Drops all the skull, new skull if other team was killed. */
 	if (strcharinfo(PC_MAP) == "ebg_tti"){
-		.@team = callfunc("F_ValidateeBG",BGT_TI,0);
+		.@team = callfunc("F_ValidateeBG", BGT_TI, 0);
 		if ($@eBG_start[BGT_TI] == EBG_RUNNING) {
 			getmapxy .@m$, .@x, .@y, 0;
 			.@bg_id = getcharid(4);
@@ -75,7 +75,7 @@ OnValidateScore:
 OnTimer60000:
 	.time_remaining--;
 	if (.time_remaining != 0) {
-		mapannounce("ebg_tti", "The Battle will end in "+ .time_remaining +" Minutes!!", bc_map, 0x696969);
+		mapannounce("ebg_tti", sprintf(_$("The Battle will end in %d Minutes!!"), .time_remaining), bc_map, 0x696969);
 		initnpctimer;
 		end;
 	}
@@ -91,9 +91,9 @@ OnMatchEnd:
 		
 	.@win = callfunc("F_eBGReward", BGT_TI, $bg_tierra_ti, 3, .Team1_Score, .Team2_Score, .Team3_Score, 0, 4, 0);
 	if (.@win)  {
-		mapannounce("ebg_tti","The " + callfunc("F_eBGTeamName", .@win) + " has won the Battle of Tierra Inferno!",bc_map,callfunc("F_eBGTeamColor",.@win));
+		mapannounce("ebg_tti", sprintf(_$("The %s has won the Battle of Tierra Inferno!"), callfunc("F_eBGTeamName", .@win)), bc_map, callfunc("F_eBGTeamColor", .@win));
 	} else {
-		mapannounce("ebg_tti","The battle is over. There are no Winners!", bc_map, 0x696969);
+		mapannounce("ebg_tti", _("The battle is over. There are no Winners!"), bc_map, 0x696969);
 	}
 	
 	//
@@ -154,7 +154,8 @@ OnTouch:
 		}
 		set(getvariableofnpc(getd(".Team"+ .@id +"_Score"), "TI_Tierra"), .@Score);
 		bg_team_score(getd("$@ebg_tti_BG_id"+ .@id), .@Score);
-		mapannounce("ebg_tti", callfunc("F_eBGTeamName",.@id) + " : " + .@Points + " slaughtered skulls by " + strcharinfo(0) + " [" + .@Score + "/"+ $bg_tierra_ti[3] +"]", bc_map, callfunc("F_eBGTeamColor", .@id));
+		
+		mapannounce("ebg_tti", sprintf(_$("%s : %d slaughtered skulls by %s [%d/%d]"), callfunc("F_eBGTeamName",.@id), .@Points, strcharinfo(0), .@Score, $bg_tierra_ti[3]), bc_map, callfunc("F_eBGTeamColor", .@id));
 		bg_addpoints(BG_TI_SKULL, .@Points, 1);
 		donpcevent("TI_Tierra::OnValidateScore");
 	}

@@ -45,7 +45,7 @@ OnTimer30000:	// Update Information every 30 seconds.
 	.@max_player = (.@total / .@bg_teams);
 	.@c = callfunc("F_eBG_Total_Player", .map_name$[.@array_index], .@bg_teams, .bg_type[.@array_index]);
 	delwaitingroom();
-	waitingroom("Battle Station("+ getelementofarray(getvariableofnpc(.bg_name$, "BG_Settings"), .bg_type[.@array_index]) +") ["+ .@c +"/"+ .@max_player +"] Players", .@max_player);
+	waitingroom(sprintf(_$("Battle Station(%s) [%d/%d] Players"), getelementofarray(getvariableofnpc(.bg_name$, "BG_Settings"), .bg_type[.@array_index]), .@c, .@max_player), .@max_player);
 	initnpctimer();
 	end;
 }
@@ -96,7 +96,7 @@ prontera,150,150,5	script	Join Battleground	4_F_SURA,{
 	end;
 OnInit:
 	// Names of BG.
-	setarray .bg_name$[BGT_CTF],	"Flavius - CTF"	,"Tierra - Bossnia"	,"Tierra - Triple Infierno"	,"Tierra - Eye of Storm","Flavius - Team Deathmatch","Flavius - Stone Control"	,"Conquest"		,"Rush"		,"Tierra - Domination"	, "Fumbi - Touchdown";
+	setarray .bg_name$[BGT_CTF],    _("Flavius - CTF"), _("Tierra - Bossnia"), _("Tierra - Triple Infierno"), _("Tierra - Eye of Storm"), _("Flavius - Team Deathmatch"), _("Flavius - Stone Control"), _("Conquest"), _("Rush"), _("Tierra - Domination"), _("Fumbi - Touchdown");
 	// MapName of BG
 	setarray .bg_mapname$[BGT_CTF],	"ebg_ctf"		,"ebg_boss"			,"ebg_tti"					,"ebg_eos"				,"ebg_td"					,"ebg_sc"					,"ebg_conquest"	,"ebg_rush"	,"ebg_dom"				, "ebg_tunnel";
 	// NPCNames of BG
@@ -319,7 +319,7 @@ OnInit:
 // @bgtime command
 OnTimeLeft:
 	if (!on_ebg()) {
-		dispbottom("You are not playing eBattlegrounds.");
+		dispbottom(_("You are not playing eBattlegrounds."));
 		end;
 	}
 	callfunc("F_eBG_Time_Left", @BG_ID, .bg_npcname$[@BG_ID]);
@@ -463,7 +463,7 @@ OnBGAnnounce: // Announce remaining players
 	}
 
 	if ($@eBG_start[.bg_change] == EBG_NOT_STARTED && .@player_joined < .@min_p) {
-		bg_announce(sprintf("ExtendedBG -- %s -- %d more players to start.", .bg_name$[.bg_change], (.@min_p - .@player_joined)), .@type, .bg_colors$[.bg_change]);
+		bg_announce(sprintf(_$("ExtendedBG -- %s -- %d more players to start."), .bg_name$[.bg_change], (.@min_p - .@player_joined)), .@type, .bg_colors$[.bg_change]);
 		if (.@end == 1) {
 			end;
 		}
@@ -472,10 +472,10 @@ OnBGAnnounce: // Announce remaining players
 		.@msg$ = "";
 		for (.@i = 1; .@i <= .bg_teams[.bg_change]; .@i++) {
 			if (.@i != 1)
-				.@msg$ += " vs ";
-			.@msg$ += bg_get_data(getd("$@"+ .bg_mapname$[.bg_change] +"_BG_id"+ .@i), 0) +"/"+ .bg_maxplayer[.bg_change];
+				.@msg$ += _(" vs ");
+			.@msg$ += sprintf(_$("%d/%d"), bg_get_data(getd("$@"+ .bg_mapname$[.bg_change] +"_BG_id"+ .@i), 0), .bg_maxplayer[.bg_change]);
 		}
-		bg_announce(sprintf("ExtendedBG -- %s -- %s Playing", .bg_name$[.bg_change], .@msg$), .@type, .bg_colors$[.bg_change]);
+		bg_announce(sprintf(_$("ExtendedBG -- %s -- %s Playing"), .bg_name$[.bg_change], .@msg$), .@type, .bg_colors$[.bg_change]);
 	}
 	return;
 	
@@ -483,17 +483,17 @@ OnCheckBGEnabled:
 	.@type = getarg(0);	// 2 = Party, 1 = Guild, 0 = None
 	if (.@type == 2) {	// Party
 		if (.bg_enabled_p[.bg_change] == false) {
-			dispbottom(sprintf("Party Join is disabled for %s BG.", .bg_name$[.bg_change]));
+			dispbottom(sprintf(_$("Party Join is disabled for %s BG."), .bg_name$[.bg_change]));
 			return false;
 		}
 	} else if (.@type == 1) { // Guild
 		if (.bg_enabled_g[.bg_change] == false) {
-			dispbottom(sprintf("Guild Join is disabled for %s BG.", .bg_name$[.bg_change]));
+			dispbottom(sprintf(_$("Guild Join is disabled for %s BG."), .bg_name$[.bg_change]));
 			return false;
 		}
 	} else if (.@type == 0) {
 		if (.bg_enabled[.bg_change] == false) {
-			dispbottom(sprintf("Individual Join is disabled for %s BG.", .bg_name$[.bg_change]));
+			dispbottom(sprintf(_$("Individual Join is disabled for %s BG."), .bg_name$[.bg_change]));
 			return false;
 		}
 	}
@@ -522,16 +522,16 @@ OnJoinBG: // joinbg: .@type = 0
 	if (callsub(OnCheckBGEnabled, .@type) == false)
 		end;
 	if (@BG_GlobalQueueID > 0) {
-		dispbottom("You are already queued.");
+		dispbottom(_("You are already queued."));
 		end;
 	}
 	dispbottom("EBG: "+ on_ebg());
 	if (on_ebg() == true) {
-		dispbottom("You are Already on BG");
+		dispbottom(_("You are Already on BG"));
 		end;
 	}
 	if (bg_join_time > gettimetick(2)) {
-		dispbottom(sprintf("Please wait for %d Seconds, to join the bg again", (bg_join_time - gettimetick(2))));
+		dispbottom(sprintf(_$("Please wait for %d Seconds, to join the bg again"), (bg_join_time - gettimetick(2))));
 		end;
 	}
 	@BG_TeamJoin = 0;
@@ -547,11 +547,11 @@ OnJoinBG: // joinbg: .@type = 0
 		break;
 	}
 	if (bg_logincheck(.@bg_map$) >= .bg_common[1]) {
-		dispbottom("Someone else from same IP is already On BG.");
+		dispbottom(_("Someone else from same IP is already On BG."));
 		end;
 	}
 	if (getbattleflag("battle_configuration/bg_queue_townonly") && !getmapflag(strcharinfo(PC_MAP), mf_town)) {
-		dispbottom("You can only join when in town.");
+		dispbottom(_("You can only join when in town."));
 		end;
 	}
 	// Fallthrough
@@ -575,7 +575,7 @@ OnStartBG:
 	// Check Player Count
 	if (callfunc("F_eBGMaxPlayer", .bg_mapname$[.bg_change], .bg_teams[.bg_change]) >= .bg_maxplayer[.bg_change] ||
 		$@eBG_member_size >= .bg_maxplayer[.bg_change]) {
-		dispbottom("Please Wait till Current BG gets Over...");
+		dispbottom(_("Please Wait till Current BG gets Over..."));
 		end;
 	}
 	// Attempt to join
@@ -592,7 +592,7 @@ OnStartBG:
 		 * 	Invalid Map
 		 * 	Invalid GuildID
 		 */
-		dispbottom("Failed to Join BG. Try again later.");
+		dispbottom(_("Failed to Join BG. Try again later."));
 		break;
 	}
 	end;
@@ -711,7 +711,7 @@ OnLeaveBGSub:
 OnLeaveBG:	// Replicate in bg_team_delete_pre (called when used .@leavebg/leaved bg via logout/mapchange)	
 	if (on_ebg() == false) {
 		if (!.@dont_warn)
-			dispbottom("You are Not on Any Kind of BG");
+			dispbottom(_("You are Not on Any Kind of BG"));
 		if (.@ret_func)
 			return 0;
 		end;	// .@ret_func = 0
@@ -722,7 +722,7 @@ OnLeaveBG:	// Replicate in bg_team_delete_pre (called when used .@leavebg/leaved
 
 		callsub(OnLeaveBGSourceSub, 1);
 		// Act as if player has logged out.
-		dispbottom("BG Leaved");
+		dispbottom(_("BG Leaved"));
 		
 		// Warp back to savepoint
 		if (getmapflag(strcharinfo(PC_MAP), mf_battleground))
@@ -821,7 +821,7 @@ OnBGStart:	// BG Starts
 			.@index = $bg_conquest_rotate; // Check map index
 			.@Castle$ = "ebg_conq0"+ (.@index + 1);
 			.@announce$ = _("-- Reinforcements entering the Battle of Conquest --");
-			.@color$ = _("0xFFA500"); // Color of Announce
+			.@color$ = "0xFFA500"; // Color of Announce
 			// Warp positions for Attacker and Defender
 			setarray .@bg_conquest_Defender_XY[0],	120, 129,  // ebg_conq01
 													136, 188,  // ebg_conq02
@@ -907,7 +907,7 @@ OnBGStart:	// BG Starts
 			.@index = $bg_rush_rotate;
 			.@Castle$ = "ebg_rush0"+ (.@index + 1);
 			.@announce$ = _("-- Reinforcements entering the Battle of Rush --");
-			.@color$ = _("0xDDA0DD");
+			.@color$ = "0xDDA0DD";
 			// Defender BG Id
 			.@Defender = getvariableofnpc(.Defender, "eBG_Rush");
 

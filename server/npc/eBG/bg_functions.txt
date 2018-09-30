@@ -331,13 +331,13 @@ function	script	F_eBGTeamName	{
 	.@team = getarg(0, -1);
 	switch(.@team) {
 		case GUILLAUME:
-			return "Blue Team";
+			return _("Blue Team");
 		case CROIX:
-			return "Red Team";
+			return _("Red Team");
 		case TRAITOR:
-			return "Green Team";
+			return _("Green Team");
 	}
-	return "Null - Error";
+	return _("Null - Error");
 }
 
 /**
@@ -351,13 +351,13 @@ function	script	F_eBGNPCName	{
 	 */
 	switch(.@team) {
 		case GUILLAUME:
-			return "Guillaume";
+			return _("Guillaume");
 		case CROIX:
-			return "Croix";
+			return _("Croix");
 		case TRAITOR:
-			return "Traitor";
+			return _("Traitor");
 	}
-	return "Neutral";
+	return _("Neutral");
 }
 
 /*
@@ -647,13 +647,13 @@ function	script	F_eBG_Status	{
 	.@status = getarg(0, 0);
 	switch(.@status) {
 		case EBG_NOT_STARTED:
-			return "Waiting for Players";
+			return _("Waiting for Players");
 		case EBG_RUNNING:
-			return "InProgress";
+			return _("In Progress");
 		case EBG_ENDING:
-			return "About to End";
+			return _("About to End");
 	}
-	return "-----";
+	return _("-----");
 }
 
 /**
@@ -736,16 +736,16 @@ function	script	F_eBG_Time_Left	{
 		case BGT_RUSH:
 			.@timer = (getnpctimer(0, .@npc_name$)/1000);
 			.@time_minutes = getvariableofnpc(.time_remaining, .@npc_name$) - 1;
-			dispbottom("Time Left: "+ .@time_minutes +" minutes "+ (60-.@timer) +" seconds.");
+			dispbottom(sprintf(_$("Time Left: %d minutes %d seconds."), .@time_minutes, (60-.@timer)));
 			break;
 
 		case BGT_EOS:
 		case BGT_DOM:
 		case BGT_TOUCHDOWN:
-			dispbottom("Current BG does not have any specific time to end.");
+			dispbottom(_("Current BG does not have any specific time to end."));
 			break;
 		default:
-			dispbottom("This BG is not yet supported. Contact GM.");
+			dispbottom(_("This BG is not yet supported. Contact GM."));
 			break;
 	}
 	return;

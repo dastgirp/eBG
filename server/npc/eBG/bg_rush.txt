@@ -58,7 +58,7 @@ OnReadyCheck:
 	callsub(OnSpawnEmperium, 0);
 	// ======================================
 	sleep 4000;
-	mapannounce(.Castle$, "Move on warriors!! Let's capture this Castle!!", bc_map, 0xDDA0DD);
+	mapannounce(.Castle$, _("Move on warriors!! Let's capture this Castle!!"), bc_map, 0xDDA0DD);
 	end;
 
 OnEmp:
@@ -70,7 +70,7 @@ OnEmp:
 		initnpctimer;
 		.time_remaining = getvariableofnpc(.bg_time[BGT_RUSH], "BG_Settings");
 		.Defender = getcharid(4);
-		mapannounce(.Castle$ ,bg_info(.Defender,1) + " : Castle captured, now prepare to Defend it!!", bc_map, bg_info(.Defender,2));
+		mapannounce(.Castle$, sprintf(_$("%s : Castle captured, now prepare to Defend it!!"), bg_info(.Defender, 1)), bc_map, bg_info(.Defender,2));
 		.@attacker = 1;
 		if (.Defender == $@ebg_rush_BG_id1) {
 			.@attacker = 2;
@@ -93,12 +93,12 @@ OnEmp:
 		donpcevent("rush_respawn#17::OnBGStart");
 
 		sleep 5000;
-		mapannounce(.Castle$, bg_info(.Attacker, 1) + " : Capture the Castle, it's our last chance to Win!!", 1, bg_info(.Attacker, 2));
+		mapannounce(.Castle$, sprintf(_$("%s : Capture the Castle, it's our last chance to Win!!"), bg_info(.Attacker, 1)), 1, bg_info(.Attacker, 2));
 		end;
 	}
 
 	// End on Second Capture
-	mapannounce(.Castle$, bg_info(.Attacker, 1) + " : Castle captured, we won the Battle!!", 1, bg_info(.Attacker, 2));
+	mapannounce(.Castle$, sprintf(_$("%s : Castle captured, we won the Battle!!"), bg_info(.Attacker, 1)), 1, bg_info(.Attacker, 2));
 	if (.Defender == $@ebg_rush_BG_id1)
 		.Team2_Score = 2;
 	else
@@ -110,14 +110,14 @@ OnEmp:
 OnTimer60000:
 	.time_remaining--;
 	if (.time_remaining != 0) {
-		mapannounce(.Castle$, "Battle of Rush will ends in "+ .time_remaining +" Minutes!!", bc_map, 0xDDA0DD);
+		mapannounce(.Castle$, sprintf(_$("Battle of Rush will ends in %d Minutes!!"), .time_remaining), bc_map, 0xDDA0DD);
 		initnpctimer;
 		end;
 	}
 	if (.Defender == 0) {
-		mapannounce(.Castle$, "Castle captured Fail. No winners", bc_map, 0xDDA0DD);
+		mapannounce(.Castle$, _("Castle captured Fail. No winners"), bc_map, 0xDDA0DD);
 	} else {
-		mapannounce(.Castle$, bg_info(.Defender, 1) + " : Castle protected, we won the Battle!!", 1, bg_info(.Defender,2));
+		mapannounce(.Castle$, sprintf(_$("%s : Castle protected, we won the Battle!!"), bg_info(.Defender, 1)), 1, bg_info(.Defender,2));
 		if (.Defender == $@ebg_rush_BG_id1)
 			.Team1_Score = 3;
 		else
