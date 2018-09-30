@@ -2038,7 +2038,12 @@ int pc_setpos_pre(struct map_session_data **sd, unsigned short *map_index_, int 
 int skill_notok_pre(uint16 *skill_id, struct map_session_data **sd)
 {
 	int16 idx;
+	struct sd_p_data *data;
+	struct ebg_mapflags *mf_data;
 	nullpo_retr(1, *sd);
+
+	if (*skill_id != GD_EMERGENCYCALL) 
+		return 1;
 
 	idx = skill->get_index(*skill_id);
 
@@ -2047,39 +2052,43 @@ int skill_notok_pre(uint16 *skill_id, struct map_session_data **sd)
 		return 1;
 	}
 
-	if (idx == 0 || pc_has_permission(*sd, PC_PERM_DISABLE_SKILL_USAGE))
+	if (idx == 0 || pc_has_permission(*sd, PC_PERM_DISABLE_SKILL_USAGE)) {
+		hookStop();
 		return 1;
+	}
 
 	if ((*sd)->blockskill[idx]) {
 		clif->skill_fail(*sd, *skill_id, USESKILL_FAIL_SKILLINTERVAL, 0, 0);
+		hookStop();
 		return 1;
 	}
 
 	if ((*sd)->skillitem == *skill_id) {
+		hookStop();
 		return 0;
 	}
 
 	if ((*sd)->sc.data[SC_ALL_RIDING]) {
+		hookStop();
 		return 1;
 	}
 
 	eShowDebug("NotOk: Emergency Skill1 - 1\n");
-	if (*skill_id == GD_EMERGENCYCALL) {
-		struct sd_p_data *data = pdb_search(*sd, false);
-		struct ebg_mapflags *mf_data = getFromMAPD(&map->list[(*sd)->bl.m], 0);
 
-		if (mf_data && mf_data->no_ec) {
-			clif->message((*sd)->fd, "Emergency Call cannot be cast here.");
-			hookStop();
-			return 1;
-		}
+	data = pdb_search(*sd, false);
+	mf_data = getFromMAPD(&map->list[(*sd)->bl.m], 0);
 
-		eShowDebug("NotOk: Emergency Skill1 - 2: %d\n", (data && data->leader)? 1: 0);
-		if (data != NULL && map->list[(*sd)->bl.m].flag.battleground && data->eBG == true && data->leader) {
-			eShowDebug("NotOk: Emergency Skill1 - 3\n");
-			hookStop();
-			return 0;
-		}
+	if (mf_data && mf_data->no_ec) {
+		clif->message((*sd)->fd, "Emergency Call cannot be cast here.");
+		hookStop();
+		return 1;
+	}
+
+	eShowDebug("NotOk: Emergency Skill1 - 2: %d\n", (data && data->leader)? 1: 0);
+	if (data != NULL && map->list[(*sd)->bl.m].flag.battleground && data->eBG == true && data->leader) {
+		eShowDebug("NotOk: Emergency Skill1 - 3\n");
+		hookStop();
+		return 0;
 	}
 	return 1;
 }

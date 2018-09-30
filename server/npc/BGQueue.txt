@@ -616,6 +616,9 @@ function	script	F_joinTeams	{
 					$@eBG_member_group[$@eBG_member_size] = .@group;
 					$@eBG_member_type[$@eBG_member_size] = .@type;
 					$@eBG_member_size++;
+
+					// Remove from Queue
+					@BG_GlobalQueueID = 0;
 				}
 				queueremove(.@queue[.@i], .@p);
 				if (.@max_p == $@eBG_member_size)
