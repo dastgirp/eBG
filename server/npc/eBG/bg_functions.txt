@@ -437,12 +437,15 @@ function	script	F_ValidateeBG	{
 		.@check = @BG_Team;
 	}
 	
-	if (.@check > 0 && .@clear > 0){
-		@BG_TeamJoin = 0;
+	// Was on Team and Clear Variables is true
+	if (.@clear > 0) {
+		if (.@check > 0) {
+			@BG_TeamJoin = 0;
+			@BG_TeamID = 0;
+			@BG_Team = 0;
+			@bg_killer_id = 0;
+		}
 		//@BG_ID = BGT_MAX; // Handled by bg_common OnPCLogoutEvent
-		@BG_TeamID = 0;
-		@BG_Team = 0;
-		@bg_killer_id = 0;
 		@BG_GlobalQueueID = 0;
 	}
 	return .@check;
@@ -485,9 +488,8 @@ function	script	F_queueclear	{
 		.@it = queueiterator(.@queue_id);
 		for (.@p = qiget(.@it); qicheck(.@it); .@p = qiget(.@it)) {
 			if (attachrid(.@p)) {
-				@BG_Team = 0;
 				callfunc("F_ValidateeBG", @BG_ID, 1);
-				bg_join_time = gettimetick(2) + .bg_maxtime[@BG_ID];	// Sets Time to join Again
+				bg_join_time = gettimetick(2) + getvariableofnpc(.bg_maxtime[@BG_ID], "BG_Settings");	// Sets Time to join Again
 			}
 			queueremove(.@queue,.@p);
 		}

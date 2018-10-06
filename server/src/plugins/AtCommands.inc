@@ -243,7 +243,7 @@ ACMD(leader)
 	char output[100];
 	unsigned int color;
 
-	if (data == NULL || !data->eBG == false || sd->bg_id == 0 || (bgd = bg->team_search(sd->bg_id)) == NULL || (bg_data_t = bg_extra_create(bgd, false)) == NULL) {
+	if (data == NULL || !data->eBG || sd->bg_id == 0 || (bgd = bg->team_search(sd->bg_id)) == NULL || (bg_data_t = bg_extra_create(bgd, false)) == NULL) {
 		clif->message(fd, "Command only allowed while in eBG.");
 		return false;
 	}

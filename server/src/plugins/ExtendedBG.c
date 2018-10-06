@@ -1921,26 +1921,13 @@ void eBG_turnOff(struct map_session_data *sd)
 	data->flag.ebg_afk = 0;	// Set AFK Timer to 0
 	eShowDebug("Checking data->g bg_end...");
 	/// Remove Guild Data if found 
-	if (
+	eShowDebug("BG Leave: Guild Found\n");
 #ifndef VIRT_GUILD
-	data->g
-#else
-	bgd != NULL &&
-	((bg_data_t = bg_extra_create(bgd, false)) != NULL) &&
-	bg_data_t->g
-#endif
-	) {
-		eShowDebug("BG Leave: Guild Found\n");
-#ifdef VIRT_GUILD
-		bg_data_t->g->connect_member--;
-#else
+	if (data->g) {
 		if (sd->guild) {
 			sd->guild->connect_member--;
 			eBG_Guildremove(sd, sd->guild);
 		}
-#endif
-		eShowDebug("BG Leave: Guild Removed\n");
-#ifndef VIRT_GUILD
 		if (data->g) {
 			sd->status.guild_id = data->g->guild_id;
 			sd->guild = data->g;
@@ -1951,8 +1938,13 @@ void eBG_turnOff(struct map_session_data *sd)
 			eShowDebug("BG Leave: sd->g = 0\n");
 		}
 		data->g = NULL;
-#endif
 	}
+	
+#else
+	if (bgd != NULL) {
+		bgd->count--;
+	}
+#endif
 	clear_bg_guild_data(sd, bgd);
 
 	ebg_clear_hpsp_timer(sd, EBG_HP_TIME | EBG_SP_TIME | EBG_EXTRA_TIME); // Clear HpSp Timer
@@ -3353,12 +3345,14 @@ int bg_e_team_leave(struct map_session_data **sd_, enum bg_team_leave_type* flag
 	struct battleground_data *bgd = NULL;
 #ifdef VIRT_GUILD
 	struct bg_extra_info *bg_data_t;
-	bgd = bg->team_search(sd->bg_id);
-	bg_data_t = bg_extra_create(bgd, false);
 #endif
 	data = pdb_search(sd, false);
 	if (data == NULL || !data->eBG || !sd->bg_id)
 		return 0;
+#ifdef VIRT_GUILD
+	bgd = bg->team_search(sd->bg_id);
+	bg_data_t = bg_extra_create(bgd, false);
+#endif
 	eShowDebug("BG_LEAVE: %u ID \n", sd->bg_id);
 	
 	if ( data &&
