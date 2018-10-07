@@ -170,7 +170,7 @@ EOF
 	getrepo)
 		echo "Cloning Hercules repository..."
 		# Clone Hercules Repository
-		git clone https://github.com/HerculesWS/Hercules.git tmp || aborterror "Unable to fetch Hercules repository"
+		git clone --depth=1 https://github.com/HerculesWS/Hercules.git tmp || aborterror "Unable to fetch Hercules repository"
 		echo "Moving tmp to root directory"
 		yes | cp -a tmp/* .
 		# Move Required files for eBG to Hercules Folder
