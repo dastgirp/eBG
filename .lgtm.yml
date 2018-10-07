@@ -1,0 +1,4 @@
+extraction:
+  c:
+    after_prepare:
+      - ./travis-eBG.sh getrepo || true
