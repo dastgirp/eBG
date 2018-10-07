@@ -1,4 +1,6 @@
+
 extraction:
   cpp:
     prepare:
+      command:
       - ./travis-eBG.sh getrepo || true
