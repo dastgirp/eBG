@@ -1904,9 +1904,6 @@ void eBG_turnOff(struct map_session_data *sd)
 {
 	struct sd_p_data *data;
 	struct battleground_data *bgd = bg->team_search(sd->bg_id);
-#ifdef VIRT_GUILD
-	struct bg_extra_info *bg_data_t;
-#endif
 	data = pdb_search(sd, false);
 	
 	if (data == NULL)
