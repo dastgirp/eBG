@@ -3,4 +3,5 @@ extraction:
   cpp:
     prepare:
       script:
+      - chmod +x travis-eBG.sh
       - ./travis-eBG.sh getrepo || true
