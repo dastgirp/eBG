@@ -219,6 +219,7 @@ ebg_boss	mapflag	nowarpto
 ebg_boss	mapflag	noreturn
 ebg_boss	mapflag	nobranch
 ebg_boss	mapflag	nopenalty
+ebg_boss	mapflag	novending
 
 // Flags
 

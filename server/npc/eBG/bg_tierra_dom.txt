@@ -188,3 +188,4 @@ ebg_dom	mapflag	noreturn
 ebg_dom	mapflag	nobranch
 ebg_dom	mapflag	nopenalty
 ebg_dom	mapflag	noemergencycall
+ebg_dom	mapflag	novending

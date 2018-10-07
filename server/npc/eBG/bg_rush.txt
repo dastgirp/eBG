@@ -247,6 +247,7 @@ ebg_rush01	mapflag	nowarpto
 ebg_rush01	mapflag	noreturn
 ebg_rush01	mapflag	nobranch
 ebg_rush01	mapflag	nopenalty
+ebg_rush01	mapflag	novending
 
 ebg_rush02	mapflag	battleground	2
 ebg_rush02	mapflag	nomemo
@@ -257,6 +258,7 @@ ebg_rush02	mapflag	nowarpto
 ebg_rush02	mapflag	noreturn
 ebg_rush02	mapflag	nobranch
 ebg_rush02	mapflag	nopenalty
+ebg_rush02	mapflag	novending
 
 ebg_rush03	mapflag	battleground	2
 ebg_rush03	mapflag	nomemo
@@ -267,6 +269,7 @@ ebg_rush03	mapflag	nowarpto
 ebg_rush03	mapflag	noreturn
 ebg_rush03	mapflag	nobranch
 ebg_rush03	mapflag	nopenalty
+ebg_rush03	mapflag	novending
 
 ebg_rush04	mapflag	battleground	2
 ebg_rush04	mapflag	nomemo
@@ -277,3 +280,4 @@ ebg_rush04	mapflag	nowarpto
 ebg_rush04	mapflag	noreturn
 ebg_rush04	mapflag	nobranch
 ebg_rush04	mapflag	nopenalty
+ebg_rush04	mapflag	novending

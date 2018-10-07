@@ -457,6 +457,7 @@ ebg_eos	mapflag	noreturn
 ebg_eos	mapflag	nobranch
 ebg_eos	mapflag	nopenalty
 ebg_eos	mapflag	noemergencycall
+ebg_eos	mapflag	novending
 
 // Eye of the Storm Effects
 // *********************************************************************

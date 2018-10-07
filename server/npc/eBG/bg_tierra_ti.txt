@@ -183,6 +183,7 @@ ebg_tti	mapflag	nowarpto
 ebg_tti	mapflag	noreturn
 ebg_tti	mapflag	nobranch
 ebg_tti	mapflag	nopenalty
+ebg_tti	mapflag	novending
 
 // Emblem Flags
 

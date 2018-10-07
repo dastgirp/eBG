@@ -390,3 +390,4 @@ ebg_ctf	mapflag	noreturn
 ebg_ctf	mapflag	nobranch
 ebg_ctf	mapflag	nopenalty
 ebg_ctf	mapflag	noemergencycall
+ebg_ctf	mapflag	novending

@@ -155,3 +155,4 @@ ebg_td	mapflag	nowarpto
 ebg_td	mapflag	noreturn
 ebg_td	mapflag	nobranch
 ebg_td	mapflag	nopenalty
+ebg_td	mapflag	novending

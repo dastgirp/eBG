@@ -372,3 +372,4 @@ ebg_sc	mapflag	noreturn
 ebg_sc	mapflag	nobranch
 ebg_sc	mapflag	nopenalty
 ebg_sc	mapflag	noemergencycall
+ebg_sc	mapflag	novending

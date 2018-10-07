@@ -951,6 +951,7 @@ ebg_conq01	mapflag	noreturn
 ebg_conq01	mapflag	nobranch
 ebg_conq01	mapflag	nopenalty
 ebg_conq01	mapflag	nodrop
+ebg_conq01	mapflag	novending
 
 ebg_conq02	mapflag	battleground
 ebg_conq02	mapflag	nomemo
@@ -962,6 +963,7 @@ ebg_conq02	mapflag	noreturn
 ebg_conq02	mapflag	nobranch
 ebg_conq02	mapflag	nopenalty
 ebg_conq02	mapflag	nodrop
+ebg_conq02	mapflag	novending
 
 ebg_conq03	mapflag	battleground
 ebg_conq03	mapflag	nomemo
@@ -973,6 +975,7 @@ ebg_conq03	mapflag	noreturn
 ebg_conq03	mapflag	nobranch
 ebg_conq03	mapflag	nopenalty
 ebg_conq03	mapflag	nodrop
+ebg_conq03	mapflag	novending
 
 ebg_conq04	mapflag	battleground
 ebg_conq04	mapflag	nomemo
@@ -984,6 +987,7 @@ ebg_conq04	mapflag	noreturn
 ebg_conq04	mapflag	nobranch
 ebg_conq04	mapflag	nopenalty
 ebg_conq04	mapflag	nodrop
+ebg_conq04	mapflag	novending
 
 ebg_conq05	mapflag	battleground
 ebg_conq05	mapflag	nomemo
@@ -995,6 +999,7 @@ ebg_conq05	mapflag	noreturn
 ebg_conq05	mapflag	nobranch
 ebg_conq05	mapflag	nopenalty
 ebg_conq05	mapflag	nodrop
+ebg_conq05	mapflag	novending
 
 ebg_conq06	mapflag	battleground
 ebg_conq06	mapflag	nomemo
@@ -1006,3 +1011,4 @@ ebg_conq06	mapflag	noreturn
 ebg_conq06	mapflag	nobranch
 ebg_conq06	mapflag	nopenalty
 ebg_conq06	mapflag	nodrop
+ebg_conq06	mapflag	novending
