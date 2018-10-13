@@ -5885,6 +5885,44 @@ void chrif_on_ready_post(void)
 	bg_fame_receive();      // Builds FameData.
 }
 
+int64 battle_calc_emp_damage(struct block_list *src, struct block_list *bl, int64 damage, uint16 skill_id, int flag)
+{
+	nullpo_retr(damage, src);
+	nullpo_retr(damage, bl);
+
+	if (src->type == BL_PC && bl->type == BL_MOB) {
+		struct map_session_data *sd = BL_CAST(BL_PC, src);
+		struct mob_data *md = BL_CAST(BL_MOB, bl);
+		struct sd_p_data *data;
+		data = pdb_search(sd, false);
+		if (data && data->eBG && md->class_ == MOBID_EMPELIUM && flag&BF_SKILL) {
+			//Skill immunity.
+			switch (skill_id) {
+#ifndef RENEWAL
+			case MO_TRIPLEATTACK:
+			case HW_GRAVITATION:
+#endif
+			case TF_DOUBLE:
+				break;
+			default:
+				return 0;
+			}
+		}
+	}
+
+	return damage;
+}
+
+int64 battle_calc_gvg_damage_post(int64 retVal, struct block_list *src, struct block_list *bl, int64 damage, int div_, uint16 skill_id, uint16 skill_lv, int flag)
+{
+	return battle_calc_emp_damage(src, bl, retVal, skill_id, flag);
+}
+
+int64 battle_calc_bg_damage_post(int64 retVal, struct block_list *src, struct block_list *bl, int64 damage, int div_, uint16 skill_id, uint16 skill_lv, int flag)
+{
+	return battle_calc_emp_damage(src, bl, retVal, skill_id, flag);
+}
+
 void bg_initialize_constants(void)
 {
 	/// Common Constants 
@@ -6101,6 +6139,8 @@ HPExport void plugin_init(void)
 	addHookPost(pc, dead, pc_dead_post);
 	addHookPost(bg, send_dot_remove, remove_teampos);
 	addHookPost(bg, send_xy_timer, send_pos_location);
+	addHookPost(battle, calc_gvg_damage, battle_calc_gvg_damage_post);
+	addHookPost(battle, calc_bg_damage, battle_calc_bg_damage_post);
 
 	// Atcommands
 	addAtcommand("get_value", get_value);
