@@ -473,7 +473,8 @@ OnBGAnnounce: // Announce remaining players
 		for (.@i = 1; .@i <= .bg_teams[.bg_change]; .@i++) {
 			if (.@i != 1)
 				.@msg$ += _(" vs ");
-			.@msg$ += sprintf(_$("%d/%d"), bg_get_data(getd("$@"+ .bg_mapname$[.bg_change] +"_BG_id"+ .@i), 0), .bg_maxplayer[.bg_change]);
+			.@player = bg_get_data(getd("$@"+ .bg_mapname$[.bg_change] +"_BG_id"+ .@i), 0);
+			.@msg$ += sprintf(_$("%d/%d"), .@player, .bg_maxplayer[.bg_change]);
 		}
 		bg_announce(sprintf(_$("ExtendedBG -- %s -- %s Playing"), .bg_name$[.bg_change], .@msg$), .@type, .bg_colors$[.bg_change]);
 	}
@@ -667,10 +668,12 @@ OnLeaveBGSource:	// called from Source
 	bg_hpsp_time_del(EBG_HP_TIME | EBG_SP_TIME | EBG_EXTRA_TIME);
 
 	bg_end(.@BG_ID);
+
 	bg_leave();
 
 	// Remove from queue
 	queueremove(getd("$@"+ .bg_mapname$[.@BG_ID] +"_BG_queue"+ @BG_Team), getcharid(3));
+
 	// Clear Variables and set rejoin time.
 	bg_join_time = gettimetick(2) + .bg_maxtime[.@BG_ID];	//Sets Time to join Again
 
@@ -708,10 +711,12 @@ OnLeaveBGSub:
 	.@dont_warn = getarg(0, 1);
 	.@ret_func = getarg(1, 1);
 	// Fallthrough
-OnLeaveBG:	// Replicate in bg_team_delete_pre (called when used .@leavebg/leaved bg via logout/mapchange)	
+// Not Called when logout
+OnLeaveBG:	// Replicate in bg_team_delete_pre (called when used .@leavebg/leaved bg via mapchange)	
 	if (on_ebg() == false) {
-		if (!.@dont_warn)
+		if (!.@dont_warn) {
 			dispbottom(_("You are Not on Any Kind of BG"));
+		}
 		if (.@ret_func)
 			return 0;
 		end;	// .@ret_func = 0

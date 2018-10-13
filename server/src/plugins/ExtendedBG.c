@@ -3514,16 +3514,21 @@ void ebg_request_save_data(int64 save_type, struct sd_p_data *sd_data, struct ma
 			} \
 		}
 
+
 /**
- * map->quit PreHooked
+ * npc->script_event PostHooked
  * Executes pc_logout_action
  * @see map_quit
  * @see pc_logout_action
- * @return 0
+ * @return retVal
+ * @note Not using map_quit since it would cause the variables to be cleared by source
+ *       which would cause logout event label to not be executed.
  **/
-int bg_clear_char_data_hook(struct map_session_data **sd) {
-	pc_logout_action(*sd);
-	return 0;
+int bg_clear_char_data_hook(int retVal, struct map_session_data *sd, enum npce_event type) {
+	if (sd != NULL && type == NPCE_LOGOUT) {
+		pc_logout_action(sd);
+	}
+	return retVal;
 }
 
 /**
@@ -6122,7 +6127,6 @@ HPExport void plugin_init(void)
 	addHookPre(clif, maptypeproperty2, send_map_property);
 	//addHookPost(clif, map_type, Stop_This_Shitty_Battleground_Check);
 #endif
-	addHookPre(map, quit, bg_clear_char_data_hook);
 	addHookPre(skill, check_condition_castbegin, gmaster_skill_cast);
 	addHookPre(clif, pUseSkillToId, unit_guild_skill);
 	addHookPre(skill, castend_nodamage_id, skill_castend_guild);
@@ -6136,6 +6140,7 @@ HPExport void plugin_init(void)
 	addHookPre(pc, update_idle_time, update_ebg_idle);
 	addHookPre(bg, send_xy_timer_sub, set_ebg_idle);
 	// Post Hooks
+	addHookPost(npc, script_event, bg_clear_char_data_hook);
 	addHookPost(pc, dead, pc_dead_post);
 	addHookPost(bg, send_dot_remove, remove_teampos);
 	addHookPost(bg, send_xy_timer, send_pos_location);
