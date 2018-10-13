@@ -329,9 +329,9 @@ OnBarricade3:
 	end;
 
 OnEmperium:
-	bg_addpoints BG_CONQ_EMPERIUM, 1, 1;
+	bg_addpoints(BG_CONQ_EMPERIUM, 1, 1);
 	.Score++;
-	mapannounce(.Castle$, sprintf(_$("The %s army has won the Battle and captured the Castle!!"), bg_info(.Attacker,0)), bc_map, bg_info(.Attacker, 2));
+	mapannounce(.Castle$, sprintf(_$("The %s army has won the Battle and captured the Castle!!"), bg_info(.Attacker, 0)), bc_map, bg_info(.Attacker, 2));
 	donpcevent("eBG_Conquest::OnMatchEnd");
 	end;
 
@@ -342,7 +342,8 @@ OnTimer60000:
 		initnpctimer;
 		end;
 	}
-	mapannounce(.Castle$, sprintf(_$("The %s army has won the Battle and protected the Castle!!"), bg_info(.Defender,0)), bc_map, bg_info(.Defender, 2));
+	mapannounce(.Castle$, sprintf(_$("The %s army has won the Battle and protected the Castle!!"), bg_info(.Defender, 0)), bc_map, bg_info(.Defender, 2));
+	// FALLTHROUGH
 OnMatchEnd:
 OnMatchStop:
 	stopnpctimer;
@@ -365,7 +366,7 @@ OnMatchStop:
 	callfunc("F_EndeBG", "ebg_conquest", 2, "ebg_conq0"+ ($bg_conquest_rotate + 1));
 
 	// Delete Wall(s)
-	for (.@i = 0; @i <= 3; ++.@i) {
+	for (.@i = 0; .@i <= 3; ++.@i) {
 		if (checkwall("conq_wall0"+ .@i)) {
 			delwall("conq_wall0"+ .@i);
 		}

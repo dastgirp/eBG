@@ -1939,8 +1939,10 @@ void eBG_turnOff(struct map_session_data *sd)
 	
 #else
 	if (bgd != NULL) {
-		bgd->count--;
+		if (bgd->count > 0)
+			bgd->count--;
 	}
+	
 #endif
 	clear_bg_guild_data(sd, bgd);
 
@@ -3387,7 +3389,7 @@ int bg_e_team_leave(struct map_session_data **sd_, enum bg_team_leave_type* flag
 	clear_bg_guild_data(sd, bgd);
 	
 	if (bgd != NULL) {
-		--bgd->count;
+		// bgd count is decreased in ebg_turn_off
 		return bgd->count;
 	} else {
 		return 0;
