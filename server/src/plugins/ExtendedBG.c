@@ -229,18 +229,18 @@ enum Battleground_Types {
 };
 
 /// BattleConf Settings Start
-int bg_reward_rates = 100;      ///< Reward Rates? (100=Normal)(Default: 100)
-int bg_ranked_mode = 1;         ///< Enable Rank Mode? (1=Yes, 0=No)(Default: 1)
-int bg_max_rank_game = 50;      ///< Total Ranked Matches in a Day(Default: 50)
-int bg_rank_bonus = 1;          ///< Enable Rank Bonus (1=Yes, 0=No)(Default: 1)
-int bg_rank_rates = 150;        ///< Ranked Games Extra Rewards (100 = Normal)(Default: 150)
-int bg_queue_townonly = 1;      ///< Can Only Join from Town (1=Yes, 0=No)(Default: 1)
-int bg_idle_announce = 30;      ///< Idle time after which player is marked afk(Default: 300s)
-int bg_kick_idle = 0;           ///< Auto Kick Idle Players(Default: 0)
-int bg_reportafk_leader = 1;    ///< Only Leader can use \@reportafk(Default: 1)
-int bg_log_kill = 7;            ///< Log Kills, 0=None, 1=Log BG Kills, 2= Log WoE Kills, 4 = Log Kills on all other maps.
-int bg_reserved_char_id = INT_MAX-100;  ///< Reserved CharID for BG Items
-int woe_reserved_char_id = INT_MAX-101; ///< Reserved CharID for WoE Items
+int bg_reward_rates = 100;        ///< Reward Rates? (100=Normal)(Default: 100)
+int bg_ranked_mode = 1;           ///< Enable Rank Mode? (1=Yes, 0=No)(Default: 1)
+int bg_max_rank_game = 10;        ///< Total Ranked Matches in a Day(Default: 10)
+int bg_rank_bonus = 1;            ///< Enable Rank Bonus (1=Yes, 0=No)(Default: 1)
+int bg_rank_rates = 150;          ///< Ranked Games Extra Rewards (100 = Normal)(Default: 150)
+int bg_queue_townonly = 1;        ///< Can Only Join from Town (1=Yes, 0=No)(Default: 1)
+int bg_idle_announce = 300;       ///< Idle time after which player is marked afk(Default: 300s)
+int bg_kick_idle = 0;             ///< Auto Kick Idle Players(Default: 0)
+int bg_reportafk_leader = 1;      ///< Only Leader can use \@reportafk(Default: 1)
+int bg_log_kill = 7;              ///< Log Kills, 0=None, 1=Log BG Kills, 2= Log WoE Kills, 4 = Log Kills on all other maps.
+int bg_reserved_char_id = 99999;  ///< Reserved CharID for BG Items
+int woe_reserved_char_id = 99998; ///< Reserved CharID for WoE Items
 
 /**
  * Battleground Data
