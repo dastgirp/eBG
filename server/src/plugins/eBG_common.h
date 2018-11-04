@@ -52,7 +52,7 @@ const unsigned int bg_colors[4] = {
 	/// eBG Guild Start ID
 	#define EBG_GUILDSTART 901
 	/// eBG Guild End ID
-	#define EBG_GUILDEND 913
+	#define EBG_GUILDEND (EBG_GUILDSTART + 12)
 #endif
 
 /**

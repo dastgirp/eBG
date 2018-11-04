@@ -6052,9 +6052,9 @@ void bg_initialize_constants(void)
 	script->set_constant("TRAITOR", 3, false, false);
 	
 	/// BG Conditions
-	script->set_constant("BGC_WON", BGC_WON, false, false);
-	script->set_constant("BGC_LOSS", BGC_LOSS, false, false);
-	script->set_constant("BGC_TIE", BGC_TIE, false, false);
+	script->set_constant("BGC_WON", BGC_WON, false, false);                                 ///< 0
+	script->set_constant("BGC_LOSS", BGC_LOSS, false, false);                               ///< 1
+	script->set_constant("BGC_TIE", BGC_TIE, false, false);                                 ///< 2
 	
 	/// Arithmetic Constants
 	script->set_constant("EBG_ADD", EBG_A_ADD, false, false);                               ///< 0
@@ -6097,13 +6097,18 @@ void bg_initialize_constants(void)
 	script->set_constant("EBG_EXTRA_TIME", EBG_EXTRA_TIME, false, false);                 ///< 0x4
 	
 	/// bg_can_move Constants
-	script->set_constant("EBG_MOVABLE", 1, false, false);
-	script->set_constant("EBG_IMMOVABLE", 0, false, false);
+	script->set_constant("EBG_MOVABLE", 1, false, false);                                 ///< 1
+	script->set_constant("EBG_IMMOVABLE", 0, false, false);                               ///< 0
 
 	/// bg_announce flag constants
 	script->set_constant("BC_EBG", BC_EBG, false, false);                                 ///< 0x1
 	script->set_constant("BC_TEAMEBG", BC_TEAMEBG, false, false);                         ///< 0x2
-	script->set_constant("BC_SELFEBG", BC_SELFEBG, false, false);                         ///< 0x2
+	script->set_constant("BC_SELFEBG", BC_SELFEBG, false, false);                         ///< 0x4
+
+	/// Restricted items
+	script->set_constant("MAP_IS_NONE", MAP_IS_NONE, false, false);                       ///< 0X0
+	script->set_constant("MAP_IS_BG", MAP_IS_BG, false, false);                           ///< 0X1
+	script->set_constant("MAP_IS_WOE", MAP_IS_WOE, false, false);                         ///< 0X2
 }
 
 #include "eBG_common.c"
@@ -6211,6 +6216,7 @@ HPExport void plugin_init(void)
 	addScriptCommand("bg_script_timer", "is?", bg_script_timer);
 	addScriptCommand("bg_get_guild_id", "i", bg_get_guild_id);
 	addScriptCommand("checkwall", "s", checkwall);
+	addScriptCommand("getebgitem", "iii", getebgitem);
 	//#include "NewVersion_init.inc"
 	bg_initialize_constants();
 	

@@ -14,7 +14,11 @@ Support Forum: http://herc.ws/board/topic/8814-release-extendedbg-for-hercules-w
 # Installation Steps #
 
 Client:
-    Put the contents of resnametable.txt to GRF
+    1) Put the contents of resnametable.txt to GRF
+    2) Put the contents of mapnametable.txt to GRF
+    Optional:
+    1) To be done only if .bg_common[6] have 1st bit set and .bg_common[7] is custom Item
+        a) Put contents of System/itemInfo.lua to your itemInfo.lua/lub
 
 Server:
     Conf:
@@ -24,6 +28,10 @@ Server:
     DB:
         1) Copy db/emblems folder to your hercules/db/emblems folder
         2) Copy contents of db/map_index.txt at end of your map_index.txt
+        Optional:
+        1) To be done only if .bg_common[6] have 1st bit set and .bg_common[7] is custom Item
+            a) Copy the contents of item_db.conf to your item_db2.conf
+            b) Copy the contents of item_group.conf to your (pre-)re/item_group.conf
     MapCache:
         1) Copy all files in maps/ folder to "maps/re" or "maps/pre-re" depending on your configuration
     NPC:
@@ -37,5 +45,8 @@ Server:
             ExtendedBG-char
         (All other files are just includes)
     SQL:
-        1) Execute the file sql-files/main.sql on your SQL Server
+        1) Execute the file sql-files/bg_main.sql on your SQL Server
+        Optional(If VIRT_GUILD is commented from eBG_Common.h):
+        1) To be executed only IF VIRT_GUILD is commented from eBG_common.h,
+            a) Execute the file sql-files/bg_guild.sql
 

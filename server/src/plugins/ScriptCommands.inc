@@ -1434,6 +1434,10 @@ BUILDIN(bg_get_guild_id) {
 	return true;
 }
 
+/**
+ * checkwall("wall_name");
+ * Returns 1 if wall exist, else returns 0
+ */
 BUILDIN(checkwall) {
 	const char *name = script_getstr(st, 2);
 
@@ -1444,5 +1448,62 @@ BUILDIN(checkwall) {
 
 	script_pushint(st, 1);
 	return true;
+}
 
+/**
+ * 
+ */
+BUILDIN(getebgitem)
+{
+	int nameid = script_getnum(st, 2),
+		quantity = script_getnum(st, 3),
+		type = script_getnum(st, 4);
+	int id;
+	struct item item_tmp;
+	struct map_session_data *sd;
+
+	sd = script->rid2sd(st);
+	if (sd == NULL) // Player not attached!
+		return true;
+
+	if (!itemdb->exists(nameid)) {
+		script_pushint(st,0);
+		return true;
+	}
+
+	switch(type) {
+		case MAP_IS_BG:
+			id = bg_reserved_char_id;
+			break;
+		case MAP_IS_WOE:
+			id = woe_reserved_char_id;
+			break;
+		case -1:	// Special for NonExclusive Items
+			id = 0;
+			break;
+		default:
+			script_pushint(st, 0);
+			ShowError("getebgitem: Invalid Type(%d) For Item(%dx %d).\n", type, quantity, nameid);
+			return true;
+	}
+
+	
+	memset(&item_tmp, 0, sizeof(item_tmp));
+	item_tmp.nameid = nameid;
+	item_tmp.amount = quantity;
+	item_tmp.identify = 1;
+	if (id != 0) {
+		item_tmp.card[0] = CARD0_CREATE;
+		item_tmp.card[1] = 0;
+		item_tmp.card[2] = id;
+		item_tmp.card[3] = id >> 16;
+	}
+	if (pc->additem(sd, &item_tmp, 1, LOG_TYPE_SCRIPT)) {
+		// Failed to add item
+		script_pushint(st,0);
+		return true;
+	}
+
+	script_pushint(st,1);
+	return true;
 }
