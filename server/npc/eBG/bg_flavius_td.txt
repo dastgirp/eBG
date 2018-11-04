@@ -7,7 +7,7 @@ OnPCDieEvent:
 	.@die = true;
 OnPCLogoutEvent:
 	if (strcharinfo(PC_MAP) == "ebg_td" && $@eBG_start[BGT_TD] == EBG_RUNNING) {
-		.@team = callfunc("F_ValidateeBG",BGT_TD,0);
+		.@team = callfunc("F_ValidateeBG", BGT_TD, 0);
 		if (.@team != GUILLAUME && .@team != CROIX)
 			end;
 		if (.@die) {
@@ -35,7 +35,7 @@ OnTeamOff:
 
 
 OnReadyCheck:
-	if ($@eBG_start[BGT_TD])
+	if ($@eBG_start[BGT_TD] != EBG_NOT_STARTED)
 		end;
 
 	$@eBG_start[BGT_TD] = EBG_RUNNING;
@@ -46,19 +46,19 @@ OnReadyCheck:
 	.Team2_Score = $bg_flavius_td[0];
 	bg_updatescore "ebg_td", .Team1_Score, .Team2_Score;
 	sleep 2000;
-	bg_team_reveal $@ebg_td_BG_id1;
-	bg_team_reveal $@ebg_td_BG_id2;
+	bg_team_reveal($@ebg_td_BG_id1);
+	bg_team_reveal($@ebg_td_BG_id2);
 	donpcevent("td_respawn#10::OnBGStart");
 	donpcevent("td_respawn#11::OnBGStart");
 	end;
 
 OnValidateScore:
-	if ($@eBG_start[BGT_TD] != EBG_RUNNING)
+	if ($@eBG_start[BGT_TD] == EBG_NOT_STARTED)
 		return;
 	
 	.@timer = getarg(0, 0);	// 1 = Time Reached, Tie
 
-	bg_updatescore "ebg_td", .Team1_Score, .Team2_Score;
+	bg_updatescore("ebg_td", .Team1_Score, .Team2_Score);
 
 	/**
 	 * 2 Teams, AddScore = 0, StartingIndex = 1, CheckMethod(2)
@@ -77,6 +77,14 @@ OnValidateScore:
 
 OnTimer60000:
 	.time_remaining--;
+
+	// Players cannot join if only 2 minutes are left
+	if (.time_remaining <= 2) {
+		$@eBG_start[BGT_TD] = EBG_ENDING;
+	} else {
+		$@eBG_start[BGT_TD] = EBG_RUNNING;
+	}
+
 	if (.time_remaining != 0) {
 		mapannounce("ebg_td", sprintf(_$("The Battle will end in %d Minutes!!"), .time_remaining), bc_map, 0x808000);
 		initnpctimer;

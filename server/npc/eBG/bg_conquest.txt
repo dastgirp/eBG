@@ -245,7 +245,7 @@ OnBarricadeBuild:
 			break;
 	}
 	return;
-	
+
 OnReadyCheck:
 	if ($@eBG_start[BGT_CONQ] != EBG_NOT_STARTED)
 		end;
@@ -337,6 +337,14 @@ OnEmperium:
 
 OnTimer60000:
 	.time_remaining--;
+
+	// Players cannot join if only 2 minutes are left
+	if (.time_remaining <= 2) {
+		$@eBG_start[BGT_CONQ] = EBG_ENDING;
+	} else {
+		$@eBG_start[BGT_CONQ] = EBG_RUNNING;
+	}
+	
 	if (.time_remaining != 0) {
 		mapannounce(.Castle$, sprintf(_$("Battle of Conquest will ends in %d Minutes!!"), .time_remaining), bc_map, 0xFFA500);
 		initnpctimer;
@@ -346,6 +354,7 @@ OnTimer60000:
 	// FALLTHROUGH
 OnMatchEnd:
 OnMatchStop:
+	$@eBG_start[BGT_CONQ] = EBG_ENDING;
 	stopnpctimer;
 	donpcevent("conquest_respawn#14::OnBGStop");
 	donpcevent("conquest_respawn#15::OnBGStop");
@@ -355,7 +364,6 @@ OnMatchStop:
 	killmonster(.Castle$, "eBG_Conquest::OnBarricade3");
 	killmonster(.Castle$, "eBG_Conquest::OnGuardianStone");
 	killmonster(.Castle$, "eBG_Conquest::OnEmperium");
-	$@eBG_start[BGT_CONQ] = EBG_ENDING;
 	// =======================================================
 	// Team Rewards
 	// =======================================================

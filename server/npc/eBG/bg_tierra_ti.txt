@@ -14,7 +14,7 @@ OnInit:
 
 OnPCDieEvent:
 	/* Drops all the skull, new skull if other team was killed. */
-	if (strcharinfo(PC_MAP) == "ebg_tti"){
+	if (strcharinfo(PC_MAP) == "ebg_tti") {
 		.@team = callfunc("F_ValidateeBG", BGT_TI, 0);
 		if ($@eBG_start[BGT_TI] == EBG_RUNNING) {
 			getmapxy .@m$, .@x, .@y, 0;
@@ -35,7 +35,7 @@ OnPCDieEvent:
 	end;
 
 OnReadyCheck:
-	if ($@eBG_start[BGT_TI])
+	if ($@eBG_start[BGT_TI] != EBG_NOT_STARTED)
 		end;
 		
 	$@eBG_start[BGT_TI] = EBG_RUNNING;
@@ -63,7 +63,7 @@ OnReadyCheck:
 	end;
 
 OnValidateScore:
-	if ($@eBG_start[BGT_TI] != EBG_RUNNING)
+	if ($@eBG_start[BGT_TI] == EBG_NOT_STARTED)
 		end;
 	for (.@i = 1; .@i <= 3; .@i++)
 		if (getd(".Team"+.@i+"_Score") >= $bg_tierra_ti[3]){
@@ -74,6 +74,14 @@ OnValidateScore:
 
 OnTimer60000:
 	.time_remaining--;
+
+	// Players cannot join if only 2 minutes are left
+	if (.time_remaining <= 2) {
+		$@eBG_start[BGT_TI] = EBG_ENDING;
+	} else {
+		$@eBG_start[BGT_TI] = EBG_RUNNING;
+	}
+
 	if (.time_remaining != 0) {
 		mapannounce("ebg_tti", sprintf(_$("The Battle will end in %d Minutes!!"), .time_remaining), bc_map, 0x696969);
 		initnpctimer;

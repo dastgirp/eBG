@@ -53,7 +53,7 @@ OnTimerStop:
 	return;
 	
 OnTouch:
-	if ($@eBG_start[BGT_CTF] != EBG_RUNNING || Hp < 1)
+	if ($@eBG_start[BGT_CTF] == EBG_NOT_STARTED || Hp < 1)
 		end;
 		
 	.@self = atoi(strnpcinfo(2));
@@ -204,7 +204,7 @@ OnTeamDie:
 	.@x = getarg(4, -1);
 	.@y = getarg(5, -1);
 	// Team Member Quit/Die while carrying the flag
-	if ($@eBG_start[BGT_CTF] == EBG_RUNNING && getvariableofnpc(.Flag_Carry[.@oppose], "BG_Flag#eBG") == getcharid(0)) {
+	if ($@eBG_start[BGT_CTF] != EBG_NOT_STARTED && getvariableofnpc(.Flag_Carry[.@oppose], "BG_Flag#eBG") == getcharid(0)) {
 		// Nobody carry flag now
 		set(getvariableofnpc(.Flag_Carry[.@oppose], "BG_Flag#eBG"), 0);
 		// Unblock Skills/Item Usage
@@ -230,7 +230,7 @@ OnTeamDie:
 	return;
 	
 OnReadyCheck:
-	if ($@eBG_start[BGT_CTF])
+	if ($@eBG_start[BGT_CTF] != EBG_NOT_STARTED)
 		end;
 		
 	$@eBG_start[BGT_CTF] = EBG_RUNNING;
@@ -252,17 +252,25 @@ OnReadyCheck:
 	end;
 
 OnMatchStart:
-	if ($@eBG_start[BGT_CTF] != EBG_RUNNING)	//If Match not Started, Do Nothing
+	if ($@eBG_start[BGT_CTF] == EBG_NOT_STARTED) // If Match not Started, Do Nothing
 		end;
 
-	// Flags2Base
-	donpcevent("Guillaume Flag#1::OnBase");	//Initialize Team1 Flag
-	donpcevent("Croix Flag#2::OnBase");	//Initialize Team2 Flag
+	// Flags to Base
+	donpcevent("Guillaume Flag#1::OnBase");	// Initialize Team1 Flag
+	donpcevent("Croix Flag#2::OnBase");	// Initialize Team2 Flag
 	mapannounce("ebg_ctf", _("The Flags have been set to their Bases!!"), bc_map | bc_blue);
 	end;
 
 OnTimer60000:
 	.time_remaining--;
+
+	// Players cannot join if only 2 minutes are left
+	if (.time_remaining <= 2) {
+		$@eBG_start[BGT_CTF] = EBG_ENDING;
+	} else {
+		$@eBG_start[BGT_CTF] = EBG_RUNNING;
+	}
+	
 	if (.time_remaining != 0) {
 		mapannounce("ebg_ctf", sprintf(_$("The Battle will end in %d Minutes!!"), .time_remaining), bc_map, 0xA0522D);
 		initnpctimer;

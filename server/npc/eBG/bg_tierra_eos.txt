@@ -39,7 +39,7 @@ OnTeamDie:
 	return;
 
 OnReadyCheck:
-	if ($@eBG_start[BGT_EOS])
+	if ($@eBG_start[BGT_EOS] != EBG_NOT_STARTED)
 		end;
 		
 	$@eBG_start[BGT_EOS] = EBG_RUNNING;
@@ -157,7 +157,7 @@ OnValidateScore:
 	end;
 
 OnBreak:
-	if ($@eBG_start[BGT_EOS] != EBG_RUNNING)
+	if ($@eBG_start[BGT_EOS] == EBG_NOT_STARTED)
 		end;
 
 	if (getcharid(4) == $@ebg_eos_BG_id1) {
@@ -198,7 +198,7 @@ ebg_eos,273,204,0	script	Neutral Flag#eBG	OBJ_NEUTRAL,2,2,{
 	end;
 
 OnTouch:
-	if ($@eBG_start[BGT_EOS] != EBG_RUNNING || Hp < 1 || bg_get_npc_data(1))
+	if ($@eBG_start[BGT_EOS] == EBG_NOT_STARTED || Hp < 1 || bg_get_npc_data(1))
 		end;
 
 	.@self = GUILLAUME;
@@ -262,7 +262,7 @@ OnDisable:
 	end;
 
 OnBase:
-	if ($@eBG_start[BGT_EOS] != EBG_RUNNING)
+	if ($@eBG_start[BGT_EOS] == EBG_NOT_STARTED)
 		end;
 
 	movenpc "Neutral Flag#eBG",273,204;
@@ -284,7 +284,7 @@ ebg_eos,173,345,0	script	North_Base#1	OBJ_NEUTRAL,3,3,{
 	end;
 
 OnTouch:
-	if ($@eBG_start[BGT_EOS] != EBG_RUNNING || bg_get_npc_data() == 0 || bg_get_npc_data() != getcharid(4) || bg_get_npc_data(0,"Neutral Flag#eBG") != getcharid(0))
+	if ($@eBG_start[BGT_EOS] == EBG_NOT_STARTED || bg_get_npc_data() == 0 || bg_get_npc_data() != getcharid(4) || bg_get_npc_data(0,"Neutral Flag#eBG") != getcharid(0))
 		end;
 
 	bg_npc_data(0, 0, "Neutral Flag#eBG");

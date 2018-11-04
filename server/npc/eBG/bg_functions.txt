@@ -489,7 +489,8 @@ function	script	F_queueclear	{
 		for (.@p = qiget(.@it); qicheck(.@it); .@p = qiget(.@it)) {
 			if (attachrid(.@p)) {
 				callfunc("F_ValidateeBG", @BG_ID, 1);
-				bg_join_time = gettimetick(2) + getvariableofnpc(.bg_maxtime[@BG_ID], "BG_Settings");	// Sets Time to join Again
+				// Join Time shouldn't be there if the player played BG till end
+				//bg_join_time = gettimetick(2) + getvariableofnpc(.bg_maxtime[@BG_ID], "BG_Settings");
 			}
 			queueremove(.@queue,.@p);
 		}
@@ -629,10 +630,10 @@ function	script	F_EndeBG	{
 		.@map$ = .@actual_name$;
 	}
 	.@id = callfunc("F_MapToId", .@queue_name$);
-	bg_updatescore .@map$, 0, 0;
+	bg_updatescore(.@map$, 0, 0);
 	/* Destroy Existing BG */
 	for (.@i = 1; .@i <= .@teams; ++.@i) {
-		bg_destroy getd("$@"+ .@queue_name$ +"_BG_id"+ .@i);
+		bg_destroy(getd("$@"+ .@queue_name$ +"_BG_id"+ .@i));
 		setd("$@"+ .@queue_name$ +"_BG_id"+ .@i, 0);
 		callfunc("F_queueclear", getd("$@"+ .@queue_name$ +"_BG_queue"+ .@i));
 	}

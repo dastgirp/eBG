@@ -1,10 +1,10 @@
 // Battle Ground - Tierra Bossnia
 
--	script	BOSS_Tierra	-1,{
+-	script	BOSS_Tierra	FAKE_NPC,{
 	end;
 
 OnReadyCheck:
-	if ($@eBG_start[BGT_BOSS])
+	if ($@eBG_start[BGT_BOSS] != EBG_NOT_STARTED)
 		end;
 		
 	$@eBG_start[BGT_BOSS] = EBG_RUNNING;
@@ -34,13 +34,13 @@ OnNeutralReset:
 		bg_immunemob(bg_get_npc_data(0, "Croix_Boss#2"), 1);
 	bg_monster(0, "ebg_boss", 273, 204, "Balance Flag", $bg_tierra_boss[10], "BOSS_Tierra::OnNeutralBreak");
 	sleep 2000;
-	if( $@eBG_start[BGT_BOSS] != EBG_RUNNING )
+	if ($@eBG_start[BGT_BOSS] == EBG_NOT_STARTED)
 		end;
 	mapannounce("ebg_boss", _("-- Balance Flag returned to normality --"), 1, 0x483D8B);
 	end;
 
 OnNeutralBreak:
-	if ($@eBG_start[BGT_BOSS] != EBG_RUNNING)
+	if ($@eBG_start[BGT_BOSS] == EBG_NOT_STARTED)
 		end;
 	bg_npc_data(getcharid(4));
 	bg_addpoints(BOSS_NEUT_FLAG, 1, 1);
@@ -76,6 +76,14 @@ OnPCDieEvent:
 
 OnTimer60000:
 	.time_remaining--;
+
+	// Players cannot join if only 2 minutes are left
+	if (.time_remaining <= 2) {
+		$@eBG_start[BGT_BOSS] = EBG_ENDING;
+	} else {
+		$@eBG_start[BGT_BOSS] = EBG_RUNNING;
+	}
+
 	if (.time_remaining != 0) {
 		mapannounce("ebg_boss", sprintf(_$("The Battle will end in %d Minutes!!"), .time_remaining), bc_map, 0x483D8B);
 		initnpctimer;

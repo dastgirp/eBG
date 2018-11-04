@@ -39,7 +39,7 @@ OnSpawnEmperium:
 	return;
 
 OnReadyCheck:
-	if ($@eBG_start[BGT_RUSH])
+	if ($@eBG_start[BGT_RUSH] != EBG_NOT_STARTED)
 		end;
 	
 	$@eBG_start[BGT_RUSH] = EBG_RUNNING;	
@@ -62,7 +62,7 @@ OnReadyCheck:
 	end;
 
 OnEmp:
-	if ($@eBG_start[BGT_RUSH] != EBG_RUNNING)
+	if ($@eBG_start[BGT_RUSH] == EBG_NOT_STARTED)
 		end;
 
 	if (.Defender == 0) {	// First Time
@@ -109,6 +109,14 @@ OnEmp:
 
 OnTimer60000:
 	.time_remaining--;
+
+	// Players cannot join if only 2 minutes are left
+	if (.time_remaining <= 2) {
+		$@eBG_start[BGT_RUSH] = EBG_ENDING;
+	} else {
+		$@eBG_start[BGT_RUSH] = EBG_RUNNING;
+	}
+
 	if (.time_remaining != 0) {
 		mapannounce(.Castle$, sprintf(_$("Battle of Rush will ends in %d Minutes!!"), .time_remaining), bc_map, 0xDDA0DD);
 		initnpctimer;

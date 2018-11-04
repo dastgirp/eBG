@@ -23,7 +23,7 @@ OnTeamDie:
 	.@x = getarg(1, -1);
 	.@y = getarg(2, -1);
 	.@stone = callfunc("SC_StoneCheck", getcharid(0));
-	if ($@eBG_start[BGT_SC] == EBG_RUNNING && .@stone) { // Stone Carrier
+	if ($@eBG_start[BGT_SC] != EBG_NOT_STARTED && .@stone) { // Stone Carrier
 		bg_npc_data(0, .@stone);
 		if (.@x == -1 && .@y == -1)
 			getmapxy(.@m$, .@x, .@y, UNITTYPE_PC);
@@ -41,7 +41,7 @@ OnTeamDie:
 	return;
 
 OnReadyCheck:
-	if ($@eBG_start[BGT_SC])
+	if ($@eBG_start[BGT_SC] != EBG_NOT_STARTED)
 		end;
 	$@eBG_start[BGT_SC] = EBG_RUNNING;
 	initnpctimer;
@@ -66,10 +66,12 @@ OnTeam2Score:
 	end;
 	
 OnTeamScore:
-	setd(".Team"+ getarg(0) +"_Score", getd(".Team"+ getarg(0) +"_Score") + 1);
 //OnValidateScore:
-	if ($@eBG_start[BGT_SC] != EBG_RUNNING)
+	if ($@eBG_start[BGT_SC] == EBG_NOT_STARTED)
 		end;
+
+	setd(".Team"+ getarg(0) +"_Score", getd(".Team"+ getarg(0) +"_Score") + 1);
+
 	.Team1_Score = min(.Team1_Score, $bg_flavius_sc[0]);
 	.Team2_Score = min(.Team2_Score, $bg_flavius_sc[0]);
 
@@ -81,6 +83,14 @@ OnTeamScore:
 
 OnTimer60000:
 	.time_remaining--;
+
+	// Players cannot join if only 2 minutes are left
+	if (.time_remaining <= 2) {
+		$@eBG_start[BGT_SC] = EBG_ENDING;
+	} else {
+		$@eBG_start[BGT_SC] = EBG_RUNNING;
+	}
+
 	if (.time_remaining != 0) {
 		mapannounce("ebg_sc", sprintf(_$("The Battle will end in %d Minutes!!"), .time_remaining), bc_map, 0x9ACD32);
 		initnpctimer;
@@ -147,10 +157,10 @@ ebg_sc,177,182,0	script	Neutral Stone#1	BARRICADE,1,1,{
 	end;
 
 OnTouch:
-	if ($@eBG_start[BGT_SC] != EBG_RUNNING || Hp < 1 || getcharid(4) == 0)
+	if ($@eBG_start[BGT_SC] == EBG_NOT_STARTED || Hp < 1 || getcharid(4) == 0)
 		end;
 	.@stone_id = atoi(strnpcinfo(2));
-	if (bg_get_npc_data(.@stone_id,"SC_Flavius") || callfunc("SC_StoneCheck",getcharid(0)))
+	if (bg_get_npc_data(.@stone_id, "SC_Flavius") || callfunc("SC_StoneCheck", getcharid(0)))
 		end; // Already Captured / Already with a Stone
 
 	sc_end SC_HIDING;
@@ -221,7 +231,7 @@ ebg_sc,85,159,0	script	Stone Point#1::cSC1	GAJOMART,1,1,{
 	end;
 
 OnTouch:
-	if ($@eBG_start[BGT_SC] != EBG_RUNNING || Hp < 1)
+	if ($@eBG_start[BGT_SC] == EBG_NOT_STARTED || Hp < 1)
 		end;
 	.@stone_id = callfunc("SC_StoneCheck", getcharid(0));
 	.@hidden_part = atoi(strnpcinfo(2));

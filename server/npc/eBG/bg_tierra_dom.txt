@@ -25,7 +25,7 @@ OnPCDieEvent:
 
 OnTeamDie:
 	// Check for Offensive or Defensive Kills
-	if ($@eBG_start[BGT_DOM] != EBG_RUNNING)
+	if ($@eBG_start[BGT_DOM] == EBG_NOT_STARTED)
 		return;
 
 	if (!@killer_bg_id || @killer_bg_id == getcharid(4))
@@ -59,7 +59,7 @@ OnTeamDie:
 	return;
 
 OnReadyCheck:
-	if ($@eBG_start[BGT_DOM])
+	if ($@eBG_start[BGT_DOM] != EBG_NOT_STARTED)
 		end;
 		
 	$@eBG_start[BGT_DOM] = EBG_RUNNING;
@@ -126,7 +126,7 @@ OnValidateScore:
 	stopnpctimer "Center_Base#5";
 	donpcevent("dom_respawn#18::OnBGStop");
 	donpcevent("dom_respawn#19::OnBGStop");
-	set $@eBG_start[BGT_DOM], EBG_ENDING;
+	$@eBG_start[BGT_DOM] = EBG_ENDING;
 	// Team Rewards
 	.@win = callfunc("F_eBGReward", BGT_DOM, $bg_tierra_dom, 2, .Team1_Score, .Team2_Score, 0, 1, 1);
 	/* .@win = -1, some unknown error, don't give rewards */

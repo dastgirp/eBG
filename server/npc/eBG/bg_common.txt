@@ -143,7 +143,7 @@ OnInit:
 	 *	$@eBG_start - To Track Start/End status of BG.
 	 *	0 = Not Yet Started(EBG_NOT_STARTED)
 	 *	1 = Started(EBG_RUNNING)
-	 *	2 = Ended(EBG_ENDING)
+	 *	2 = Ending(EBG_ENDING)
 	 */
 	
 	/* Flavius Settings */
@@ -451,12 +451,13 @@ OnTimer60000:
 	initnpctimer;
 
 	.bg_common[5]++;
+	// If EBG is Running, announce every x minute
 	if (.bg_common[5] >= .bg_common[4] && $@eBG_start[.bg_change] != EBG_NOT_STARTED) {
 		callsub(OnBGAnnounce, 0, 0);
 		.bg_common[5] = 0;
 	}
 
-	// eBG is running, don't change.
+	// eBG is running, don't change the eBG Type.
 	if ($@eBG_start[.bg_change] != EBG_NOT_STARTED) {
 		end;
 	}
@@ -468,6 +469,7 @@ OnTimer60000:
 	if (.bg_common[3] < .bg_common[2]) {
 		end;
 	}
+	// Change BG, time exceeded the setting
 	// Fallthrough
 OnChangeBGS: // End instead of return
 	.@end = 1;
@@ -522,12 +524,13 @@ OnBGAnnounce: // Announce remaining players
 		.@type = BC_EBG | bc_npc; // All Clients
 	}
 
+	// Announce if eBG is not started and more players required
 	if ($@eBG_start[.bg_change] == EBG_NOT_STARTED && .@player_joined < .@min_p) {
 		bg_announce(sprintf(_$("ExtendedBG -- %s -- %d more players to start."), .bg_name$[.bg_change], (.@min_p - .@player_joined)), .@type, .bg_colors$[.bg_change]);
 		if (.@end == 1) {
 			end;
 		}
-	} else if ($@eBG_start[.bg_change] != EBG_NOT_STARTED) {
+	} else if ($@eBG_start[.bg_change] != EBG_NOT_STARTED) { // eBG is running
 		.@map$ = callsub(OnGetAltMapName, .bg_change);
 		.@msg$ = "";
 		for (.@i = 1; .@i <= .bg_teams[.bg_change]; .@i++) {
@@ -537,7 +540,7 @@ OnBGAnnounce: // Announce remaining players
 			.@msg$ += sprintf(_$("%d/%d"), .@player, .bg_maxplayer[.bg_change]);
 		}
 		bg_announce(sprintf(_$("ExtendedBG -- %s -- %s Playing"), .bg_name$[.bg_change], .@msg$), .@type, .bg_colors$[.bg_change]);
-	}
+	} 
 	return;
 	
 OnCheckBGEnabled:
@@ -586,9 +589,13 @@ OnJoinBG: // joinbg: .@type = 0
 		dispbottom(_("You are already queued."));
 		end;
 	}
-	dispbottom("EBG: "+ on_ebg());
 	if (on_ebg() == true) {
 		dispbottom(_("You are Already on BG"));
+		end;
+	}
+	if ($@eBG_start[.bg_change] == EBG_ENDING) {
+		dispbottom(_("The Battleground is ending soon or already ended."));
+		dispbottom(_("Cannot join current session of battleground. Please wait."));
 		end;
 	}
 	if (bg_join_time > gettimetick(2)) {
