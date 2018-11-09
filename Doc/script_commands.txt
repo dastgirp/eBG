@@ -5,10 +5,10 @@
 // 	Dastgir
 //=====================================================
 // Date:
-// 	09-07-2016
+// 	8th November 2018
 //=====================================================
 
-*pc_block_si <Type>,<Value>{,<AccountID>};
+*pc_block_si(<Type>, <Value>{, <AccountID>})
 
 This Commands blocks the usage of Items/Skills from 
 the Attached user.
@@ -23,10 +23,10 @@ Value:
 
 =====================================================
 
-*bg_hpsp_time <HP>,<SP>,<Time>{,<BGTeam>};
+*bg_hpsp_time(<HP>, <SP>, <Time>{, <BGTeam>})
 
 Adds a Timer to the Attached player, which will reduce
-the % of HP/SP or both in the Time mentioned.
+the percentage of HP/SP or both in the Time mentioned.
 Time is in milliseconds.
 
 Adds a Player to BGTeam if specified.
@@ -36,7 +36,7 @@ and EF_BOWLINGBASH effect on player.
 
 =====================================================
 
-*bg_hpsp_time_del <Type>;
+*bg_hpsp_time_del(<Type>)
 
 This Command deletes the HP/SP reduce timer from the
 attached player.
@@ -50,7 +50,7 @@ Note: Types are operated bitwise.
 
 =====================================================
 
-*bg_hpsp_time_extra <effectID>,<EmotionID>,<PointID>,<Color>;
+*bg_hpsp_time_extra(<effectID>, <EmotionID>, <PointID>, <Color>)
 
 Adds effectID,emotionID,pointID and Color to Extra variable of
 player struct, useful in bg_npc_cond_hpsp to show custom effects
@@ -58,14 +58,14 @@ and all other things.
 
 =====================================================
 
-*viewpointmap "<mapname>",<Type>,<x>,<y>,<id>,<color>;
+*viewpointmap("<mapname>", <Type>, <x>, <y>, <id>, <color>)
 
 It does exactly the same thing as viewpoint, except
 that, it shows to all players in the map.
 
 =====================================================
 
-*bg_reward <bg_id>,<item_id>,<amount>,<kafra_points>,<quest_id>,"<variable>",<add_value>,<bg_a_type>,<bg_win_loss>;
+*bg_reward(<bg_id>, <item_id>, <amount>, <kafra_points>, <quest_id>, "<variable>", <add_value>, <bg_a_type>, <bg_win_loss>)
 
 This gives item to the specified BattlegroundTeam.
 
@@ -88,103 +88,40 @@ bg_win_loss:
 
 =====================================================
 
-*bg_addfame {<account_id>};
+*bg_addfame({<account_id>})
 
 Adds 1 BGFame to attached rid, or to the specified ID.
 
 =====================================================
 
-*bg_addpoints <type>,<value>,<fame>{,<accouont_id>};
+*bg_addpoints(<type>, <value>, <fame>{, <accouont_id>})
 
 Adds <fame> Fame and <value> to specified <type>.
 
 Type:
-	see enum Player_Data;
-List(May Change):
-	WALK_ONLY = 1
-	BG_TEAM
-	BG_SAVE_TID
-	BG_CTF_WON = 11
-	BG_CTF_LOSS
-	BG_CTF_TIE
-	CTF_ONHAND
-	CTF_DROPPED
-	CTF_CAPTURED
-	BG_BOSS_WON = 21
-	BG_BOSS_LOSS
-	BG_BOSS_TIE
-	BOSS_KILLED
-	BOSS_NEUT_FLAG
-	BG_TI_WON = 31
-	BG_TI_LOSS
-	BG_TI_TIE
-	BG_TI_SKULL
-	BG_EOS_WON = 41
-	BG_EOS_LOSS
-	BG_EOS_TIE
-	BG_EOS_BASE
-	BG_EOS_FLAG
-	BG_TD_WON = 51
-	BG_TD_LOSS
-	BG_TD_TIE
-	BG_TD_KILL
-	BG_TD_DIE
-	BG_SC_WON = 61
-	BG_SC_LOSS
-	BG_SC_TIE
-	BG_SC_DROPPED
-	BG_SC_STOLE
-	BG_SC_CAPTURED
-	BG_CONQ_WON = 71
-	BG_CONQ_LOSS
-	BG_CONQ_EMPERIUM
-	BG_CONQ_BARRICADE
-	BG_CONQ_GUARDIAN_S
-	BG_RUSH_WON = 81
-	BG_RUSH_LOSS
-	BG_DOM_WON = 91
-	BG_DOM_LOSS
-	BG_DOM_TIE
-	BG_DOM_BASE
-	BG_DOM_OFF_KILL
-	BG_DOM_DEF_KILL
-	BG_POINTS = 101
-	BG_RANKED_POINTS
-	BG_RANKED_GAMES = 103
-	BG_LEADER_WON = 104
-	BG_LEADER_LOSS
-	BG_LEADER_TIE
-	BG_WON = 107
-	BG_TIE
-	BG_LOSS
-	BG_HP_VALUE = 110
-	BG_HP_RATE
-	BG_HP_TID
-	BG_SP_VALUE = 116
-	BG_SP_RATE
-	BG_SP_TID
+	Refer point_types.txt
 
 =====================================================
 
-*map_exists "<MapName>";
+*map_exists("<MapName>")
 
 Returns the ID of the map.
 
 =====================================================
 
-*bg_change_team <teamID>,<GuildID>;
+*bg_change_team(<teamID>, <GuildID>)
 
 Changes the BGTeam of Player to TeamID and Guild as GuildID
 
 =====================================================
 
-*bg_e_join_team <TeamID>,<GuildID>;
+*bg_e_join_team(<TeamID>, <GuildID>)
 
 Makes the Player join to BGTeam with Specified GuildID.
 
 =====================================================
 
-*bg_end <bg_type>;
+*bg_end(<bg_type>)
 
 Ends the specified type of BG. Also saves the Data of BG
 
@@ -201,33 +138,33 @@ bg_types:
 
 =====================================================
 
-*bg_reset_rank_stat;
+*bg_reset_rank_stat()
 
 Resets the Total Ranked Games Played to 0.
 Returns 1 on success, else 0
 
 =====================================================
 
-*on_ebg;
+*on_ebg()
 
 Returns 1 if the player is playing on eBG.
 
 =====================================================
 
-*bg_logincheck "<map_name>";
+*bg_logincheck("<map_name>")
 
 Returns the count of player with sameIP on the specified
 map.
 
 =====================================================
 
-*bg_mapwarp "<map_name>";
+*bg_mapwarp("<map_name>")
 
 Warps all players from Map to their respective save points.
 
 =====================================================
 
-*bg_immunemob <ID>,<activate>;
+*bg_immunemob(<ID>, <activate>)
 
 Makes the monster type as plant.
 
@@ -237,7 +174,7 @@ activate:
 
 =====================================================
 
-*bg_mob_move <ID>,<activate>;
+*bg_mob_move(<ID>, <activate>)
 
 Changed the monster move ability
 
@@ -247,14 +184,14 @@ activate:
 
 =====================================================
 
-*bg_revealmob <ID>,<flag>,<color>;
+*bg_revealmob(<ID>, <flag>, <color>)
 
 Refer to viewpoint.
 ID: Monster RID
 
 =====================================================
 
-*bg_timer_start <duration>,<interval>{,<RandTimer1>,<RandTimer2>};
+*bg_timer_start(<duration>, <interval>{, <RandTimer1>, <RandTimer2>})
 
 Starts a Timer for specified duration(in ms),
 Its repeated if interval is 1.
@@ -270,7 +207,7 @@ Returns Timer Unique ID.
 
 =====================================================
 
-*bg_areaheal_timer <UID>,"<map_name>",<x1>,<y1>,<x2>,<y2>,<hp>,<sp>{,<add_op>};
+*bg_areaheal_timer(<UID>, "<map_name>", <x1>, <y1>, <x2>, <y2>, <hp>, <sp>{, <add_op>})
 
 Refer to areaheal.
 UID:
@@ -280,8 +217,8 @@ add_op:
 
 =====================================================
 
-*bg_areawarp_timer <UID>,"<map_name>",<x1>,<y1>,<x2>,<y2>,<"str">,<x3>,<y3>{,<x4>,<y4>{,<add_op>}};
-*bg_areawarp_timer <UID>,"<map_name>",<x1>,<y1>,<x2>,<y2>,<"str">,<x3>,<y3>{,<add_op>};
+*bg_areawarp_timer(<UID>, "<map_name>", <x1>, <y1>, <x2>, <y2>, <"str">, <x3>, <y3>{, <x4>, <y4>{, <add_op>}})
+*bg_areawarp_timer(<UID>, "<map_name>", <x1>, <y1>, <x2>, <y2>, <"str">, <x3>, <y3>{, <add_op>})
 
 Refer to areawarp.
 
@@ -292,9 +229,15 @@ add_op:
 
 =====================================================
 
-*bg_effect_timer <UID>,<EffectID>{,<index>{,<add_op>}};
+*bg_effect_timer(<UID>, <EffectID>{, <index>{, <add_op>}})
 
-Refer to misceffect.
+This command, if run from an NPC object that has a sprite, will call up a
+specified effect number, centered on the NPC sprite. If the running code
+does not have an object ID (a 'floating' NPC) or is not running from an
+NPC object at all (an item script) the effect will be centered on the
+character who's RID got attached to the script, if any. For usable item
+scripts, this command will create an effect centered on the player using
+the item.
 
 index:
 	Maximum BMAX_EFFECT can be shown.
@@ -308,7 +251,7 @@ add_op:
 
 =====================================================
 
-*bg_viewpoint_timer <UID>,"<map_name>",<type>,<x>,<y>,<id>,<color>{,add_op};
+*bg_viewpoint_timer(<UID>, "<map_name>", <type>, <x>, <y>, <id>, <color>{, <add_op>})
 
 Refer to viewpointmap
 
@@ -322,20 +265,20 @@ add_op:
 
 =====================================================
 
-*bg_npc_cond_hpsp "<npc_name>",<value>,<condition>,{<index>{,<index_at>}};
+*bg_npc_cond_hpsp("<npc_name>", <value>, <condition>,{ <index>{, <index_at>}})
 
-	Same as bg_npc_cond_timer, but the data is saved to player instead of npc.
-	Executes bg_hpsp_time if condition is met.
+Same as bg_npc_cond_timer, but the data is saved to player instead of npc.
+Executes bg_hpsp_time if condition is met.
 
 =====================================================
 
-*bg_player_cond_timer <UID>,"<npc_name>",<value>,<condition>,<operation>{,<index>{,<index_at>{,<add_op>}}};
+*bg_player_cond_timer(<UID>, "<npc_name>", <value>, <condition>, <operation>{, <index>{, <index_at>{, <add_op>}}})
 	
-	Same as bg_npc_cond_timer, but the data is variable value from Player instead of npc.
+Same as bg_npc_cond_timer, but the data is variable value from Player instead of npc.
 
 =====================================================
 
-*bg_npc_cond_timer <UID>,"<npc_name>",<value>,<condition>,<operation>{,<index>{,<index_at>{,<add_op>}}};
+*bg_npc_cond_timer(<UID>, "<npc_name>", <value>, <condition>, <operation>{, <index>{, <index_at>{, <add_op>}}})
 
 Checks a Condition before executing a specific operation.
 if value satisfies the condition, then execute operation (value referred from bg_npc_data)
@@ -362,7 +305,7 @@ add_op:
 
 =====================================================
 
-*bg_timer_child <UID>,<Duration>,<Operations>;
+*bg_timer_child(<UID>, <Duration>, <Operations>)
 
 Adds a Child Timer to timer of UID, with duration and
 operations specified.
@@ -372,7 +315,7 @@ almost near timings.
 
 =====================================================
 
-*bg_operations_timer <UID>,<Operations>{,<replace>};
+*bg_operations_timer(<UID>, <Operations>{, <replace>})
 
 Adds Operation to timer with speicified UID.
 
@@ -382,20 +325,20 @@ replace:
 
 =====================================================
 
-*bg_timer_stop <UID>;
+*bg_timer_stop(<UID>)
 
 Ends the Timer with specified UID, and destroys it's data.
 
 =====================================================
 
-*bg_timer_exists <UID>;
+*bg_timer_exists(<UID>)
 
 Checks if Timer with UID Exists or not.
 If Timer exists, it returns 1, else it returns 0
 
 =====================================================
 
-*bg_npc_data <value>{,<index>{,"<npc_name>"}};
+*bg_npc_data(<value>{, <index>{, "<npc_name>"}})
 
 Sets Value of npc_extra_data to specified index.
 
@@ -408,7 +351,7 @@ npc_name:
 
 =====================================================
 
-*bg_get_npc_data {<index>{,"<npc_name>"}};
+*bg_get_npc_data({<index>{, "<npc_name>"}})
 
 Gets value of npc_extra_data at index.
 
@@ -421,21 +364,21 @@ npc_name:
 
 =====================================================
 
-*bg_areaitem "<map_name>",<x>,<y>,<ItemID>,<amount>;
+*bg_areaitem("<map_name>", <x>, <y>, <ItemID>, <amount>)
 
-Drops ItemID in range x^(1/2)+rand(2),y^(1/2)+rand(2)
+Drops ItemID in area of x^(1/2)+rand(2), y^(1/2)+rand(2)
 Item is dropped 1 by 1, and randomly in the area.
 
 =====================================================
 
-*bg_team_reveal <TeamID>;
+*bg_team_reveal(<TeamID>)
 
 Shows the Team Location on MiniMap
 Returns 1 on success
 
 =====================================================
 
-*bg_team_score <TeamID>,<Points>;
+*bg_team_score(<TeamID>, <Points>)
 
 Updates the Team Points to specified one.
 (bg_extra_info => points)
@@ -444,14 +387,14 @@ Returns 1 on Success
 
 =====================================================
 
-*bg_insert_npc_name <UID>,"<npc_name>";
+*bg_insert_npc_name(<UID>, "<npc_name>")
 
 Inserts the NPC Name to the given UID, to add npc name to the structure, so that one can use
 functions like ConditionTimer and all other which requires NPC.
 
 =====================================================
 
-*bg_insert_event_name <UID>,"<event_name>";
+*bg_insert_event_name(<UID>, "<event_name>")
 
 Inserts the NPC Name to the given UID, to add EventName to the structure, so that one can use
 functions like BG_T_O_DOEVENT and all other which requires Events.
@@ -476,7 +419,7 @@ Following program will execute OnEvent every 2 seconds, until the timer is stopp
 
 =====================================================
 
-*bg_perform_arithmetic <UID>,"<npc_name>",<value>,<operation>{,<index_at>{,<add_op>}};
+*bg_perform_arithmetic(<UID>, "<npc_name>", <value>, <operation>{, <index_at>{, <add_op>}})
 
 Performs Arithmetic Operations on Variables set via bg_npc_data.
  
@@ -498,7 +441,7 @@ add_op:
 
 =====================================================
 
-*bg_mapannounce_timer <UID>,"<map_name>","<mes>",<flag>,"<color>"{,<announce>{,<add_op>}};
+*bg_mapannounce_timer(<UID>, "<map_name>", "<mes>", <flag>, "<color>"{, <announce>{, <add_op>}})
 
 Refer to mapannounce
 
@@ -512,7 +455,7 @@ add_op:
 
 =====================================================
 
-*bg_info <bg_id>,<type>;
+*bg_info(<bg_id>, <type>)
 
 Returns Specific Data based on types.
 
@@ -523,16 +466,16 @@ Types:
 
 =====================================================
 
-*bg_timer_link <UID>,<OperationIndependent>,<OperationDependent>;
+*bg_timer_link(<UID>, <OperationIndependent>, <OperationDependent>)
 
 This will link OperationDependent Operations to the OperationIndependent Operations.
 i.e OperationDependent will only be able to run after OperationIndependent have run with success(having some return values)
 
 =====================================================
 
-*bg_announce "<text>",<flag>,<fontColor>{,<fontType>{,<fontSize>{,<fontAlign>{,<fontY>}}}};
+*bg_announce("<text>", <flag>, <fontColor>{, <fontType>{, <fontSize>{, <fontAlign>{, <fontY>}}}})
 
-Refer to *announce
+Refer to announce
 
 flag:
 	1: All Clients (will not be shown to players with ignorebg)
@@ -540,9 +483,26 @@ flag:
 
 =====================================================
 
-*bg_script_timer <UID>,"Script"{,<AddOp>};
+*bg_script_timer(<UID>, "Script"{, <AddOp>})
 
 Adds Script to be executed by NPC for given UID.
 AddOp: 1: Don't Add BG_T_O_SCRIPT (Should be set by child timer)
+
+=====================================================
+
+*checkwall(<"wall_name">)
+
+Checks if wall with "wall_name" exists.
+Returns 1 if wall exists, else returns 0
+
+=====================================================
+
+*getebgitem(<nameid>, <quantity>, <type>)
+
+Refer to getitem
+
+type:
+	MAP_IS_BG: BG Bounded Item
+	MAP_IS_WOE: WoE Bounded Item
 
 =====================================================

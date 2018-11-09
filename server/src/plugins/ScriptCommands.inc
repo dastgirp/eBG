@@ -1357,9 +1357,9 @@ BUILDIN(bg_timer_link){
 
 BUILDIN(bg_announce) {
 #define scrpt_data(num,default) (script_hasdata(st,(num)) ? script_getnum(st,(num)) : (default))
-	const char *mes = script_getstr(st,2);
+	const char *mes = script_getstr(st, 2);
 	int flag = script_getnum(st, 3);
-	const char *fontColor = script_hasdata(st,4) ? script_getstr(st,4) : NULL;
+	const char *fontColor = script_hasdata(st, 4) ? script_getstr(st,4) : NULL;
 	int fontType = scrpt_data(5, 0x190); // default fontType (FW_NORMAL)
 	int fontSize = scrpt_data(6, 12); // default fontSize
 	int fontAlign = scrpt_data(7, 0); // default fontAlign
@@ -1451,7 +1451,9 @@ BUILDIN(checkwall) {
 }
 
 /**
- * 
+ * getebgitem(<nameid>, <quantity>, <type>)
+ * Gets BG/WoE Bounded Items
+ * type: MAP_IS_BG/MAP_IS_WOE
  */
 BUILDIN(getebgitem)
 {

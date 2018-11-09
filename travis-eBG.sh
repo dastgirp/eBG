@@ -89,7 +89,8 @@ case "$MODE" in
 		echo "Importing tables into $DBNAME..."
 		mysql $DBUSER $DBPASS $DBNAME < sql-files/main.sql || aborterror "Unable to import main database."
 		mysql $DBUSER $DBPASS $DBNAME < sql-files/logs.sql || aborterror "Unable to import logs database."
-		mysql $DBUSER $DBPASS $DBNAME < server/sql-files/main_bg.sql || aborterror "Unable to import eBG database."
+		mysql $DBUSER $DBPASS $DBNAME < server/sql-files/bg_main.sql || aborterror "Unable to import Main eBG database."
+		mysql $DBUSER $DBPASS $DBNAME < server/sql-files/bg_guild.sql || aborterror "Unable to import Guild eBG database."
 		;;
 	build)
 		(cd tools && ./validateinterfaces.py silent) || aborterror "Interface validation error."
@@ -159,6 +160,8 @@ EOF
 		SCRIPTS="--load-script $script_dir/bg_flavius_ctf.txt --load-script $script_dir/bg_flavius_td.txt --load-script $script_dir/bg_flavius_sc.txt $SCRIPTS"
 		# Queue
 		SCRIPTS="--load-script server/npc/BGQueue.txt $SCRIPTS"
+		# Misc Scripts
+		SCRIPTS="--load-script $script_dir/bg_shop.txt $SCRIPTS"
 		# Common functions
 		SCRIPTS="--load-script $script_dir/bg_functions.txt --load-script $script_dir/bg_common.txt $SCRIPTS"
 		# Run with only HPM
@@ -180,6 +183,7 @@ EOF
 		yes | cp -a server/db/emblems/* db/emblems/
 		yes | cp -a server/maps/* maps/re/
 		yes | cp -a server/maps/* maps/pre-re/
+		yes | cp -a server/conf/import/* conf/import/
 		rm -rf tmp
 		;;
 	*)

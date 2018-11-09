@@ -1,19 +1,31 @@
 /**
  * Common eBG File for Char/Map Server.
- * Change only if you know what you are doing.
  */
 
-/// Warp Location
-#define EBG_WARP 32000
+/// Enable Rankings (BG/WoE)
+#define EBG_RANKING
+
+/// Dual Client check method
+/// 0 = Disable Check
+/// 1 = IP Check
+/// 2 = Gepard Check
+/// 3 = IP and Gepard Check (either IP or gepard is same)
+#define DUAL_CLIENT_CHECK 1
+
+///< Ranked BG Fame List Size
+#define fame_list_size_bgrank MAX_FAME_LIST
+///< Normal BG Fame List Size
+#define fame_list_size_bg MAX_FAME_LIST
+
+/**
+ * eBG Configurations
+ * Change below if you know what you are doing.
+ */
 
 /// Load/Save the Data from CharServer?
 /// Default: Enabled
 #define CHAR_SERVER_SAVE
 
-/**
- * eBG Configurations
- * Change if you know what you are doing.
- */
 /// Max SpecialEffect that can be shown in condition timer.
 #define BMAX_EFFECT 2
 
@@ -26,6 +38,9 @@
 /// Maximum Child Timer a Parent can have
 #define MAX_CHILD_TIMER 10
 
+/// Warp Location
+#define EBG_WARP 32000
+
 /// Battleground Colors
 const unsigned int bg_colors[4] = {
 	0x000000FF, ///< Guillaume
@@ -33,9 +48,6 @@ const unsigned int bg_colors[4] = {
 	0x0000FF00, ///< Green Team
 	0x00FFFFFF  ///< Default
 };
-
-/// Enable Rankings
-#define EBG_RANKING
 
 /**
  * Guild Settings
@@ -694,7 +706,8 @@ struct sd_p_data {
 enum {
 	MAP_IS_NONE = 0x0,
 	MAP_IS_BG   = 0x1,
-	MAP_IS_WOE  = 0x2
+	MAP_IS_WOE  = 0x2,
+	MAP_IS_PVP  = 0x3,
 };
 
 /**
@@ -813,7 +826,5 @@ void set_ebg_buffer(unsigned char *buf, int *offset_, int64 *type, struct ebg_sa
 	void bg_clear_char_data(struct map_session_data *sd);
 #endif
 
-#define fame_list_size_bgrank MAX_FAME_LIST                  ///< Ranked BG Fame List Size
-#define fame_list_size_bg MAX_FAME_LIST                      ///< Normal BG Fame List Size
 struct fame_list bgrank_fame_list[fame_list_size_bgrank];    ///< Ranked BG Fame List
 struct fame_list bg_fame_list[fame_list_size_bg];            ///< Normal BG Fame List

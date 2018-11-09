@@ -1,0 +1,271 @@
+// Supply Shop (Currency: Zeny)
+-	shop	eBGShop#supply	FAKE_NPC,909:100
+// BG Exclusive Shop (Currency: Badges)
+-	shop	eBGShop#bg	FAKE_NPC,909:100
+// WoE Exclusive Shop (Currency: Badges)
+-	shop	eBGShop#woe	FAKE_NPC,909:100
+
+-	script	Telma#eBG	FAKE_NPC,{
+	callsub(OnShopCommand);
+	end;
+OnInit:
+	setarray .bg_common, 14,         // Enable BG Shop, 1=(Item from .bg_common[1]), 2=SupplyStore, 4=BG Items, 8=WoE Items
+						 Red_Potion; // The item bought by 1 point of each BG (.bg_common[0] should have 1st bit set) (Default: eBG_Red_Box)
+	.bgshop_town_only = 1; // Enable @bgshop from town only?
+	// Format: Item, Quantity
+	// These items would be BG Exclusive and sold by @bgshop
+	setarray .tbg_supply[0], White_Slim_Potion, 150,
+							White_Potion, 100,
+							Blue_Potion, 100,
+							Yellow_Gemstone, 50,
+							Red_Gemstone, 100,
+							Blue_Gemstone, 200,
+							Fire_Bottle, 40,
+							Acid_Bottle, 40,
+							MenEater_Plant_Bottle, 30,
+							Mini_Bottle, 30,
+							Coating_Bottle, 25,
+							Speed_Up_Potion, 10,
+							Fragment_Of_Crystal, 25,
+							Spiderweb, 40,
+							Inspector_Certificate, 10,
+							Str_Dish07, 3,
+							Int_Dish07, 3,
+							Vit_Dish07, 3,
+							Agi_Dish07, 3,
+							Dex_Dish07, 3,
+							Luk_Dish07, 3;
+
+	// These items would be WoE Exclusive and sold by @bgshop
+	setarray .twoe_supply[0],Str_Dish07, 1,
+							Int_Dish07, 1,
+							Vit_Dish07, 1,
+							Agi_Dish07, 1,
+							Dex_Dish07, 1,
+							Luk_Dish07, 1,
+							MenEater_Plant_Bottle, 7,
+							Mini_Bottle, 7,
+							Inspector_Certificate, 2,
+							S_Barricade_Repair_Kit, 1,
+							S_Gstone_Repair_Kit, 1;
+	// Supply Shop (purchasable by Zeny)
+	setarray .tsupply_supply[0],Dun_Tele_Scroll1, 4500,
+								Dun_Tele_Scroll2, 3500,
+								WOB_Rune, 3500,
+								WOB_Schwaltz, 3500,
+								WOB_Rachel, 3500,
+								WOB_Local, 3500,
+								//Support_Crystal_Summoner, 2000000, // Not Implemented Yet
+								Kafra_Card, 5500;
+	// Shop Currency (in order of precedence)
+	setarray .ebg_currency[0],	BF_Badge1,
+								BF_Badge2,
+								War_Badge;
+
+	bindatcmd("bgshop", strnpcinfo(3) +"::OnShopCommand");
+	// Initiate the NPC Shop
+	callsub(OnShopInit);
+	end;
+
+OnShopInit: // Should be called via OnInit only.
+	callsub(OnShopInitSub, "bg");
+	callsub(OnShopInitSub, "woe");
+	callsub(OnShopInitSub, "supply");
+	return;
+
+OnShopInitSub:
+	.@type$ = "t"+ getarg(0);
+	.@npc_name$ = getarg(0);
+	.@len = getarraysize(getd("."+ .@type$ +"_supply"));
+	for (.@i = 0; .@i < .@len; .@i += 2) {
+		.@id = getd("."+ .@type$ +"_supply["+ .@i +"]");
+		.@cost = getd("."+ .@type$ +"_supply["+ (.@i + 1) +"]");
+		npcshopadditem("eBGShop#"+ .@npc_name$, .@id, .@cost);
+		setd("."+ .@npc_name$ +"_supply["+ .@id +"]", .@cost);	// Set the cost to .bg_supply/.woe_supply
+	}
+	deletearray(getd("."+ .@type$ +"_supply"), .@len);
+	npcshopdelitem("eBGShop#"+ .@npc_name$, Jellopy);
+	return;
+
+OnShopCommand:
+	if (.bgshop_town_only && !getmapflag(strcharinfo(PC_MAP), mf_town)) {
+		dispbottom(_("[Telma]"));
+		dispbottom(_("@bgshop can only be accessed from town."));
+		end;
+	}
+OnShop:
+	mes("[Telma]");
+	mes("Welcome, mighty warrior.");
+	mes("Do you need supply for your battles?");
+	mes("I can exchange you a nice amount for your badges or open the normal Supply Store for you.");
+	@ebg_shop = 0;
+	@ebg_shop_type$ = "";
+	next;
+	switch(select(
+		(.bg_common[0] & 1) ? sprintf(_$("^FF0000%s^000000"), getitemname(.bg_common[1])) : "",
+		(.bg_common[0] & 2) ? "^FFA500Supply Store^000000" : "",
+		(.bg_common[0] & 4) ? "^FF0000Battleground Exclusive Items^000000" : "",
+		(.bg_common[0] & 8) ? "^0000FFWar of Emperium Exclusive Items^000000" : "")) {
+	case 1: // eBG Red Box
+		callsub(OnShopRedBox);
+		break;
+	case 2:
+		callsub(OnShopExclusive, "supply", -1);
+		break;
+	case 3: // BG Shop
+		callsub(OnShopExclusive, "bg", MAP_IS_BG);
+		break;
+	case 4: // WoE
+		callsub(OnShopExclusive, "woe", MAP_IS_WOE);
+		break;
+	}
+	close;
+
+OnShopExclusive:
+	.@map_type$ = getarg(0, 0);
+	.@item_exclusive = getarg(1, 0);
+	@ebg_shop = .@item_exclusive;
+	@ebg_shop_type$ = .@map_type$;
+	mes("[Telma]");
+	mes("Close this window to open the Store.");
+	mes("-----");
+	mes("Allowed Currency:");
+	if (.@item_exclusive == MAP_IS_BG || .@item_exclusive == MAP_IS_WOE) {
+		for (.@i = 0; .@i < getarraysize(.ebg_currency); ++.@i) {
+			mesf("%s: %d", getitemname(.ebg_currency[.@i]), countitem(.ebg_currency[.@i]));
+			dispbottom(sprintf(_$("%s: %d"), getitemname(.ebg_currency[.@i]), countitem(.ebg_currency[.@i])));
+			.@currency += countitem(.ebg_currency[.@i]);
+		}
+		mesf("Total Currency: %d", .@currency);
+	} else {
+		mesf("Zeny: %d", Zeny);
+	}
+	close2;
+	callshop("eBGShop#"+ .@map_type$, 1); // Buy Window
+	npcshopattach("eBGShop#"+ .@map_type$);
+	end;
+
+OnBuyItem:
+	.@size = getarraysize(@bought_nameid);
+	mes("[Telma]");
+	if (!checkweight2(@bought_nameid, @bought_quantity)) {
+		mes("You cannot carry these many items.");
+		callsub(OnBuyItemClear);
+		end;
+	}
+
+	.@currency = 0;
+	if (@ebg_shop_type$ == "bg" ||
+		@ebg_shop_type$ == "woe") {
+		// Set BG Type
+		for (.@i = 0; .@i < getarraysize(.ebg_currency); ++.@i) {
+			.@currency += countitem(.ebg_currency[.@i]);
+		}
+	} else if (@ebg_shop_type$ == "supply") {
+		.@currency = Zeny;
+	} else {
+		mes("Shop not supported.");
+		callsub(OnBuyItemClear);
+		end;
+	}
+
+	.@cost = 0;
+	for (.@i = 0; .@i < .@size; ++.@i) {
+		.@cost += getd("."+ @ebg_shop_type$ +"_supply["+ @bought_nameid[.@i] +"]") * @bought_quantity[.@i];
+	}
+	if (.@cost == 0 || .@cost > .@currency) {
+		mes("You don't have enough items.");
+		mesf("Cost: %d", .@cost);
+		mesf("You currently have %d items.", .@currency);
+		callsub(OnBuyItemClear);
+		end;
+	}
+	// Buy and Decrease Currency
+	if (@ebg_shop_type$ == "bg" ||
+		@ebg_shop_type$ == "woe") {
+		for (.@i = 0; .@i < getarraysize(.ebg_currency); ++.@i) {
+			.@to_remove = min(countitem(.ebg_currency[.@i]), .@cost);
+			.@cost -= .@to_remove;
+			delitem(.ebg_currency[.@i], .@to_remove);
+			dispbottom(sprintf(_$("Spent %d %s for Purchasing items."), .@to_remove, getitemname(.ebg_currency[.@i])));
+			if (.@cost <= 0)
+				break;
+		}
+	} else if (@ebg_shop_type$ == "supply") {
+		.@to_remove = min(Zeny, .@cost);
+		.@cost -= .@to_remove;
+		Zeny -= .@to_remove;
+	}
+	if (.@cost > 0) { // Not Possible, but safety for hack
+		mes("You cheated!");
+		callsub(OnBuyItemClear);
+		end;
+	}
+	// Give Item in Inventory
+	for (.@i = 0; .@i < .@size; ++.@i) {
+		getebgitem(@bought_nameid[.@i], @bought_quantity[.@i], @ebg_shop);
+	}
+	mes("I hope you liked my services.");
+	mes("Have a great day!");
+	// Fallthrough
+OnBuyItemClear: // Clean Up
+	deletearray(@bought_quantity, .@size);
+	deletearray(@bought_nameid, .@size);
+	@ebg_shop_type$ = "";
+	@ebg_shop = 0;
+	close;
+
+OnShopRedBox:
+	mes("[Telma]");
+	mesf("You can exchange your BG partipation points, a full round of each won BG, for one ^FF0000%s^000000.", getitemname(.bg_common[1]));
+	mes("Let me check your points...");
+	next;
+	.@can_buy = true;
+	.@max_buy = -1;
+	for (.@i = BGT_CTF; .@i <= getvariableofnpc(.bg_common[0], "BG_Settings"); ++.@i) {
+		if (.bg_enabled[.@i]) {
+			.@bg_name$ = .bg_name$[.@i];
+			.@point = getd(callfunc("F_varAdd", .@i));
+			mesf("%s : ^0000FF %d ^000000", .@bg_name$, .@point); // Name : Points
+			if (.@point <= 0)
+				.@can_buy = false;
+			if (.@max_buy == -1 || .@point < .@max_buy)
+				.@max_buy = .@point;
+		}
+	}
+	next;
+	if (!.@can_buy) {
+		mes("[Telma]");
+		mesf("To exchange your points for the %s, you need to get atleast 1 point in each BG", getitemname(.bg_common[1]));
+		mes("Play all kinds of BG's!!.");
+		close;
+	}
+	mes("[Telma]");
+	mesf("How many %s do you want?", getitemname(.bg_common[1]));
+	mesf("Maximum %s that you can get: %d", getitemname(.bg_common[1]), .@max_buy);
+	input(.@to_get, 1, .@max_buy);
+	next;
+	mes("[Telma]");
+	if (.@to_get > .@max_buy) {
+		mes("Please try again with correct number");
+		close;
+	}
+
+	for (.@i = BGT_CTF; .@i <= getvariableofnpc(.bg_common[0], "BG_Settings"); ++.@i) {
+		if (.bg_enabled[.@i]) {
+			.@point$ = callfunc("F_varAdd", .@i);
+			if (getd(.@point$) < .@to_get) {
+				mes("You tried to cheat!!");
+				close;
+			}
+			// Reduce the point
+			setd(.@point$, getd(.@point$) - .@to_get);
+		}
+	}
+	getitem(.bg_common[1], .@to_get);
+	mesf("Here is %d %s for you!!", .@to_get, getitemname(.bg_common[1]));
+	mes("I hope you can find inside it a big surprise.");
+	mes("Talk to me if you want to exchange more.");
+	return;
+
+}

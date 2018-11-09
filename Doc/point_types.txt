@@ -1,0 +1,139 @@
+	// Common Settings
+	WALK_ONLY = 1           ///< Can Walk or Not
+	BG_SAVE_TID             ///< Save Timer ID
+	
+	// Capture the Flag
+	BG_CTF_WON = 11         ///< Number of Times Player Won in CTF
+	BG_CTF_LOSS             ///< Number of Times Player Loss in CTF
+	BG_CTF_TIE              ///< Number of Times Player Tie in CTF
+	CTF_ONHAND              ///< Number of Times Player Carried Flag
+	CTF_DROPPED             ///< Number of Times Player Dropped Flag
+	CTF_CAPTURED            ///< Number of Times Player Captured Flag
+	
+	// Bossnia
+	BG_BOSS_WON = 21        ///< Number of Times Player Won in Boss
+	BG_BOSS_LOSS            ///< Number of Times Player Loss in Boss
+	BG_BOSS_TIE             ///< Number of Times Player Tie in Boss
+	BOSS_KILLED             ///< Number of Times Player has killed Boss
+	BOSS_NEUT_FLAG          ///< Number of Times Neutral Flags has been killed
+	
+	// Tierra Inferno
+	BG_TI_WON = 31          ///< Number of Times Player Won in TI
+	BG_TI_LOSS              ///< Number of Times Player Loss in TI
+	BG_TI_TIE               ///< Number of Times Player Tie in TI
+	BG_TI_SKULL             ///< Skulls got in TI
+	
+	// Eye of Storm
+	BG_EOS_WON = 41        ///< Number of Times Player Won in EyeOfStorm
+	BG_EOS_LOSS            ///< Number of Times Player Loss in EyeOfStorm
+	BG_EOS_TIE             ///< Number of Times Player Tie in EyeOfStorm
+	BG_EOS_BASE            ///< Number of Times Player have captured Base in EyeOfStorm
+	BG_EOS_FLAG            ///< Number of Times Player have captured NeutralFlag in EyeOfStorm
+
+	// Team Deathmatch
+	BG_TD_WON = 51         ///< Number of Times Player Won in TeamDeathMatch
+	BG_TD_LOSS             ///< Number of Times Player Loss in TeamDeathMatch
+	BG_TD_TIE              ///< Number of Times Player Tie in TeamDeathMatch
+	BG_TD_KILL             ///< Number of Times Player have killed other player
+	BG_TD_DIE              ///< Number of Times Player have died
+	
+	// Stone Control
+	BG_SC_WON = 61         ///< Number of Times Player Won in StoneControl
+	BG_SC_LOSS             ///< Number of Times Player Loss in StoneControl
+	BG_SC_TIE              ///< Number of Times Player Tie in StoneControl
+	BG_SC_DROPPED          ///< Number of Times Player Dropped Stone
+	BG_SC_STOLE            ///< Number of Times Player Stole Stone
+	BG_SC_CAPTURED         ///< Number of Times Player Captured Stone
+	
+	// Conquest
+	BG_CONQ_WON = 71       ///< Number of Times Player Won in Conquest
+	BG_CONQ_LOSS           ///< Number of Times Player Loss in Conquest
+	BG_CONQ_EMPERIUM       ///< Number of Times Player Captured Emperium
+	BG_CONQ_BARRICADE      ///< Number of Times Player Destroyed Barricade
+	BG_CONQ_GUARDIAN_S     ///< Number of Times Player Destroyed Guardian Stone
+	
+	// Rush
+	BG_RUSH_WON = 81       ///< Number of Times Player Won in Rush
+	BG_RUSH_LOSS           ///< Number of Times Player Loss in Rush
+	BG_RUSH_EMPERIUM       ///< Number of Times Player Captured Emperium
+
+	// Domination
+	BG_DOM_WON = 91        ///< Number of Times Player Won in Domination
+	BG_DOM_LOSS            ///< Number of Times Player Loss in Domination
+	BG_DOM_TIE             ///< Number of Times Player Tie in Domination
+	BG_DOM_BASE            ///< Number of Times Player have captured Base in Domination
+	BG_DOM_OFF_KILL        ///< Number of Offensive Kills
+	BG_DOM_DEF_KILL        ///< Number of Defensive Kills
+
+	// Points
+	BG_POINTS = 101        ///< BG Points
+	BG_RANKED_POINTS       ///< BG Ranked Points
+	BG_TOTAL_RANKED_GAMES  ///< Total Ranked Games Played.
+	BG_TEAM                ///< Which Team Player Belongs to
+
+	BG_RANKED_GAMES = 106  ///< Number of Ranked Games Played.
+
+	// Leader Win/Tie/Loss
+	BG_LEADER_WON = 116    ///< Number of Times Won as a Leader
+	BG_LEADER_LOSS         ///< Number of Times Loss as a Leader
+	BG_LEADER_TIE          ///< Number of Times Tie as a Leader
+
+	// Common Win/Tie/Loss
+	BG_WON = 121           ///< Constant for Win
+	BG_TIE                 ///< Constant for Tie
+	BG_LOSS                ///< Constant for Loss
+	
+	// HP Loss
+	BG_HP_VALUE = 126      ///< HP Loss Percentage
+	BG_HP_RATE             ///< HP Loss Timer(in ms)
+	BG_HP_TID              ///< HP Loss TimerID
+
+	// SP Loss
+	BG_SP_VALUE = 131      ///< SP Loss Percentage
+	BG_SP_RATE             ///< SP Loss Timer(in ms)
+	BG_SP_TID              ///< SP Loss TimerID
+
+	// Common Ranking (BG and WoE)
+	RANKING_MAX_DAMAGE = 200            ///< MaxDamage in 1 Hit
+	RANKING_DAMAGE_DEALT                ///< Total Damage Dealt
+	RANKING_DAMAGE_RECEIVED             ///< Total Damage Received
+
+	RANKING_HEAL_TEAM = 210             ///< Total Healing Done to TeamMate
+	RANKING_HEAL_ENEMY                  ///< Total Healing Done to Enemy
+	RANKING_SP_USED                     ///< SP Used
+	RANKING_HP_POTION                   ///< HP Potion Consumed
+	RANKING_SP_POTION                   ///< SP Potion Consumed
+
+	RANKING_RED_GEMSTONE = 220          ///< Total Red Gemstone Used
+	RANKING_BLUE_GEMSTONE               ///< Total Blue Gemstone Used
+	RANKING_YELLOW_GEMSTONE             ///< Total Yellow Gemstone Used
+	RANKING_POISON_BOTTLE               ///< Total Poison Bottle Used
+	RANKING_ACID_DEMONSTRATION          ///< Total Acid Demonstration Used (> 0 Damage)
+	RANKING_ACID_DEMONSTRATION_F        ///< Total Acid Demonstration Used (No Damage)
+
+	RANKING_SUPPORT_SKILL_TEAM = 230    ///< Support Skill Casted at TeamMate
+	RANKING_SUPPORT_SKILL_ENEMY         ///< Support Skill Casted at Enemy
+
+	RANKING_SPIRITB = 240               ///< Total Spirit Ball Used
+	RANKING_ZENY                        ///< Total Zeny Used(By Skills)
+
+	RANKING_KILLS = 250                 ///< Total Kills
+	RANKING_DEATHS                      ///< Total Deaths
+	RANKING_AMMOS                       ///< Total Ammo Used(By Skills/Attacks)
+	RANKING_SCORE                       ///< Elo Score
+	
+	RANKING_SKILL_USED = 260            ///< Skill Used(for logs)
+	// BG Ranking (Player should be in BG Map for common ranks)
+	RANKING_BG_BOSS_DMG = 301           ///< Damage done to MvP's
+	// WoE Ranking (Player should be in WoE Map for common ranks)
+	RANKING_WOE_EMPERIUM = 401          ///< Emperium Destroyed
+	RANKING_WOE_BARRICADE               ///< Barriacde Destroyed
+	RANKING_WOE_GUARDIAN                ///< Guardian Killed
+	RANKING_WOE_GSTONE                  ///< Guardian Stone Destroyed
+
+	RANKING_WOE_EMPERIUM_DAMAGE = 410   ///< Total Damage Dealt to Emperium
+	RANKING_WOE_BARRICADE_DAMAGE        ///< Total Damage Dealt to Barriacde
+	RANKING_WOE_GUARDIAN_DAMAGE         ///< Total Damage Dealt to Guardian
+	RANKING_WOE_GSTONE_DAMAGE           ///< Total Damage Dealt to Guardian Stone
+
+see enum Player_Data from eBG_common.h for more details.

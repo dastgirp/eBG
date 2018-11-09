@@ -165,6 +165,8 @@ Changelogs:	See BitBucket Changelog Issue.
 				is_bg = MAP_IS_BG; \
 			} else if ((sd)->status.guild_id && map_flag_gvg2((sd)->bl.m)) { \
 				is_bg = MAP_IS_WOE; \
+			} else if (map->list[(sd)->bl.m].flag.pvp || map->list[(sd)->bl.m].flag.pvp_noguild || map->list[(sd)->bl.m].flag.pvp_noparty) { \
+				is_bg = MAP_IS_PVP; \
 			} else { \
 				is_bg = MAP_IS_NONE; \
 			}
@@ -199,6 +201,7 @@ void bg_send_char_info(struct map_session_data *sd);
 int bg_timer_function(int tid, int64 tick, int id, intptr_t data);
 void eBG_script_bg_end(struct map_session_data *sd, int bg_type);
 bool ebg_clear_hpsp_timer(struct map_session_data *sd, int type);
+void ebg_broadcast2(struct block_list* bl, const char* mes, int len, unsigned int fontColor, short fontType, short fontSize, short fontAlign, short fontY, enum ebg_target target);
 
 /**
  * Battleground Result
@@ -241,6 +244,7 @@ int bg_reportafk_leader = 1;      ///< Only Leader can use \@reportafk(Default: 
 int bg_log_kill = 7;              ///< Log Kills, 0=None, 1=Log BG Kills, 2= Log WoE Kills, 4 = Log Kills on all other maps.
 int bg_reserved_char_id = 99999;  ///< Reserved CharID for BG Items
 int woe_reserved_char_id = 99998; ///< Reserved CharID for WoE Items
+int bg_items_pvp = 0;             ///< Enable Usage of BG Items in PvP Maps? (default: 0)
 
 /**
  * Battleground Data
@@ -977,7 +981,7 @@ int eBG_warp_eos(struct block_list *bl, va_list ap)
 	bool ebg_custom;
 	unsigned int index;
 	struct map_session_data *sd = BL_CAST(BL_PC, bl);
-	int bg_team = pc->readreg(sd, script->add_str("@BG_Team"));
+	int bg_team = pc->readreg(sd, script->add_variable("@BG_Team"));
 
 	index = va_arg(ap, unsigned int);
 	x2 = va_arg(ap, int);
@@ -987,7 +991,7 @@ int eBG_warp_eos(struct block_list *bl, va_list ap)
 	ebg_custom = va_arg(ap, int);
 	
 	if (ebg_custom == 1) {
-		int value = pc->readreg(sd, script->add_str("@eBG_eos_w"));
+		int value = pc->readreg(sd, script->add_variable("@eBG_eos_w"));
 		eShowDebug("EOS/DOM Warp\n");
 		switch(value) {
 		case 0:	// No Variable set, warp to boat
@@ -1038,7 +1042,7 @@ int eBG_warp_eos(struct block_list *bl, va_list ap)
 	}
 
 	if (ebg_custom == 1) {
-		pc->setreg(sd, script->add_str("@eBG_eos_w"), 0);
+		pc->setreg(sd, script->add_variable("@eBG_eos_w"), 0);
 	}
 	return 1;
 }
@@ -1137,7 +1141,7 @@ int bg_timer_function(int tid, int64 tick, int id, intptr_t data)
 			cond_value = ned->value[tdb->npcs->checkat[i]];
 		}
 	} else {
-		cond_value = pc->readreg(sd, script->add_str(tdb->npcs->var));
+		cond_value = pc->readreg(sd, script->add_variable(tdb->npcs->var));
 	}
 	*/
 	
@@ -1225,7 +1229,7 @@ int bg_timer_function(int tid, int64 tick, int id, intptr_t data)
 					}
 					value = ned->value[tdb->npcs->checkat[i]];
 				} else 
-					value = pc->readreg(sd, script->add_str(tdb->npcs->var));
+					value = pc->readreg(sd, script->add_variable(tdb->npcs->var));
 				eShowDebug("Value[%d]:%d, Condition: %d, value: %d\n",tdb->npcs->checkat[i], value, tdb->npcs->condition[i], tdb->npcs->value[i]);
 				
 				if (tdb->npcs->condition[i]&EBG_CONDITION_LESS && value < tdb->npcs->value[i]) {
@@ -1578,13 +1582,14 @@ void ebg_battleconf(const char *key, const char *val)
 	BC_CHECK("battle_configuration/bg_max_rank_game", bg_max_rank_game, 0, INT_MAX);   ///< bg_max_rank_game - Maximum Rank Games that a Player can play(in a day), Default: 50
 	BC_CHECK("battle_configuration/bg_queue_townonly", bg_queue_townonly, 0, 1);       ///< bg_queue_townonly - Can Only Join from Town? Default: 1
 	BC_CHECK("battle_configuration/bg_idle_announce", bg_idle_announce, 0, INT_MAX);   ///< bg_idle_announce - Time after which player is marked as afk. Default: 300
-	BC_CHECK("battle_configuration/bg_kick_idle", bg_kick_idle, 0, 1);                 ///< bg_kick_idle - AutoKick Idle Player
+	BC_CHECK("battle_configuration/bg_kick_idle", bg_kick_idle, 0, INT_MAX);           ///< bg_kick_idle - Time after which idle players will be autokicked. 0 to disable. Default: 0
 	BC_CHECK("battle_configuration/bg_reportafk_leader", bg_reportafk_leader, 0, 1);   ///< bg_reportafk_leader - Only leader can use @reportafk
 #ifdef EBG_RANKING
-	BC_CHECK("battle_configuration/bg_log_kill", bg_log_kill, 0, 1);                   ///< bg_log_kill - Log Kills
+	BC_CHECK("battle_configuration/bg_log_kill", bg_log_kill, 0, 7);                   ///< bg_log_kill - Log Kills
 #endif
 	BC_CHECK("battle_configuration/bg_reserved_char_id", bg_reserved_char_id, 0, INT_MAX);   ///< bg_reserved_char_id - BG CharID for Items
 	BC_CHECK("battle_configuration/woe_reserved_char_id", woe_reserved_char_id, 0, INT_MAX); ///< woe_reserved_char_id - WoE CharID for Items
+	BC_CHECK("battle_configuration/bg_items_pvp", bg_items_pvp, 0, 1);                 ///< bg_items_pvp - BG Items can be used in PvP Maps? (1=Yes,0=No), Default: 0
 
 #undef BC_CHECK
 	ShowWarning("ebg_battleconf: Unknown Config '%s'.\n", key);
@@ -1616,6 +1621,7 @@ int ebg_battleconf_return(const char *key)
 #endif
 	BC_CHECK("battle_configuration/bg_reserved_char_id", bg_reserved_char_id);
 	BC_CHECK("battle_configuration/woe_reserved_char_id", woe_reserved_char_id);
+	BC_CHECK("battle_configuration/bg_items_pvp", bg_items_pvp);
 #undef BC_CHECK
 
 	ShowWarning("ebg_battleconf_return: Unknown Config '%s'.\n", key);
@@ -1765,7 +1771,9 @@ int get_itemskill_restriction(struct map_session_data *sd)
 }
 
 /**
- * pc_useitem PreHooked for itemRestriction (only_walk parameter)
+ * pc_useitem PreHooked
+ * Item Restriction (only_walk)
+ * BG/WoE Consumables
  * @see pc_useitem
  **/
 int pc_useitem_pre(struct map_session_data **sd_, int *n_)
@@ -1778,6 +1786,7 @@ int pc_useitem_pre(struct map_session_data **sd_, int *n_)
 	nullpo_ret(sd);
 
 	if (sd->npc_id || sd->state.workinprogress&1) {
+		hookStop();
 		return 0;
 	}
 
@@ -1794,11 +1803,12 @@ int pc_useitem_pre(struct map_session_data **sd_, int *n_)
 
 	// Check BG Item
 	if (sd->status.inventory[n].card[0] == CARD0_CREATE) {
-		if (MakeDWord(sd->status.inventory[n].card[2], sd->status.inventory[n].card[3]) == bg_reserved_char_id && is_bg != MAP_IS_BG) {
-			hookStop();
-			return 0;
-		}
-		if (MakeDWord(sd->status.inventory[n].card[2], sd->status.inventory[n].card[3]) == woe_reserved_char_id && is_bg != MAP_IS_WOE) {
+		if (MakeDWord(sd->status.inventory[n].card[2], sd->status.inventory[n].card[3]) == bg_reserved_char_id) {
+			if (is_bg != MAP_IS_BG && !(bg_items_pvp && is_bg == MAP_IS_PVP)) {
+				hookStop();
+				return 0;
+			}
+		} else if (MakeDWord(sd->status.inventory[n].card[2], sd->status.inventory[n].card[3]) == woe_reserved_char_id && is_bg != MAP_IS_WOE) {
 			hookStop();
 			return 0;
 		}
@@ -1829,10 +1839,11 @@ void eBG_ChangeLeader(struct sd_p_data *data, int bg_id)
 			if (data->leader && bg_data_t->leader) { /// Current is the Leader, so Change it.
 				int i;
 
-				data->leader = false;
 				for (i = 0; i < MAX_BG_MEMBERS; i++) { /// Update other BG members
 					struct map_session_data *bg_sd;
 					struct sd_p_data *bg_data;
+					char output[100];
+					unsigned int color;
 					if ((bg_sd = bgd->members[i].sd) == NULL)
 						continue;
 					bg_data = pdb_search(bg_sd, false);
@@ -1840,12 +1851,24 @@ void eBG_ChangeLeader(struct sd_p_data *data, int bg_id)
 						ShowWarning("eBG_ChangeLeader: Cannot find Player Data of CharacterID: %d\n",bg_sd->status.char_id);
 						return;
 					}
+
+					if (bg_data->leader) // Same Player
+						continue;
+					data->leader = false;
 					bg_data->leader = true;
 #ifdef LEADER_INT
 					bg_data_t->leader = bg_sd->status.char_id;
 #else
 					bg_data_t->leader->char_id = bg_sd->status.char_id;
 #endif
+					clif->charnameupdate(bg_sd);
+
+					// Announce the change
+#ifdef VIRT_GUILD
+					color = bg_colors[GET_ORIG_GUILD_ID(bg_data_t->g->guild_id)];
+					sprintf(output, "Team Leader transfered to [%s]", bg_sd->status.name);
+					ebg_broadcast2(&bg_sd->bl, output, (int)strlen(output) + 1, color, 0x190, 20, 0, 0, CLIENT_EBG);
+#endif // Todo (else sd_data for bg_colors)
 					break;
 				}
 			}
@@ -1911,7 +1934,7 @@ void eBG_turnOff(struct map_session_data *sd)
 	
 	/// Set Ranked and eBG Mode to Off 
 	if (data->leader) {
-		eBG_ChangeLeader(data, sd->bg_id);
+		eBG_ChangeLeader(data, sd->bg_id); // ToDo: Already called by bg_e_team_leave
 	}
 	data->ranked.match = false;
 	data->eBG = false;
@@ -2266,7 +2289,7 @@ void bg_team_rewards(int bg_id, int nameid, int amount, int kafrapoints, int que
 
 		if (quest_id)
 			quest->add(sd, quest_id, 0);
-		pc_setglobalreg(sd, script->add_str(var), pc_readglobalreg(sd, script->add_str(var)) + add_value);
+		pc_setglobalreg(sd, script->add_variable(var), pc_readglobalreg(sd, script->add_variable(var)) + add_value);
 
 		if (kafrapoints > 0) {
 			get_amount = kafrapoints;
@@ -2284,7 +2307,7 @@ void bg_team_rewards(int bg_id, int nameid, int amount, int kafrapoints, int que
 				clif->additem(sd, 0, 0, flag);
 		}
 
-		type = mapreg->readreg(script->add_str("$BGRanked"));
+		type = mapreg->readreg(script->add_variable("$BGRanked"));
 		
 		switch (bg_win_loss) {
 		case BGC_WON: // Won
@@ -2539,9 +2562,9 @@ int pc_dead_pre(struct map_session_data **sd_, struct block_list **src)
 #endif
 		if (sd->bg_id) {
 			if (bg->team_search(sd->bg_id) != NULL) {
-				pc->setreg(sd, script->add_str("@killer_bg_id"), bg->team_get_id(*src));                                 // Killer Battleground ID
-				pc->setreg(sd, script->add_str("@killer_bg_src"), ssd && ssd->bg_id ? ssd->bl.id : 0);                  // Killer BL ID
-				pc->setreg(sd, script->add_str("@killer_bg_acc_id"), ssd && ssd->bg_id ? ssd->status.account_id : 0);   // Killer AccountID
+				pc->setreg(sd, script->add_variable("@killer_bg_id"), bg->team_get_id(*src));                                 // Killer Battleground ID
+				pc->setreg(sd, script->add_variable("@killer_bg_src"), ssd && ssd->bg_id ? ssd->bl.id : 0);                  // Killer BL ID
+				pc->setreg(sd, script->add_variable("@killer_bg_acc_id"), ssd && ssd->bg_id ? ssd->status.account_id : 0);   // Killer AccountID
 				if (data && data->eBG) {
 					data->kills = data->kills+1;
 				}
@@ -2764,7 +2787,7 @@ int pc_dead_post(int retVal, struct map_session_data *sd, struct block_list *src
 	ebg_clear_hpsp_timer(sd, EBG_HP_TIME | EBG_SP_TIME | EBG_EXTRA_TIME);
 	
 	if (retVal != 0) {
-		pc->setreg(sd,script->add_str("@bg_killer_id"), src ? src->id : 0);
+		pc->setreg(sd,script->add_variable("@bg_killer_id"), src ? src->id : 0);
 	}
 	return retVal;
 }
@@ -2792,7 +2815,32 @@ void clif_parse_LoadEndAck_pre(int *fd, struct map_session_data **sd_)
 }
 
 /**
- * Checks PlayerIP based on same map
+ * Comparison of IP/Unique ID
+ * @method bg_ipcheck_compare
+ * @param  fd1                Player 1 FD
+ * @param  fd2                Player 2 FD
+ * @return                    true, if IP/UID is same
+ */
+bool bg_ipcheck_compare(int fd1, int fd2)
+{
+	// IP Check
+#if (DUAL_CLIENT_CHECK & 1)
+	if (sockt->session[fd1]->client_addr == sockt->session[fd2]->client_addr)
+		return true;
+#endif
+
+	// Gepard Check
+#if (DUAL_CLIENT_CHECK & 2)
+	if (session[fd1]->gepard_info.unique_id == session[fd2]->gepard_info.unique_id)
+		return true;
+#endif
+
+	// Same IP/Mac not found
+	return false;
+}
+
+/**
+ * Checks PlayerIP/uid based on same map
  * @param bl Block_List
  * @param ap va_list
  * @return 1 if found, else 0.
@@ -2801,8 +2849,8 @@ int bg_ipcheck_sub(struct block_list *bl, va_list ap)
 {
 	struct map_session_data *sd,*pl_sd;
 	pl_sd = (struct map_session_data *)bl;
-	sd = va_arg(ap,struct map_session_data *);
-	if (sockt->session[sd->fd]->client_addr == sockt->session[pl_sd->fd]->client_addr)
+	sd = va_arg(ap, struct map_session_data *);
+	if (bg_ipcheck_compare(sd->fd, pl_sd->fd))
 		return 1;
 	return 0;
 }
@@ -2829,7 +2877,7 @@ int bg_ipcheck(struct map_session_data *sd, bool same_map, const char* map_name)
 		for (pl_sd = (struct map_session_data *)mapit->first(iter); mapit->exists(iter); pl_sd = (struct map_session_data *)mapit->next(iter)) {
 			if (!(pl_sd->bg_id || map->list[pl_sd->bl.m].flag.battleground))
 				continue;
-			if (sockt->session[sd->fd]->client_addr == sockt->session[pl_sd->fd]->client_addr)
+			if (bg_ipcheck_compare(sd->fd, pl_sd->fd))
 				c++;
 		}
 		mapit->free(iter);
@@ -3181,7 +3229,7 @@ int bg_e_team_join(int bg_id, struct map_session_data *sd, int guild_id)
 		memcpy(&bgd->members[i].source,&sd->status.last_point,sizeof(struct point));
 	bgd->count++;
 
-	if (mapreg->readreg(script->add_str("$BGRanked")) && bg_ranked_mode &&
+	if (mapreg->readreg(script->add_variable("$BGRanked")) && bg_ranked_mode &&
 		data->esd->bg.ranked_games < bg_max_rank_game && (int)DIFF_TICK(timer->gettick(), bg_data_t->creation_time) < 60) {	// 60 Seconds Time Limit for Getting Ranked.
 		int *total_ranked_game;
 		char output[128];
@@ -3190,7 +3238,7 @@ int bg_e_team_join(int bg_id, struct map_session_data *sd, int guild_id)
 		data->esd->bg.ranked_games++;
 		SET_VARIABLE_ADD(sd, total_ranked_game, BG_TOTAL_RANKED_GAMES, 1, int);
 		
-		pc_setglobalreg(sd, script->add_str("bg_ranked"), mapreg->readreg(script->add_str("$BGRanked_")));
+		pc_setglobalreg(sd, script->add_variable("bg_ranked"), mapreg->readreg(script->add_variable("$BGRanked_")));
 		sprintf(output,"-- Ranked Battleground Match %d Of %d --", data->esd->bg.ranked_games, bg_max_rank_game);
 		clif->message(sd->fd,output);
 	}
@@ -3640,7 +3688,7 @@ void send_bg_memberlist(struct map_session_data *sd)
 	WFIFOHEAD(fd, bgd->count * size + 4);
 	WFIFOW(fd, 0) = cmd;
 	eShowDebug("%d - Bg_Count \n", bgd->count);
-	for (i = 0, c = 0; i < bgd->count; i++) {
+	for (i = 0, c = 0; c < bgd->count; i++) {
 		if ((psd = bgd->members[i].sd) == NULL)
 			continue;
 		data = pdb_search(psd, false);
@@ -5004,9 +5052,22 @@ int set_ebg_idle(union DBKey *key, struct DBData **data_db, va_list ap)
 		color = bg_colors[GET_ORIG_GUILD_ID(sd_data->g->guild_id)];
 #endif
 		// Reveal done in other function.
-		if (bg_idle_announce > 0 && sd_data->eBG && sd_data->flag.ebg_afk == 0 && DIFF_TICK32(sockt->last_tick, sd->idletime) >= bg_idle_announce) { // Idle announces
+		if (bg_idle_announce > 0 && sd_data->eBG && DIFF_TICK32(sockt->last_tick, sd->idletime) >= bg_idle_announce) { // Idle announces
 			char output[200];
-			if (bg_kick_idle > 0) {
+
+			// Announce if not yet done.
+			if (sd_data->flag.ebg_afk == 0) {
+				sd_data->flag.ebg_afk = 1;
+#ifdef VIRT_GUILD
+				sprintf(output, "%s : %s seems to be away. AFK Warning - Can be kicked out with @reportafk", bg_data->g->name, sd->status.name);
+#else
+				sprintf(output, "%s : %s seems to be away. AFK Warning - Can be kicked out with @reportafk", sd_data->g->name, sd->status.name);
+#endif
+				ebg_broadcast2(&sd->bl, output, (int)strlen(output)+1, color, 0x190, 20, 0, 0, CLIENT_EBG);
+			}
+
+			// Autokick timer
+			if (bg_kick_idle > 0 && DIFF_TICK32(sockt->last_tick, sd->idletime) >= bg_kick_idle) {
 				sprintf(output, "- AFK [%s] AutoKicked -", sd->status.name);
 				ebg_broadcast2(&sd->bl, output, (int)strlen(output)+1, color, 0x190, 20, 0, 0, CLIENT_EBG);
 				
@@ -5015,14 +5076,6 @@ int set_ebg_idle(union DBKey *key, struct DBData **data_db, va_list ap)
 				pc->setpos(sd, sd->status.save_point.map, sd->status.save_point.x, sd->status.save_point.y, CLR_OUTSIGHT);
 				continue;
 			}
-			sd_data->flag.ebg_afk = 1;
-
-#ifdef VIRT_GUILD
-			sprintf(output, "%s : %s seems to be away. AFK Warning - Can be kicked out with @reportafk", bg_data->g->name, sd->status.name);
-#else
-			sprintf(output, "%s : %s seems to be away. AFK Warning - Can be kicked out with @reportafk", sd_data->g->name, sd->status.name);
-#endif
-			ebg_broadcast2(&sd->bl, output, (int)strlen(output)+1, color, 0x190, 20, 0, 0, CLIENT_EBG);
 		}
 	}
 	return 1;
@@ -5739,13 +5792,13 @@ bool bg_team_delete_pre(int *bg_id_)
 		data = pdb_search(sd, false);
 		if (data != NULL && data->eBG) {
 			// @Todo: Just call bg->team_leave?
-			int bg_id_var = pc->readreg(sd, script->add_str("@BG_ID"));
-			int bg_team = pc->readreg(sd, script->add_str("@BG_Team"));
+			int bg_id_var = pc->readreg(sd, script->add_variable("@BG_ID"));
+			int bg_team = pc->readreg(sd, script->add_variable("@BG_Team"));
 			hookS = true;
 			ebg_clear_hpsp_timer(sd, EBG_HP_TIME | EBG_SP_TIME | EBG_EXTRA_TIME);
 			bg->send_dot_remove(sd);
 			if (bg_id_var == BGT_TOUCHDOWN) {
-				pc->changelook(sd, LOOK_CLOTHES_COLOR, pc_readglobalreg(sd, script->add_str("eBG_tod_pallete")));
+				pc->changelook(sd, LOOK_CLOTHES_COLOR, pc_readglobalreg(sd, script->add_variable("eBG_tod_pallete")));
 			}
 			if (bg_team > 0) {
 				eBG_script_bg_end(sd, bg_id_var);	// Save the Variables, and TurnOff the bg
@@ -6032,7 +6085,7 @@ void bg_initialize_constants(void)
 	script->set_constant("EBG_NOT_STARTED", 0, false, false);
 	script->set_constant("EBG_RUNNING", 1, false, false);
 	script->set_constant("EBG_ENDING", 2, false, false);
-	
+
 	/// CTF .status:
 	script->set_constant("CTF_UNTOUCHED", 0, false, false);
 	script->set_constant("CTF_ONGROUND", 1, false, false);
@@ -6106,9 +6159,11 @@ void bg_initialize_constants(void)
 	script->set_constant("BC_SELFEBG", BC_SELFEBG, false, false);                         ///< 0x4
 
 	/// Restricted items
-	script->set_constant("MAP_IS_NONE", MAP_IS_NONE, false, false);                       ///< 0X0
-	script->set_constant("MAP_IS_BG", MAP_IS_BG, false, false);                           ///< 0X1
-	script->set_constant("MAP_IS_WOE", MAP_IS_WOE, false, false);                         ///< 0X2
+	script->set_constant("MAP_IS_NONE", MAP_IS_NONE, false, false);                       ///< 0x0
+	script->set_constant("MAP_IS_BG", MAP_IS_BG, false, false);                           ///< 0x1
+	script->set_constant("MAP_IS_WOE", MAP_IS_WOE, false, false);                         ///< 0x2
+	script->set_constant("MAP_IS_PVP", MAP_IS_PVP, false, false);                         ///< 0x3
+	
 }
 
 #include "eBG_common.c"
@@ -6212,7 +6267,7 @@ HPExport void plugin_init(void)
 	addScriptCommand("bg_info", "ii", bg_info);
 	addScriptCommand("bg_insert_event_name", "is", bg_insert_event_name);
 	addScriptCommand("bg_timer_link", "iii", bg_timer_link);
-	addScriptCommand("bg_announce", "sis????", bg_announce);
+	addScriptCommand("bg_announce", "si?????", bg_announce);
 	addScriptCommand("bg_script_timer", "is?", bg_script_timer);
 	addScriptCommand("bg_get_guild_id", "i", bg_get_guild_id);
 	addScriptCommand("checkwall", "s", checkwall);
@@ -6280,6 +6335,7 @@ HPExport void server_preinit(void)
 	addBattleConf("battle_configuration/bg_log_kill", ebg_battleconf, ebg_battleconf_return, false);          // Logs kill
 	addBattleConf("battle_configuration/bg_reserved_char_id", ebg_battleconf, ebg_battleconf_return, false);  // BattleGround CharID
 	addBattleConf("battle_configuration/woe_reserved_char_id", ebg_battleconf, ebg_battleconf_return, false); // WoE CharID
+	addBattleConf("battle_configuration/bg_items_pvp", ebg_battleconf, ebg_battleconf_return, false);         // Setting for allowing BG in PvP
 	
 	// BG_Timer DB
 	bg_timer_db = idb_alloc(DB_OPT_BASE);    // Build up TimerDatabase
