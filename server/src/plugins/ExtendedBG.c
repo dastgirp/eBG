@@ -165,8 +165,6 @@ Changelogs:	See BitBucket Changelog Issue.
 				is_bg = MAP_IS_BG; \
 			} else if ((sd)->status.guild_id && map_flag_gvg2((sd)->bl.m)) { \
 				is_bg = MAP_IS_WOE; \
-			} else if (map->list[(sd)->bl.m].flag.pvp || map->list[(sd)->bl.m].flag.pvp_noguild || map->list[(sd)->bl.m].flag.pvp_noparty) { \
-				is_bg = MAP_IS_PVP; \
 			} else { \
 				is_bg = MAP_IS_NONE; \
 			}
@@ -194,7 +192,7 @@ int get_variable_(struct map_session_data *sd, int type, bool create, int retVal
 void bg_load_char_data(struct map_session_data *sd);
 int eBG_Guildadd(struct map_session_data *sd, struct guild* g);
 int eBG_Guildremove(struct map_session_data *sd, struct guild* g);
-int update_bg_ranking(struct map_session_data *sd, int type2);
+bool update_bg_ranking(struct map_session_data *sd, int type2);
 int bg_e_team_join(int bg_id, struct map_session_data *sd, int guild_id);
 void send_bg_memberlist(struct map_session_data *sd);
 void bg_send_char_info(struct map_session_data *sd);
@@ -1804,7 +1802,10 @@ int pc_useitem_pre(struct map_session_data **sd_, int *n_)
 	// Check BG Item
 	if (sd->status.inventory[n].card[0] == CARD0_CREATE) {
 		if (MakeDWord(sd->status.inventory[n].card[2], sd->status.inventory[n].card[3]) == bg_reserved_char_id) {
-			if (is_bg != MAP_IS_BG && !(bg_items_pvp && is_bg == MAP_IS_PVP)) {
+			bool is_pvp = false;
+			if (map->list[sd->bl.m].flag.pvp || map->list[sd->bl.m].flag.pvp_noguild || map->list[sd->bl.m].flag.pvp_noparty)
+				is_pvp = true;
+			if (is_bg != MAP_IS_BG && !(bg_items_pvp && is_pvp)) {
 				hookStop();
 				return 0;
 			}
@@ -2142,7 +2143,7 @@ void pc_addpoint_bg(struct map_session_data *sd, int count, int type, bool leade
 			break;
 	}
 	
-	update_bg_ranking(sd, (type+1)); /// Update Rank(map_side)
+	update_bg_ranking(sd, (type + 1)); /// Update Rank(map_side)
 	clif->message(sd->fd, message);
 	return;
 }
@@ -2176,12 +2177,11 @@ int load_playername(int char_id, char* name)
  * @param type2 Type of BG(1=Normal,Else=Ranked)
  * @return 0
  **/
-int update_bg_ranking(struct map_session_data *sd, int type2)
+bool update_bg_ranking(struct map_session_data *sd, int type2)
 {
-	// Todo: Move to char server
 	int cid = sd->status.char_id, points, size, player_pos, fame_pos;
 	struct fame_list *list;
-	//int num;
+	bool changed = false;
 	
 	switch (type2) {
 		case 1:
@@ -2219,9 +2219,11 @@ int update_bg_ranking(struct map_session_data *sd, int type2)
 			ARR_MOVE(player_pos, fame_pos, list, struct fame_list);
 			list[fame_pos].fame = points;
 		}
+		changed = true;
+		npc->event_do("::OneBGRankChange");	// Change
 	}
 
-	return 0;
+	return changed;
 }
 
 /**
@@ -2446,6 +2448,7 @@ void ebg_kill(struct map_session_data *killed, struct map_session_data *killer)
 	if (bg_log_kill <= 0 || bg_log_kill > 7)
 		return;
 	EBG_OR_WOE(killer, killer_data, is_bg);
+
 	if ((is_bg == MAP_IS_NONE && (bg_log_kill&3)) ||
 		(is_bg == MAP_IS_BG && (bg_log_kill&1)) ||
 		(is_bg == MAP_IS_WOE && (bg_log_kill&2)) ) {
@@ -5849,7 +5852,12 @@ int bg_team_db_final_pre(union DBKey *key, struct DBData **data, va_list ap)
 	return 0;
 }
 
-// PACKET_CM_FAME_DATA
+/**
+ * Receive Fame Data from Char Server
+ * Packet: PACKET_CM_FAME_DATA
+ * @method ebg_char_p_fame_data
+ * @param  fd                   File Descriptor
+ */
 void ebg_char_p_fame_data(int fd) {
 	int num, size = RFIFOL(fd, 2);
 	int total = 0, len = 8;
@@ -5873,6 +5881,8 @@ void ebg_char_p_fame_data(int fd) {
 		}
 		ShowInfo("Received Fame List of '"CL_WHITE"%d"CL_RESET"' characters(BG Regular List).\n", total);
 	}
+	// Change the NPC Looks
+	npc->event_do("::OneBGRankChange");
 }
 
 /// PACKET_CM_SYNC_DATA
@@ -6272,6 +6282,7 @@ HPExport void plugin_init(void)
 	addScriptCommand("bg_get_guild_id", "i", bg_get_guild_id);
 	addScriptCommand("checkwall", "s", checkwall);
 	addScriptCommand("getebgitem", "iii", getebgitem);
+	addScriptCommand("getbgfame", "ii", getbgfame);
 	//#include "NewVersion_init.inc"
 	bg_initialize_constants();
 	

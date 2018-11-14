@@ -707,7 +707,6 @@ enum {
 	MAP_IS_NONE = 0x0,
 	MAP_IS_BG   = 0x1,
 	MAP_IS_WOE  = 0x2,
-	MAP_IS_PVP  = 0x3,
 };
 
 /**

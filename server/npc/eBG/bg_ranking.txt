@@ -1,0 +1,122 @@
+// Ranking Display
+
+-	script	BG Ranking#main	FAKE_NPC,{
+	.@name$ = strnpcinfo(2);
+	.@npcid = getnpcid(0);
+	.@type$ = substr(.@name$, 0, 0); // first letter: r = ranked, n = Regular(Normal)
+	.@rank = atoi(substr(.@name$, 1, getstrlen(.@name$) - 1)); // Get Rank
+
+	// Get the Char ID
+	if (.@type$ == "r") {
+		.@char_id = .ranked[.@rank - 1];
+	} else {
+		.@char_id = .regular[.@rank - 1];
+	}
+
+	if (.@char_id) {
+		.@n$ = getd(".name_"+ .@type$ +"$["+ (.@rank - 1) +"]");
+		mesf("%s", .@n$);	// Display Name
+		close;
+	}
+	end;
+	
+OneBGRankChange:
+	.@name$ = strnpcinfo(2);
+	if (.@name$ != "main") {
+		.@npcid = getnpcid(0);
+		.@type$ = substr(.@name$, 0, 0); // first letter: r = ranked, n = Regular(Normal)
+		.@rank = atoi(substr(.@name$, 1, getstrlen(.@name$) - 1)); // Get Rank
+		// Index should be > 0
+		if (.@rank <= 0) {
+			end;
+		}
+		// Get the Char ID
+		if (.@type$ == "r") {
+			.@char_id = .ranked[.@rank - 1];
+		} else {
+			.@char_id = .regular[.@rank - 1];
+		}
+		.@current = getd(".current_"+ .@type$ +"["+ (.@rank - 1) +"]");
+		if (.@current == .@char_id)	// same character currently
+			end;
+		// Change the CharID
+		setd(".current_"+ .@type$ +"["+ (.@rank - 1) +"]", .@char_id);
+		// Change Look
+		if (.@char_id) {
+			query_sql("SELECT `name`, `class`, `hair`, `hair_color`, `clothes_color`, `head_top`, `head_mid`, `head_bottom` FROM `char` WHERE `char_id`="+ .@char_id,
+				.@name$, .@class, .@hair, .@hcolor, .@ccolor, .@ht, .@hm, .@hb);
+			setunitdata(.@npcid, UDT_CLASS, .@class);
+			setunitdata(.@npcid, UDT_HAIRSTYLE, .@hair);
+			setunitdata(.@npcid, UDT_HAIRCOLOR, .@hcolor);
+			setunitdata(.@npcid, UDT_CLOTHCOLOR, .@ccolor);
+			setunitdata(.@npcid, UDT_HEADTOP, .@ht);
+			setunitdata(.@npcid, UDT_HEADMIDDLE, .@hm);
+			setunitdata(.@npcid, UDT_HEADBOTTOM, .@hb);
+			setd(".name_"+ .@type$ +"$["+ (.@rank - 1) +"]", .@name$);
+		} else {
+			// Edit Default Look Here
+			setunitdata(.@npcid, UDT_CLASS, Job_Novice);
+			setunitdata(.@npcid, UDT_HAIRSTYLE, 1);
+			setunitdata(.@npcid, UDT_HAIRCOLOR, 1);
+			setunitdata(.@npcid, UDT_CLOTHCOLOR, 1);
+			setunitdata(.@npcid, UDT_HEADTOP, Valkyrie_Helm);
+			setunitdata(.@npcid, UDT_HEADMIDDLE, Pair_Of_Red_Ribbon_);
+			setunitdata(.@npcid, UDT_HEADBOTTOM, Cheer_Scarf6);
+		}
+	}
+	end;
+
+OnFetchData:
+	.@type = getarg(0);
+	switch(.@type) {
+	case 1:
+		.rank_count = getbgfame(.@type, .top_ranked);
+		copyarray(.ranked[0], $@bg_fame_id[0], .rank_count);
+		deletearray($@bg_fame_id[0], .rank_count);
+		break;
+	case 2:
+		.regular_count = getbgfame(.@type, .top_regular);
+		copyarray(.regular[0], $@bg_fame_id[0], .regular_count);
+		deletearray($@bg_fame_id[0], .regular_count);
+		break;
+	}
+
+	return;
+
+OnTimer5000:
+	donpcevent("::OneBGRankChange");	// Execute All Change
+	stopnpctimer;
+	end;
+
+OnInit:
+	.top_ranked = 3;	// Top X Ranked Players data is fetched
+	.top_regular = 3;
+
+	.@name$ = strnpcinfo(2);
+	if (.@name$ == "main") {
+		callsub(OnFetchData, 1);
+		callsub(OnFetchData, 2);
+		initnpctimer;
+	}
+
+	end;
+
+}
+
+// Format of Name:
+//  Name#Tx
+// T:
+//  T can be either r or n, r = Ranked, n = Regular
+// x: A Number which indicates the rank
+// 
+// Uncomment and change the location of NPCs
+
+// NPC count should equal .top_ranked
+//prontera,148,148,6	duplicate(BG Ranking#main)	Ranked No. 1#r1	PORING
+//prontera,148,147,6	duplicate(BG Ranking#main)	Ranked No. 2#r2	PORING
+//prontera,148,146,6	duplicate(BG Ranking#main)	Ranked No. 3#r3	PORING
+
+// NPC count should equal .top_regular, don't change hidden value
+//prontera,148,145,6	duplicate(BG Ranking#main)	Regular No. 1#n1	PORING
+//prontera,148,144,6	duplicate(BG Ranking#main)	Regular No. 2#n2	PORING
+//prontera,148,143,6	duplicate(BG Ranking#main)	Regular No. 3#n3	PORING

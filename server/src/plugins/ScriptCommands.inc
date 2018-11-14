@@ -1509,3 +1509,29 @@ BUILDIN(getebgitem)
 	script_pushint(st,1);
 	return true;
 }
+
+/**
+ * getbgfame(fameType, top)
+ * fameType:
+ *  1 = Ranked BG
+ *  2 = Regular BG
+ * top: Top X Players
+ */
+BUILDIN(getbgfame)
+{
+	int fameType = script_getnum(st, 2),
+		top = script_getnum(st, 3);
+	int c = 0, i;
+	if (fameType == 1) {
+		for (i = 0; i < MAX_FAME_LIST && bgrank_fame_list[i].id && c < top; i++) {
+			mapreg->setreg(reference_uid(script->add_variable("$@bg_fame_id"), c++), bgrank_fame_list[i].id);
+		}
+	} else if (fameType == 2) {
+		for (i = 0; i < MAX_FAME_LIST && bg_fame_list[i].id && c < top; i++) {
+			mapreg->setreg(reference_uid(script->add_variable("$@bg_fame_id"), c++), bg_fame_list[i].id);
+		}
+	}
+
+	script_pushint(st, c);
+	return true;
+}

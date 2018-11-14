@@ -161,7 +161,7 @@ EOF
 		# Queue
 		SCRIPTS="--load-script server/npc/BGQueue.txt $SCRIPTS"
 		# Misc Scripts
-		SCRIPTS="--load-script $script_dir/bg_shop.txt $SCRIPTS"
+		SCRIPTS="--load-script $script_dir/bg_shop.txt --load-script $script_dir/bg_ranking.txt $SCRIPTS"
 		# Common functions
 		SCRIPTS="--load-script $script_dir/bg_functions.txt --load-script $script_dir/bg_common.txt $SCRIPTS"
 		# Run with only HPM

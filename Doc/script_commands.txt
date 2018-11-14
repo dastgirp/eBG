@@ -5,7 +5,7 @@
 // 	Dastgir
 //=====================================================
 // Date:
-// 	8th November 2018
+// 	11th November 2018
 //=====================================================
 
 *pc_block_si(<Type>, <Value>{, <AccountID>})
@@ -504,5 +504,18 @@ Refer to getitem
 type:
 	MAP_IS_BG: BG Bounded Item
 	MAP_IS_WOE: WoE Bounded Item
+
+=====================================================
+
+*getbgfame(fameType, top)
+
+Returns the top <top> Fame in descending order for the <fameType>
+
+fameType:
+  1 = Ranked BG
+  2 = Regular BG
+
+Saves the character ID in array $@bg_fame_id.
+This command returns the number of values saved in the array.
 
 =====================================================

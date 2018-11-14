@@ -165,6 +165,9 @@ ACMD(bgranked)
 		sprintf(output, "%d - %s - %d points", (i + 1), bgrank_fame_list[i].name, bgrank_fame_list[i].fame);
 		clif->message(fd, output);
 	}
+	if (i == 0) {
+		clif->message(fd, "No Players.");
+	}
 	clif->message(fd, "============= Ranked Battleground Ranking =============");
 	return true;
 }
@@ -182,6 +185,9 @@ ACMD(bgregular)
 	for (i = 0; i < MAX_FAME_LIST && bg_fame_list[i].id; i++) {
 		sprintf(output, "%d - %s - %d points", i + 1, bg_fame_list[i].name, bg_fame_list[i].fame);
 		clif->message(fd, output);
+	}
+	if (i == 0) {
+		clif->message(fd, "No Players.");
 	}
 	clif->message(fd, "============= Regular Battleground Ranking =============");
 	return true;
