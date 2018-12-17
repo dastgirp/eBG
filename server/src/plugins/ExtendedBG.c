@@ -22,6 +22,7 @@
 #include "common/conf.h"
 #include "common/sql.h"
 #include "common/utils.h"
+#include "common/packets.h"
 
 #include "map/atcommand.h"
 #include "map/battle.h"
@@ -2001,7 +2002,7 @@ void pc_logout_action(struct map_session_data *sd)
  * Does the Necessary Restriction for Item/Skill, calling logout actions and stopping random warps.
  * @see pc_setpos
  **/
-int pc_setpos_pre(struct map_session_data **sd, unsigned short *map_index_, int *x_, int *y_, clr_type *clrtype_)
+int pc_setpos_pre(struct map_session_data **sd, unsigned short *map_index_, int *x_, int *y_, enum clr_type *clrtype_)
 {
 	int16 m;
 	int changemap;
@@ -3769,7 +3770,7 @@ void send_bg_basicinfo(struct map_session_data **sd_)
 	if (g == NULL)
 		return;
 	
-	WFIFOHEAD(fd, (clif->packet(cmd))->len);
+	WFIFOHEAD(fd, packets->db[cmd]);
 	WFIFOW(fd, 0) = cmd;
 	WFIFOL(fd, 2) = g->guild_id;
 	WFIFOL(fd, 6) = g->guild_lv;
@@ -3802,7 +3803,7 @@ void send_bg_basicinfo(struct map_session_data **sd_)
 #endif
 #endif
 
-	WFIFOSET(fd, (clif->packet(cmd))->len);
+	WFIFOSET(fd, packets->db[cmd]);
 	hookStop();
 }
 
@@ -4352,7 +4353,7 @@ void bg_updatescore_mf(struct map_session_data **sd_)
 	bg_extra = bg_extra_create(bg->team_search(sd->bg_id), false);
 	mf_data = getFromMAPD(&map->list[sd->bl.m], 0);
 	if (mf_data != NULL && mf_data->bg_3) {
-		WFIFOHEAD(fd, (clif->packet(0x2de))->len);
+		WFIFOHEAD(fd, packets->db[0x2de]);
 		WFIFOW(fd, 0) = 0x2de;
 		if (bg_extra != NULL) {
 			WFIFOW(fd, 2) = bg_extra->points;
@@ -4360,7 +4361,7 @@ void bg_updatescore_mf(struct map_session_data **sd_)
 			WFIFOW(fd, 2) = 0;
 		}
 		WFIFOL(fd, 4) = mf_data->bg_topscore;
-		WFIFOSET(fd, (clif->packet(0x2de))->len);
+		WFIFOSET(fd, packets->db[0x2de]);
 		hookStop();
 		return;
 	}
@@ -4370,7 +4371,7 @@ void bg_updatescore_mf(struct map_session_data **sd_)
  * Updates TeamScore
  **/
 void bg_updatescore_team(struct battleground_data *bgd) {
-	int len = (clif->packet(0x2de))->len;
+	int len = packets->db[0x2de];
 	char *buf;
 	struct bg_extra_info* bg_extra;
 	struct ebg_mapflags *mf_data;
@@ -4411,7 +4412,7 @@ void bg_updatescore_team(struct battleground_data *bgd) {
 			continue;
 		}
 
-		clif->send(buf, (clif->packet(0x2de))->len, &sd->bl, SELF);
+		clif->send(buf, packets->db[0x2de], &sd->bl, SELF);
 	}
 	free(buf);
 	return;
@@ -4504,7 +4505,7 @@ int status_virt_emblem_id(const struct block_list **bl_) {
  **/
 void clif_charname_virt(struct map_session_data **ssd_) {
 	int cmd = 0x195, ps = -1;
-	int len = (clif->packet(cmd))->len + 1;
+	int len = packets->db[0x195] + 1;
 	unsigned char *buf;
 	struct party_data *p = NULL;
 	struct guild *g = NULL;
@@ -4562,7 +4563,7 @@ void clif_charname_virt(struct map_session_data **ssd_) {
 	}
 
 	// Update nearby clients
-	clif->send(buf, (clif->packet(cmd))->len, &ssd->bl, AREA);
+	clif->send(buf, packets->db[cmd], &ssd->bl, AREA);
 	free(buf);
 	hookStop();
 	return;
@@ -4644,11 +4645,11 @@ void clif_charname_virt2(int *fd, struct block_list **bl_)
 	}
 	// if no recipient specified just update nearby clients
 	if (*fd == 0)
-		clif->send(buf, (clif->packet(cmd))->len, bl, AREA);
+		clif->send(buf, packets->db[cmd], bl, AREA);
 	else {
-		WFIFOHEAD(*fd, (clif->packet(cmd))->len);
-		memcpy(WFIFOP(*fd, 0), buf, (clif->packet(cmd))->len);
-		WFIFOSET(*fd, (clif->packet(cmd))->len);
+		WFIFOHEAD(*fd, packets->db[cmd]);
+		memcpy(WFIFOP(*fd, 0), buf, packets->db[cmd]);
+		WFIFOSET(*fd, packets->db[cmd]);
 	}
 	hookStop();
 }
@@ -4699,7 +4700,7 @@ void clif_belonginfo_virt(struct map_session_data **sd_, struct guild **g_) {
 	g = bg_data_t->g;
 	fd = sd->fd;
 	ps = ((data->leader) ? 0 : 1);
-	WFIFOHEAD(fd,(clif->packet(0x16c))->len);
+	WFIFOHEAD(fd, packets->db[0x16c]);
 	WFIFOW(fd,0)=0x16c;
 	WFIFOL(fd,2)= g->guild_id;
 	WFIFOL(fd,6)= g->emblem_id;
@@ -4707,7 +4708,7 @@ void clif_belonginfo_virt(struct map_session_data **sd_, struct guild **g_) {
 	WFIFOB(fd,14)= false; // Not a Guild Master
 	WFIFOL(fd,15)= 0;
 	memcpy(WFIFOP(fd,19), g->name, NAME_LENGTH);
-	WFIFOSET(fd,(clif->packet(0x16c))->len);
+	WFIFOSET(fd, packets->db[0x16c]);
 	hookStop();
 }
 
@@ -6172,7 +6173,7 @@ void bg_initialize_constants(void)
 	script->set_constant("MAP_IS_NONE", MAP_IS_NONE, false, false);                       ///< 0x0
 	script->set_constant("MAP_IS_BG", MAP_IS_BG, false, false);                           ///< 0x1
 	script->set_constant("MAP_IS_WOE", MAP_IS_WOE, false, false);                         ///< 0x2
-	script->set_constant("MAP_IS_PVP", MAP_IS_PVP, false, false);                         ///< 0x3
+	//script->set_constant("MAP_IS_PVP", MAP_IS_PVP, false, false);                         ///< 0x3
 	
 }
 
