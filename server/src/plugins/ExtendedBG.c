@@ -2835,7 +2835,7 @@ bool bg_ipcheck_compare(int fd1, int fd2)
 
 	// Gepard Check
 #if (DUAL_CLIENT_CHECK & 2)
-	if (session[fd1]->gepard_info.unique_id == session[fd2]->gepard_info.unique_id)
+	if (sockt->session[fd1]->gepard_info.unique_id == sockt->session[fd2]->gepard_info.unique_id)
 		return true;
 #endif
 
