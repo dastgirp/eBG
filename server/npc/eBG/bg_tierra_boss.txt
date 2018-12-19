@@ -42,7 +42,7 @@ OnNeutralReset:
 OnNeutralBreak:
 	if ($@eBG_start[BGT_BOSS] == EBG_NOT_STARTED)
 		end;
-	bg_npc_data(getcharid(4));
+	bg_npc_data(getcharid(CHAR_ID_BG));
 	bg_addpoints(BOSS_NEUT_FLAG, 1, 1);
 
 	.@boss1 = bg_get_npc_data(0, "Guillaume_Boss#1");
@@ -50,15 +50,15 @@ OnNeutralBreak:
 
 	// If other team got neutral, set immune to 0
 	if (.@boss1 > 0) {
-		bg_immunemob(.@boss1, (getcharid(4) == $@ebg_boss_BG_id2) ? 0 : 1);
+		bg_immunemob(.@boss1, (getcharid(CHAR_ID_BG) == $@ebg_boss_BG_id2) ? 0 : 1);
 	}
 	if (.@boss2 > 0) {
-		bg_immunemob(.@boss2, (getcharid(4) == $@ebg_boss_BG_id1) ? 0 : 1);
+		bg_immunemob(.@boss2, (getcharid(CHAR_ID_BG) == $@ebg_boss_BG_id1) ? 0 : 1);
 	}
-	if (getcharid(4) == $@ebg_boss_BG_id1) {
+	if (getcharid(CHAR_ID_BG) == $@ebg_boss_BG_id1) {
 		mapannounce("ebg_boss", _("-- Guillaume captured the Balance Flag. Croix guardian now is vulnerable to attacks!! --"), 1, 0x0000FF);
 		bg_monster bg_get_npc_data(), "ebg_boss", 273, 204, _("Guillaume Flag"), $bg_tierra_boss[11], "BOSS_Tierra::OnNeutralBreak";
-	} else if (getcharid(4) == $@ebg_boss_BG_id2) {
+	} else if (getcharid(CHAR_ID_BG) == $@ebg_boss_BG_id2) {
 		mapannounce("ebg_boss", _("-- Croix captured the Balance Flag. Guillaume guardian now is vulnerable to attacks!! --"), 1, 0xFF0000);
 		bg_monster bg_get_npc_data(), "ebg_boss", 273, 204, _("Croix Flag"), $bg_tierra_boss[12], "BOSS_Tierra::OnNeutralBreak";
 	} else {
@@ -121,7 +121,7 @@ OnMatchEnd:
 end;
 
 OnSummon:
-	.@self = atoi(strnpcinfo(2));
+	.@self = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	.@oppose = ((.@self==CROIX)?GUILLAUME:CROIX);
 	.@teamName$ = callfunc("F_eBGTeamName",.@self);
 	.@npcName$ = callfunc("F_eBGNPCName", .@self, BGT_BOSS);
@@ -140,14 +140,14 @@ OnSummon:
 	bg_npc_data(.@Boss, 0);
 	bg_npc_data(.@color, 1);
 	.uid[.@self] = bg_timer_start(2000,1);
-	bg_npc_cond_timer(.uid[.@self],strnpcinfo(0),0,EBG_CONDITION_GREATER,EBG_OP_REVEAL_MOB);
+	bg_npc_cond_timer(.uid[.@self],strnpcinfo(NPC_NAME),0,EBG_CONDITION_GREATER,EBG_OP_REVEAL_MOB);
 	bg_operations_timer(.uid[.@self],EBG_OP_REVEAL_MOB);
 	end;
 
 OnTimeStop:
 	.@i = 1;
 OnTimerStop:
-	.@self = atoi(strnpcinfo(2));
+	.@self = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	if (.uid[.@self] == 0) {
 		if (.@i)
 			end;
@@ -160,7 +160,7 @@ OnTimerStop:
 	return;
 
 OnBoss:
-	.@self = atoi(strnpcinfo(2));
+	.@self = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	.@npcName$ = callfunc("F_eBGNPCName", .@self, BGT_BOSS);
 
 	callsub(OnTimerStop);

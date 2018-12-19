@@ -62,7 +62,7 @@ OnInit:
 								BF_Badge2,
 								War_Badge;
 
-	bindatcmd("bgshop", strnpcinfo(3) +"::OnShopCommand");
+	bindatcmd("bgshop", strnpcinfo(NPC_NAME_UNIQUE) +"::OnShopCommand");
 	// Initiate the NPC Shop
 	callsub(OnShopInit);
 	end;

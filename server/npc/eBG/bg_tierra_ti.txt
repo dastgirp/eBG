@@ -18,7 +18,7 @@ OnPCDieEvent:
 		.@team = callfunc("F_ValidateeBG", BGT_TI, 0);
 		if ($@eBG_start[BGT_TI] == EBG_RUNNING) {
 			getmapxy .@m$, .@x, .@y, 0;
-			.@bg_id = getcharid(4);
+			.@bg_id = getcharid(CHAR_ID_BG);
 			for (.@i=0; .@i < 3; ++.@i) {
 				.@count = countitem($bg_tierra_ti[.@i]);
 				delitem($bg_tierra_ti[.@i], .@count);
@@ -134,7 +134,7 @@ OnTouch:
 	}
 	
 	// Only Team Members can do sacrifice.
-	if (getcharid(4) != getd("$@ebg_tti_BG_id"+ .@id)) {
+	if (getcharid(CHAR_ID_BG) != getd("$@ebg_tti_BG_id"+ .@id)) {
 		end;
 	}
 
@@ -163,7 +163,7 @@ OnTouch:
 		set(getvariableofnpc(getd(".Team"+ .@id +"_Score"), "TI_Tierra"), .@Score);
 		bg_team_score(getd("$@ebg_tti_BG_id"+ .@id), .@Score);
 		
-		mapannounce("ebg_tti", sprintf(_$("%s : %d slaughtered skulls by %s [%d/%d]"), callfunc("F_eBGTeamName",.@id), .@Points, strcharinfo(0), .@Score, $bg_tierra_ti[3]), bc_map, callfunc("F_eBGTeamColor", .@id));
+		mapannounce("ebg_tti", sprintf(_$("%s : %d slaughtered skulls by %s [%d/%d]"), callfunc("F_eBGTeamName",.@id), .@Points, strcharinfo(PC_NAME), .@Score, $bg_tierra_ti[3]), bc_map, callfunc("F_eBGTeamColor", .@id));
 		bg_addpoints(BG_TI_SKULL, .@Points, 1);
 		donpcevent("TI_Tierra::OnValidateScore");
 	}
@@ -199,8 +199,8 @@ ebg_tti	mapflag	novending
 	end;
 	
 OnEmblem_TI:
-	if (atoi(strnpcinfo(2)) >= 0)
-		flagemblem bg_get_guild_id(atoi(strnpcinfo(2)));
+	if (atoi(strnpcinfo(NPC_NAME_HIDDEN)) >= 0)
+		flagemblem bg_get_guild_id(atoi(strnpcinfo(NPC_NAME_HIDDEN)));
 	end;
 }
 

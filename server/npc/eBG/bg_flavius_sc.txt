@@ -22,13 +22,13 @@ OnTeamDie:
 	.@died = getarg(0);
 	.@x = getarg(1, -1);
 	.@y = getarg(2, -1);
-	.@stone = callfunc("SC_StoneCheck", getcharid(0));
+	.@stone = callfunc("SC_StoneCheck", getcharid(CHAR_ID_CHAR));
 	if ($@eBG_start[BGT_SC] != EBG_NOT_STARTED && .@stone) { // Stone Carrier
 		bg_npc_data(0, .@stone);
 		if (.@x == -1 && .@y == -1)
 			getmapxy(.@m$, .@x, .@y, UNITTYPE_PC);
 		movenpc("Neutral Stone#" + .@stone, .@x, .@y);
-		mapannounce("ebg_sc", sprintf(_$("Neutral Stone Dropped by [%s]"), strcharinfo(0)), 1, 0xFFFFFF);
+		mapannounce("ebg_sc", sprintf(_$("Neutral Stone Dropped by [%s]"), strcharinfo(PC_NAME)), 1, 0xFFFFFF);
 		if (.@died) {
 			bg_addpoints BG_SC_DROPPED, 1, 1;
 			bg_addfame @killer_bg_src;
@@ -157,10 +157,10 @@ ebg_sc,177,182,0	script	Neutral Stone#1	BARRICADE,1,1,{
 	end;
 
 OnTouch:
-	if ($@eBG_start[BGT_SC] == EBG_NOT_STARTED || Hp < 1 || getcharid(4) == 0)
+	if ($@eBG_start[BGT_SC] == EBG_NOT_STARTED || Hp < 1 || getcharid(CHAR_ID_BG) == 0)
 		end;
-	.@stone_id = atoi(strnpcinfo(2));
-	if (bg_get_npc_data(.@stone_id, "SC_Flavius") || callfunc("SC_StoneCheck", getcharid(0)))
+	.@stone_id = atoi(strnpcinfo(NPC_NAME_HIDDEN));
+	if (bg_get_npc_data(.@stone_id, "SC_Flavius") || callfunc("SC_StoneCheck", getcharid(CHAR_ID_CHAR)))
 		end; // Already Captured / Already with a Stone
 
 	sc_end SC_HIDING;
@@ -171,18 +171,18 @@ OnTouch:
 	sc_end SC__INVISIBILITY;
 	pc_block_si PC_BLOCK_ALL, 1; // Block Skills/Items
 	
-	mapannounce("ebg_sc", sprintf(_$("[%s] Got the Neutral Stone."), strcharinfo(0)), bc_map, 0xFFFFFF);
+	mapannounce("ebg_sc", sprintf(_$("[%s] Got the Neutral Stone."), strcharinfo(PC_NAME)), bc_map, 0xFFFFFF);
 		
-	bg_npc_data(getcharid(0), .@stone_id, "SC_Flavius");
-	callfunc("eBG_SC_addTimer", getcharid(0), "SC_Flavius");
+	bg_npc_data(getcharid(CHAR_ID_CHAR), .@stone_id, "SC_Flavius");
+	callfunc("eBG_SC_addTimer", getcharid(CHAR_ID_CHAR), "SC_Flavius");
 	callsub(OnTimerStop);
-	disablenpc strnpcinfo(0);
+	disablenpc strnpcinfo(NPC_NAME);
 	end;
 
 OnTimerStartE:
 	.@end = 1;
 OnTimerStart:
-	.@stone_id = atoi(strnpcinfo(2));
+	.@stone_id = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	if (.uid[.@stone_id] == 0) {
 		.uid[.@stone_id] = bg_timer_start(2000, 1);
 	}
@@ -193,7 +193,7 @@ OnTimerStart:
 	return;
 	
 OnTimerStop:
-	.@stone_id = atoi(strnpcinfo(2));
+	.@stone_id = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	if (.uid[.@stone_id]) {
 		bg_timer_stop(.uid[.@stone_id]);
 		.uid[.@stone_id] = 0;
@@ -205,10 +205,10 @@ OnBGStart:
 	end;
 
 OnBGStop:
-	.@stone_id = atoi(strnpcinfo(2));
+	.@stone_id = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	callsub(OnTimerStop);
-	movenpc strnpcinfo(0), .x[.@stone_id], .y[.@stone_id];
-	enablenpc strnpcinfo(0);
+	movenpc strnpcinfo(NPC_NAME), .x[.@stone_id], .y[.@stone_id];
+	enablenpc strnpcinfo(NPC_NAME);
 	end;
 
 OnInit:
@@ -233,18 +233,18 @@ ebg_sc,85,159,0	script	Stone Point#1::cSC1	GAJOMART,1,1,{
 OnTouch:
 	if ($@eBG_start[BGT_SC] == EBG_NOT_STARTED || Hp < 1)
 		end;
-	.@stone_id = callfunc("SC_StoneCheck", getcharid(0));
-	.@hidden_part = atoi(strnpcinfo(2));
-	.@point = bg_get_npc_data(0, strnpcinfo(3));
+	.@stone_id = callfunc("SC_StoneCheck", getcharid(CHAR_ID_CHAR));
+	.@hidden_part = atoi(strnpcinfo(NPC_NAME_HIDDEN));
+	.@point = bg_get_npc_data(0, strnpcinfo(NPC_NAME_UNIQUE));
 	.@team = 2;
 	.@oppose = 1;
 	if (.@hidden_part >= 7) {
 		.@team = 1; .@oppose = 2;
 	}
-	if (.@point && getd("$@ebg_sc_BG_id"+.@oppose) == getcharid(4) &&
+	if (.@point && getd("$@ebg_sc_BG_id"+.@oppose) == getcharid(CHAR_ID_BG) &&
 			.@stone_id == 0) { // Team 1 Stole the Stone
-		bg_npc_data(getcharid(0), .@point, "SC_Flavius");
-		setnpcdisplay strnpcinfo(3), "Stone Point#"+ .@hidden_part, GAJOMART;
+		bg_npc_data(getcharid(CHAR_ID_CHAR), .@point, "SC_Flavius");
+		setnpcdisplay strnpcinfo(NPC_NAME_UNIQUE), "Stone Point#"+ .@hidden_part, GAJOMART;
 
 		sc_end SC_HIDING;
 		sc_end SC_CLOAKING;
@@ -255,31 +255,31 @@ OnTouch:
 		pc_block_si PC_BLOCK_ALL,1; // Block Skills/Items
 
 
-		mapannounce("ebg_sc", sprintf(_$("%s Stone has been stole by [%s]"), callfunc("F_eBGTeamName", .@team), strcharinfo(0)), 1, callfunc("F_eBGTeamColor", .@oppose));
+		mapannounce("ebg_sc", sprintf(_$("%s Stone has been stole by [%s]"), callfunc("F_eBGTeamName", .@team), strcharinfo(PC_NAME)), 1, callfunc("F_eBGTeamColor", .@oppose));
 		bg_addpoints BG_SC_STOLE, 1, 1;
 
-		callfunc("eBG_SC_addTimer", getcharid(0), "SC_Flavius");
-		bg_npc_data(0, 0, strnpcinfo(3));
+		callfunc("eBG_SC_addTimer", getcharid(CHAR_ID_CHAR), "SC_Flavius");
+		bg_npc_data(0, 0, strnpcinfo(NPC_NAME_UNIQUE));
 		callsub(OnTimerStop);
 	}
-	else if (.@point == 0 && getd("$@ebg_sc_BG_id"+.@team) == getcharid(4)  && .@stone_id > 0) { // User is having stone
+	else if (.@point == 0 && getd("$@ebg_sc_BG_id"+.@team) == getcharid(CHAR_ID_BG)  && .@stone_id > 0) { // User is having stone
 		callsub(OnTimerStart);
-		bg_npc_data(.@stone_id, 0, strnpcinfo(3));
-		bg_npc_data(0, 1, strnpcinfo(3));
+		bg_npc_data(.@stone_id, 0, strnpcinfo(NPC_NAME_UNIQUE));
+		bg_npc_data(0, 1, strnpcinfo(NPC_NAME_UNIQUE));
 		bg_hpsp_time_del(EBG_HP_TIME | EBG_SP_TIME | EBG_EXTRA_TIME);
 
 
-		mapannounce("ebg_sc", sprintf(_$("%s Stone Captured by [%s]"), callfunc("F_eBGTeamName", .@team), strcharinfo(0)), 1, callfunc("F_eBGTeamColor",.@team));
+		mapannounce("ebg_sc", sprintf(_$("%s Stone Captured by [%s]"), callfunc("F_eBGTeamName", .@team), strcharinfo(PC_NAME)), 1, callfunc("F_eBGTeamColor",.@team));
 		bg_addpoints BG_SC_CAPTURED, 1, 1;
 		pc_block_si PC_BLOCK_ALL,0; // UnBlock Skills/Items
-		setnpcdisplay strnpcinfo(3), callfunc("F_eBGTeamName", .@team) + " Stone#"+ .@hidden_part, BARRICADE;
+		setnpcdisplay strnpcinfo(NPC_NAME_UNIQUE), callfunc("F_eBGTeamName", .@team) + " Stone#"+ .@hidden_part, BARRICADE;
 		bg_npc_data(0, .@stone_id, "SC_Flavius");
 	}
 	end;
 
 OnTeamScore:
-	bg_npc_data(0, 1, strnpcinfo(3));
-	.@hidden_part = atoi(strnpcinfo(2));
+	bg_npc_data(0, 1, strnpcinfo(NPC_NAME_UNIQUE));
+	.@hidden_part = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	if (.@hidden_part >= 7)
 		donpcevent("SC_Flavius::OnTeam1Score");
 	else
@@ -287,18 +287,18 @@ OnTeamScore:
 	end;
 
 OnTimerStart:
-	.@hidden_part = atoi(strnpcinfo(2));
+	.@hidden_part = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	.uid[.@hidden_part] = bg_timer_start(2000, 1);
 	bg_effect_timer(.uid[.@hidden_part], EF_GANBANTEIN);
 	bg_insert_event_name(.uid[.@hidden_part], "OnTeamScore");
 	getmapxy .@map$, .@x, .@y, UNITTYPE_NPC;
 	bg_viewpoint_timer(.uid[.@hidden_part], "ebg_sc", 1, .@x, .@y, 900, callfunc("F_eBGTeamColor_VP", (.@hidden_part <= 6) ? GUILLAUME : CROIX));
-	bg_perform_arithmetic(.uid[.@hidden_part], strnpcinfo(3), 1, EBG_ADD, 1);
-	bg_npc_cond_timer(.uid[.@hidden_part], strnpcinfo(3), 5, EBG_CONDITION_GREATER | EBG_CONDITION_EQUAL, EBG_OP_DOEVENT, 0, 1);
+	bg_perform_arithmetic(.uid[.@hidden_part], strnpcinfo(NPC_NAME_UNIQUE), 1, EBG_ADD, 1);
+	bg_npc_cond_timer(.uid[.@hidden_part], strnpcinfo(NPC_NAME_UNIQUE), 5, EBG_CONDITION_GREATER | EBG_CONDITION_EQUAL, EBG_OP_DOEVENT, 0, 1);
 	return;
 	
 OnTimerStop:
-	.@hidden_part = atoi(strnpcinfo(2));
+	.@hidden_part = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	if (.uid[.@hidden_part]) {
 		bg_timer_stop(.uid[.@hidden_part]);
 		.uid[.@hidden_part] = 0;
@@ -307,10 +307,10 @@ OnTimerStop:
 
 OnBGStop:
 	callsub(OnTimerStop);
-	.@hidden_part = atoi(strnpcinfo(2));
-	setnpcdisplay strnpcinfo(3), "Stone Point#"+ .@hidden_part, GAJOMART;
-	bg_npc_data(0, 0, strnpcinfo(3));
-	bg_npc_data(0, 1, strnpcinfo(3));
+	.@hidden_part = atoi(strnpcinfo(NPC_NAME_HIDDEN));
+	setnpcdisplay strnpcinfo(NPC_NAME_UNIQUE), "Stone Point#"+ .@hidden_part, GAJOMART;
+	bg_npc_data(0, 0, strnpcinfo(NPC_NAME_UNIQUE));
+	bg_npc_data(0, 1, strnpcinfo(NPC_NAME_UNIQUE));
 	end;
 }
 

@@ -34,7 +34,7 @@ OnSpawnEmperium:
 						271,29,		// ebg_rush02
 						28,102,		// ebg_rush03
 						245,167;	// ebg_rush04
-	.@emp_id = bg_monster(.@bg_id, .Castle$, .@locXY[.@index*2], .@locXY[(.@index*2)+1], "Emperium", EMPELIUM, strnpcinfo(0)+"::OnEmp");
+	.@emp_id = bg_monster(.@bg_id, .Castle$, .@locXY[.@index*2], .@locXY[(.@index*2)+1], "Emperium", EMPELIUM, strnpcinfo(NPC_NAME)+"::OnEmp");
 	bg_mob_move .@emp_id, EBG_IMMOVABLE;
 	return;
 
@@ -69,7 +69,7 @@ OnEmp:
 		bg_addpoints BG_RUSH_EMPERIUM, 1, 0; // Emperium Captured
 		initnpctimer;
 		.time_remaining = getvariableofnpc(.bg_time[BGT_RUSH], "BG_Settings");
-		.Defender = getcharid(4);
+		.Defender = getcharid(CHAR_ID_BG);
 		mapannounce(.Castle$, sprintf(_$("%s : Castle captured, now prepare to Defend it!!"), bg_info(.Defender, 1)), bc_map, bg_info(.Defender,2));
 		.@attacker = 1;
 		if (.Defender == $@ebg_rush_BG_id1) {

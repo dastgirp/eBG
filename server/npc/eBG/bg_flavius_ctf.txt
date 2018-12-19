@@ -18,7 +18,7 @@ OnTimerStartE:
 	.@end = true;
 	// Fallthrough
 OnTimerStart:
-	.@id = atoi(strnpcinfo(2));
+	.@id = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 
 	if (.@id <= 0)
 		end;
@@ -27,7 +27,7 @@ OnTimerStart:
 		callsub(OnTimerStop);
 	
 	.uid[.@id] = bg_timer_start(2000, 1);
-	bg_npc_cond_timer(.uid[.@id], strnpcinfo(0), 2, EBG_CONDITION_GREATER, EBG_OP_EFFECT | EBG_OP_VIEWPOINT);
+	bg_npc_cond_timer(.uid[.@id], strnpcinfo(NPC_NAME), 2, EBG_CONDITION_GREATER, EBG_OP_EFFECT | EBG_OP_VIEWPOINT);
 	bg_effect_timer(.uid[.@id], EF_GANBANTEIN);
 	bg_viewpoint_timer(.uid[.@id], "ebg_ctf", 1, -1, -1, .@id, callfunc("F_eBGTeamColor_VP", .@id));
 	if (.@end == true)
@@ -38,7 +38,7 @@ OnTimeStop:
 	.@i = true;
 	// Fallthrough
 OnTimerStop:
-	.@id = atoi(strnpcinfo(2));
+	.@id = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	viewpointmap "ebg_ctf",2, 0, 0, .@id, callfunc("F_eBGTeamColor_VP", .@id);
 	if (.uid[.@id] == 0) {
 		if (.@i == true)
@@ -56,7 +56,7 @@ OnTouch:
 	if ($@eBG_start[BGT_CTF] == EBG_NOT_STARTED || Hp < 1)
 		end;
 		
-	.@self = atoi(strnpcinfo(2));
+	.@self = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	.@oppose = ((.@self==CROIX)? GUILLAUME : CROIX);
 	.@team_$ = ((.@self==CROIX)? _("Croix") : _("Guillaume"));
 	.@team$ = callfunc("F_eBGTeamName", .@self);
@@ -68,12 +68,12 @@ OnTouch:
 		// Set Flag status as Taken
 		bg_npc_data(CTF_TAKEN);
 		// Set CharacterID of who got the flag
-		.Flag_Carry[.@self] =  getcharid(0);
+		.Flag_Carry[.@self] =  getcharid(CHAR_ID_CHAR);
 		//end All Invisibility Status.
 		sc_end(SC_HIDING); sc_end(SC_CLOAKING); sc_end(SC_CHASEWALK); sc_end(SC_CLOAKINGEXCEED); sc_end(SC_CAMOUFLAGE); sc_end(SC__INVISIBILITY);
 		pc_block_si(PC_BLOCK_ALL, 1); // Block Skills/Items, so can only move.
 
-		mapannounce("ebg_ctf", sprintf(_$("%s Crystal Taken by [%s]"), .@team$, strcharinfo(0)), bc_map, callfunc("F_eBGTeamColor", .@oppose));
+		mapannounce("ebg_ctf", sprintf(_$("%s Crystal Taken by [%s]"), .@team$, strcharinfo(PC_NAME)), bc_map, callfunc("F_eBGTeamColor", .@oppose));
 		// Add Points and disable NPC
 		bg_addpoints(CTF_ONHAND, 1, 1);
 		disablenpc(.@team_$+" Flag#"+ .@self);
@@ -84,12 +84,12 @@ OnTouch:
 	// Same Team Returning the Flag
 	} else if (@BG_TeamID == getd("$@ebg_ctf_BG_id"+ .@self)) {
 		// If Team B reached it's base and Team B Flag is present
-		if (bg_get_npc_data() == CTF_UNTOUCHED && .Flag_Carry[.@oppose] == getcharid(0)) {
+		if (bg_get_npc_data() == CTF_UNTOUCHED && .Flag_Carry[.@oppose] == getcharid(CHAR_ID_CHAR)) {
 			// Reset the Flag Variables
 			.Flag_Carry[.@oppose] = CTF_UNTOUCHED;	
 			.Flag_Carry[.@self] =  CTF_UNTOUCHED;
 
-			mapannounce("ebg_ctf", sprintf(_$("%s Crystal Captured by [%s]!!"), .@oppose$, strcharinfo(0)), bc_map, .@color); // Announce Team2 Captured Team1 Flag
+			mapannounce("ebg_ctf", sprintf(_$("%s Crystal Captured by [%s]!!"), .@oppose$, strcharinfo(PC_NAME)), bc_map, .@color); // Announce Team2 Captured Team1 Flag
 			// Add Poins
 			bg_addpoints(CTF_CAPTURED, 1, 1);
 			// Delete Character Timer and start NPC Timer
@@ -101,7 +101,7 @@ OnTouch:
 		// Team B Flag is on ground and teammates reaches near flag.
 		} else if (bg_get_npc_data() == CTF_ONGROUND) {
 
-			mapannounce("ebg_ctf", sprintf(_$("%s Crystal Returned by [%s]!!"), .@team$, strcharinfo(0)), bc_map, .@color); // Flag Returns
+			mapannounce("ebg_ctf", sprintf(_$("%s Crystal Returned by [%s]!!"), .@team$, strcharinfo(PC_NAME)), bc_map, .@color); // Flag Returns
 			// Add Fame
 			bg_addfame();
 			disablenpc(.@team_$ +" Flag#"+ .@self); // Disable Own Flag
@@ -136,7 +136,7 @@ OnMoveNPC:
 	return;
 	
 OnBase:
-	.@self = atoi(strnpcinfo(2));
+	.@self = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	.@team$ = ((.@self==CROIX)? _("Croix") : _("Guillaume"));
 	callsub(OnMoveNPC, .@self, .@team$);
 	bg_npc_data(CTF_UNTOUCHED);
@@ -204,7 +204,7 @@ OnTeamDie:
 	.@x = getarg(4, -1);
 	.@y = getarg(5, -1);
 	// Team Member Quit/Die while carrying the flag
-	if ($@eBG_start[BGT_CTF] != EBG_NOT_STARTED && getvariableofnpc(.Flag_Carry[.@oppose], "BG_Flag#eBG") == getcharid(0)) {
+	if ($@eBG_start[BGT_CTF] != EBG_NOT_STARTED && getvariableofnpc(.Flag_Carry[.@oppose], "BG_Flag#eBG") == getcharid(CHAR_ID_CHAR)) {
 		// Nobody carry flag now
 		set(getvariableofnpc(.Flag_Carry[.@oppose], "BG_Flag#eBG"), 0);
 		// Unblock Skills/Item Usage
@@ -214,7 +214,7 @@ OnTeamDie:
 			getmapxy(.@m$, .@x, .@y, 0);
 		movenpc(.@oppose$ +" Flag#"+ .@oppose, .@x, .@y);
 
-		mapannounce("ebg_ctf", sprintf(_$("%s Flag Dropped by [%s]"), .@oppose$, strcharinfo(0)), bc_map, 0xFF0000);
+		mapannounce("ebg_ctf", sprintf(_$("%s Flag Dropped by [%s]"), .@oppose$, strcharinfo(PC_NAME)), bc_map, 0xFF0000);
 		// Add Points
 		if (on_ebg())
 			bg_addpoints(CTF_DROPPED, 1, 1);

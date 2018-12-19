@@ -28,7 +28,7 @@ OnTeamDie:
 	if ($@eBG_start[BGT_DOM] == EBG_NOT_STARTED)
 		return;
 
-	if (!@killer_bg_id || @killer_bg_id == getcharid(4))
+	if (!@killer_bg_id || @killer_bg_id == getcharid(CHAR_ID_BG))
 		return;
 
 	.@Base =  0;
@@ -44,13 +44,13 @@ OnTeamDie:
 	}
 
 	if (.@Base == 1) { // Team 1
-		if(getcharid(4) == $@ebg_dom_BG_id1) {
+		if(getcharid(CHAR_ID_BG) == $@ebg_dom_BG_id1) {
 			bg_addpoints(BG_DOM_OFF_KILL, 1, 1, @killer_bg_src);
 		} else {
 			bg_addpoints(BG_DOM_DEF_KILL, 1, 1, @killer_bg_src);
 		}
 	} else if (.@Base == 2) { // Team 2
-		if (getcharid(4) == $@ebg_dom_BG_id2) {
+		if (getcharid(CHAR_ID_BG) == $@ebg_dom_BG_id2) {
 			bg_addpoints(BG_DOM_OFF_KILL, 1, 1, @killer_bg_src);
 		} else {
 			bg_addpoints(BG_DOM_DEF_KILL, 1, 1, @killer_bg_src);

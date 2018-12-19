@@ -1,7 +1,7 @@
 // Ranking Display
 
 -	script	BG Ranking#main	FAKE_NPC,{
-	.@name$ = strnpcinfo(2);
+	.@name$ = strnpcinfo(NPC_NAME_HIDDEN);
 	.@npcid = getnpcid(0);
 	.@type$ = substr(.@name$, 0, 0); // first letter: r = ranked, n = Regular(Normal)
 	.@rank = atoi(substr(.@name$, 1, getstrlen(.@name$) - 1)); // Get Rank
@@ -21,7 +21,7 @@
 	end;
 	
 OneBGRankChange:
-	.@name$ = strnpcinfo(2);
+	.@name$ = strnpcinfo(NPC_NAME_HIDDEN);
 	if (.@name$ != "main") {
 		.@npcid = getnpcid(0);
 		.@type$ = substr(.@name$, 0, 0); // first letter: r = ranked, n = Regular(Normal)
@@ -92,7 +92,7 @@ OnInit:
 	.top_ranked = 3;	// Top X Ranked Players data is fetched
 	.top_regular = 3;
 
-	.@name$ = strnpcinfo(2);
+	.@name$ = strnpcinfo(NPC_NAME_HIDDEN);
 	if (.@name$ == "main") {
 		callsub(OnFetchData, 1);
 		callsub(OnFetchData, 2);

@@ -4505,7 +4505,7 @@ int status_virt_emblem_id(const struct block_list **bl_) {
  **/
 void clif_charname_virt(struct map_session_data **ssd_) {
 	int cmd = 0x195, ps = -1;
-	int len = packets->db[0x195] + 1;
+	int len = packets->db[cmd] + 1;
 	unsigned char *buf;
 	struct party_data *p = NULL;
 	struct guild *g = NULL;

@@ -19,14 +19,14 @@ References:
 	end;
 	
 OnGetIndex: // Returns index of array for specific npc name.
-	.@npc_name$ = getarg(0, strnpcinfo(0));
-	.@len = getarg(1, getstrlen(strnpcinfo(0)));
+	.@npc_name$ = getarg(0, strnpcinfo(NPC_NAME));
+	.@len = getarg(1, getstrlen(strnpcinfo(NPC_NAME)));
 	.@array_index$ = substr(.@npc_name$, .@len-2, .@len-1);
 	return atoi(.@array_index$);
 
 OnInit:
-	.@vis_name$ = strnpcinfo(1);	// Visible Name
-	.@npc_name$ = strnpcinfo(0);	// Full Name
+	.@vis_name$ = strnpcinfo(NPC_NAME_VISIBLE);	// Visible Name
+	.@npc_name$ = strnpcinfo(NPC_NAME);	// Full Name
 	if (.@npc_name$ == "Register#eBG_Fake00")
 		end;
 	.@len = getstrlen(.@npc_name$);	// Get Total Length
@@ -34,7 +34,7 @@ OnInit:
 	// Retrieve Useful Information (bg_type, team_number and map_name)
 	.bg_type[.@array_index] = atoi(charat(.@npc_name$, .@len - 2));
 	.team_number[.@array_index] = atoi(charat(.@npc_name$, .@len - 1));
-	.map_name$[.@array_index] = substr(.@npc_name$, getstrlen(strnpcinfo(1)) + 1, .@len - 3);
+	.map_name$[.@array_index] = substr(.@npc_name$, getstrlen(strnpcinfo(NPC_NAME_VISIBLE)) + 1, .@len - 3);
 	initnpctimer();
 	end;
 
@@ -285,11 +285,11 @@ OnInit:
 							   2;              // Points to Take Fumbi
 								
 	/* Don't Touch Below This */
-	bindatcmd("joinbg", strnpcinfo(3) +"::OnJoinBG");
-	bindatcmd("joinbg_party", strnpcinfo(3) +"::OnJoinBGP");
-	bindatcmd("joinbg_guild", strnpcinfo(3) +"::OnJoinBGG");
-	bindatcmd("leavebg", strnpcinfo(3) +"::OnLeaveBG");
-	bindatcmd("bgtime", strnpcinfo(3) +"::OnTimeLeft");
+	bindatcmd("joinbg", strnpcinfo(NPC_NAME_UNIQUE) +"::OnJoinBG");
+	bindatcmd("joinbg_party", strnpcinfo(NPC_NAME_UNIQUE) +"::OnJoinBGP");
+	bindatcmd("joinbg_guild", strnpcinfo(NPC_NAME_UNIQUE) +"::OnJoinBGG");
+	bindatcmd("leavebg", strnpcinfo(NPC_NAME_UNIQUE) +"::OnLeaveBG");
+	bindatcmd("bgtime", strnpcinfo(NPC_NAME_UNIQUE) +"::OnTimeLeft");
 	/**
 	 * 0 = Solo
 	 * 1 = Guild
@@ -297,7 +297,7 @@ OnInit:
 	 */
 	for (.@i = 0; .@i <= 2; ++.@i) {
 		.queue[.@i] = queue();	//Current Queue
-		queueopt(.queue[.@i], QUEUEOPT_LOGOUT, strnpcinfo(3) +"::OnLeaveBG");
+		queueopt(.queue[.@i], QUEUEOPT_LOGOUT, strnpcinfo(NPC_NAME_UNIQUE) +"::OnLeaveBG");
 	}
 	/* BG CleanUp */
 	for (.@i = BGT_CTF; .@i <= .bg_common[0]; ++.@i)
@@ -565,10 +565,24 @@ OnJoinBG: // joinbg: .@type = 0
 		.@bg_map$ = .bg_mapname$[.bg_change];
 		break;
 	}
-	if (bg_logincheck(.@bg_map$) >= .bg_common[1]) {
-		dispbottom(_("Someone else from same IP is already On BG."));
-		end;
+	// IP Check
+	.@c = bg_logincheck(.@bg_map$);
+
+	/*
+	// Todo: Check queue players for same IP/Mac
+	for (.@i = 0; .@i <= 2; .@i++) { // Loop all queue
+		if (.@c >= .bg_common[1]) {
+			dispbottom(_("Someone else from same IP is already On BG."));
+			end;
+		}
+		.@it = queueiterator(.@queue[.@i]);
+		for (.@p = qiget(.@it); qicheck(.@it); .@p = qiget(.@it)) {	//Initialize data.
+			if (.@p == -1)
+				continue;
+		}
 	}
+	*/
+	
 	if (getbattleflag("battle_configuration/bg_queue_townonly") && !getmapflag(strcharinfo(PC_MAP), mf_town)) {
 		dispbottom(_("You can only join when in town."));
 		end;
@@ -576,7 +590,7 @@ OnJoinBG: // joinbg: .@type = 0
 	// Fallthrough
 OnJoinBG2:
 	@BG_GlobalQueueID = .@type + 1;
-	queueadd(.queue[.@type], getcharid(3));
+	queueadd(.queue[.@type], getcharid(CHAR_ID_ACCOUNT));
 	// Fallthrough
 OnStartBG:
 	callsub(OnBGAnnounce, 1);
@@ -586,7 +600,7 @@ OnStartBG:
 	// Initiate Variables
 	setarray .@bg_guild[1], 1, 2, 3;	//1 = blue
 	for (.@i=1; .@i <= .bg_teams[.bg_change]; ++.@i)
-		.@bg_logout$[.@i] = strnpcinfo(3) +"::OnLeaveBG";
+		.@bg_logout$[.@i] = strnpcinfo(NPC_NAME_UNIQUE) +"::OnLeaveBG";
 
 	.@bg_mapname$[0] = .bg_mapname$[.bg_change];
 	.@bg_mapname$[1] = callsub(OnGetAltMapName, .bg_change);
@@ -650,7 +664,7 @@ OnWhisperGlobal:
 		mesf("Last Ranked Time: %d", $BGRanked_);
 		mesf("Current Status: %s", ($BGRanked == 1) ? "ON" : "OFF");
 		mes("------------------------");
-		mesf("Server Time(in hour): %d", gettime(3));
+		mesf("Server Time(in hour): %d", gettime(GETTIME_HOUR));
 		switch(select("Close", "Execute OnMinute00", "Enable/Disable BGRanked", "RotateBG", "Set BGType")) {
 			case 1:
 				close;
@@ -690,7 +704,7 @@ OnLeaveBGSource:	// called from Source
 	bg_leave(); // Called again with bg_leave
 
 	// Remove from queue
-	queueremove(getd("$@"+ .bg_mapname$[.@BG_ID] +"_BG_queue"+ @BG_Team), getcharid(3));
+	queueremove(getd("$@"+ .bg_mapname$[.@BG_ID] +"_BG_queue"+ @BG_Team), getcharid(CHAR_ID_ACCOUNT));
 
 	// Clear Variables and set rejoin time.
 	bg_join_time = gettimetick(2) + .bg_maxtime[.@BG_ID];	//Sets Time to join Again
@@ -776,7 +790,7 @@ OnLeaveBG:	// Replicate in bg_team_delete_pre (called when used .@leavebg/leaved
 	end;
 
 OnBGStart:	// BG Starts
-	.@id = atoi(strnpcinfo(2));
+	.@id = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	if (.@id <= 0)
 		end;
 	if (.uid[.@id])
@@ -787,56 +801,56 @@ OnBGStart:	// BG Starts
 		/* SC: 12, 13 */
 		case 1: // Blue Team
 		case 12:
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 382, 2, 397, 17, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 382, 2, 397, 17, strnpcinfo(4), 311, 224, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 382, 2, 397, 17, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 382, 2, 397, 17, strnpcinfo(NPC_MAP), 311, 224, 1);
 			break;
 		case 2: // Red Team
 		case 13:
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 6, 282, 13, 297, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 6, 282, 13, 297, strnpcinfo(4), 87, 75, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 6, 282, 13, 297, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 6, 282, 13, 297, strnpcinfo(NPC_MAP), 87, 75, 1);
 			break;
 		/* Boss 3,4 */
 		case 3: // Blue Team
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 46, 370, 54, 378, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 46, 370, 54, 378, strnpcinfo(4), 354, 340, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 46, 370, 54, 378, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 46, 370, 54, 378, strnpcinfo(NPC_MAP), 354, 340, 1);
 			break;
 		case 4: // Red Team
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 38, 12, 47, 21, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 38, 12, 47, 21, strnpcinfo(4), 354, 57, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 38, 12, 47, 21, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 38, 12, 47, 21, strnpcinfo(NPC_MAP), 354, 57, 1);
 			break;
 		/* TI 5,6,7 */
 		case 5: // Blue Team
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 46, 86, 53, 93, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 46, 86, 53, 93, strnpcinfo(4), 46, 70, 53, 72, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 46, 86, 53, 93, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 46, 86, 53, 93, strnpcinfo(NPC_MAP), 46, 70, 53, 72, 1);
 			break;
 		case 6: // Red Team
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 6, 46, 13, 53, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 6, 46, 13, 53, strnpcinfo(4), 27, 46, 29, 53, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 6, 46, 13, 53, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 6, 46, 13, 53, strnpcinfo(NPC_MAP), 27, 46, 29, 53, 1);
 			break;
 		case 7: // Green Team
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 86, 46, 93, 53, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 86, 46, 93, 53, strnpcinfo(4), 70, 46, 72, 53, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 86, 46, 93, 53, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 86, 46, 93, 53, strnpcinfo(NPC_MAP), 70, 46, 72, 53, 1);
 			break;
 		/* EOS 8,9 */
 		/* DOM 18,19 */
 		case 8: // Blue Team
 		case 18:
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 46, 370, 54, 378, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 46, 370, 54, 378, strnpcinfo(4), -1, 0, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 46, 370, 54, 378, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 46, 370, 54, 378, strnpcinfo(NPC_MAP), -1, 0, 1);
 			break;
 		case 9: // Red Team
 		case 19:
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 38, 12, 47, 21, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 38, 12, 47, 21, strnpcinfo(4), -1, 0, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 38, 12, 47, 21, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 38, 12, 47, 21, strnpcinfo(NPC_MAP), -1, 0, 1);
 			break;
 		/* Team DeathMatch 10,11 */
 		case 10: // Blue Team
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 382, 2, 397, 17, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 382, 2, 397, 17, strnpcinfo(4), 306, 138, 327, 161, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 382, 2, 397, 17, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 382, 2, 397, 17, strnpcinfo(NPC_MAP), 306, 138, 327, 161, 1);
 			break;
 		case 11: // Red Team
-			bg_areaheal_timer(.uid[.@id], strnpcinfo(4), 2, 282, 17, 297, 100, 100, 1);
-			bg_areawarp_timer(.uid[.@id], strnpcinfo(4), 2, 282, 17, 297, strnpcinfo(4), 72, 138, 93, 161, 1);
+			bg_areaheal_timer(.uid[.@id], strnpcinfo(NPC_MAP), 2, 282, 17, 297, 100, 100, 1);
+			bg_areawarp_timer(.uid[.@id], strnpcinfo(NPC_MAP), 2, 282, 17, 297, strnpcinfo(NPC_MAP), 72, 138, 93, 161, 1);
 			break;
 		/* Conquest: 14,15 */
 		case 14: // Blue Team
@@ -1015,7 +1029,7 @@ OnBGStart:	// BG Starts
 OnBGStopSub:	//called via callsub(returns instead of end)
 	.@ret = true;
 OnBGStop:	//BG Stops
-	.@id = atoi(strnpcinfo(2));
+	.@id = atoi(strnpcinfo(NPC_NAME_HIDDEN));
 	if (.@id <= 0) {
 		if (.@ret == true) {
 			return;
