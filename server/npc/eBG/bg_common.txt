@@ -51,7 +51,7 @@ OnTimer30000:	// Update Information every 30 seconds.
 }
 
 prontera,150,150,5	script	Join Battleground	4_F_SURA,{
-	.@bg_type = .bg_change;	// Save .bg_change into temporary variable.
+	.@bg_type = getvariableofnpc(.bg_change, "BG_Settings");	// Save .bg_change into temporary variable.
 	mes("[Battleground Helper]");
 	mes("Would you like to join the Battleground?");
 	mesf("Current BG: %s", getelementofarray(getvariableofnpc(.bg_name$, "BG_Settings"), .@bg_type));
