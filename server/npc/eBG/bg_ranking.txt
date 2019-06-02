@@ -2,7 +2,7 @@
 
 -	script	BG Ranking#main	FAKE_NPC,{
 	.@name$ = strnpcinfo(NPC_NAME_HIDDEN);
-	.@npcid = getnpcid(0);
+	.@npcid = getnpcid();
 	.@type$ = substr(.@name$, 0, 0); // first letter: r = ranked, n = Regular(Normal)
 	.@rank = atoi(substr(.@name$, 1, getstrlen(.@name$) - 1)); // Get Rank
 
@@ -23,7 +23,7 @@
 OneBGRankChange:
 	.@name$ = strnpcinfo(NPC_NAME_HIDDEN);
 	if (.@name$ != "main") {
-		.@npcid = getnpcid(0);
+		.@npcid = getnpcid();
 		.@type$ = substr(.@name$, 0, 0); // first letter: r = ranked, n = Regular(Normal)
 		.@rank = atoi(substr(.@name$, 1, getstrlen(.@name$) - 1)); // Get Rank
 		// Index should be > 0
