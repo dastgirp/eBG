@@ -746,9 +746,21 @@ OnLeaveBGSub:
 // Not Called when logout
 OnLeaveBG:	// Replicate in bg_team_delete_pre (called when used .@leavebg/leaved bg via mapchange)	
 	if (on_ebg() == false) {
-		if (!.@dont_warn) {
-			dispbottom(_("You are Not on Any Kind of BG"));
+		if (@BG_GlobalQueueID > 0) {
+			if (queueremove(.queue[@BG_GlobalQueueID - 1], getcharid(CHAR_ID_ACCOUNT))) {
+				@BG_GlobalQueueID = 0;
+				if (.@dont_warn == false) {
+					dispbottom(_("Removed from Queue"));
+					callsub(OnBGAnnounce, 0, 0);
+				}
+			} else {
+				if (.@dont_warn == false) {
+					// This will happen due to @reloadscript
+					dispbottom(_("You cannot be removed from queue. Please contact GM or relog to fix."));
+				}
+			}
 		}
+		
 		if (.@ret_func)
 			return 0;
 		end;	// .@ret_func = 0

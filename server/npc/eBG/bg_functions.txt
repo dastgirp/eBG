@@ -337,7 +337,7 @@ function	script	F_eBGTeamName	{
 		case TRAITOR:
 			return _("Green Team");
 	}
-	return _("Null - Error");
+	return sprintf(_$("ERROR - %d"), .@team);
 }
 
 /**

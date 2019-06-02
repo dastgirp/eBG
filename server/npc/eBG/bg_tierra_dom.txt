@@ -135,10 +135,11 @@ OnValidateScore:
 			mapannounce("ebg_dom", _("The battle is over. Nobody won the match...!"), bc_map, 0x4169E1);
 	}
 
-	if (.@win)
+	if (.@win > 0) {
 		mapannounce("ebg_dom", sprintf(_$("The %s army has won the Battle of Tierra DoM!"), callfunc("F_eBGTeamName", .@win)), bc_map, callfunc("F_eBGTeamColor", .@win));
-	else if (.@win == 0)
+	} else if (.@win == 0) {
 		mapannounce("ebg_dom", _("The battle is over. This is a Tie...!"), bc_map, 0x4169E1);
+	}
 	
 	// =======================================================
 	.Team1_Score = 0;
