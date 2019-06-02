@@ -1500,7 +1500,7 @@ BUILDIN(getebgitem)
 		item_tmp.card[2] = id;
 		item_tmp.card[3] = id >> 16;
 	}
-	if (pc->additem(sd, &item_tmp, 1, LOG_TYPE_SCRIPT)) {
+	if (pc->additem(sd, &item_tmp, quantity, LOG_TYPE_SCRIPT)) {
 		// Failed to add item
 		script_pushint(st,0);
 		return true;

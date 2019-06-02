@@ -5995,6 +5995,55 @@ int64 battle_calc_bg_damage_post(int64 retVal, struct block_list *src, struct bl
 	return battle_calc_emp_damage(src, bl, retVal, skill_id, flag);
 }
 
+/**
+ * PreHook of pc_search_inventory.
+ * Prevents Skills to search the requirement of BG/WoE items.
+ * @method pc_search_inventory_pre
+ * @return                         index of item/INDEX_NOT_FOUND
+ */
+int pc_search_inventory_pre(struct map_session_data **sd_, int *item_id_)
+{
+	int i, item_id = *item_id_;
+	struct map_session_data *sd = *sd_;
+
+	nullpo_retr(INDEX_NOT_FOUND, sd);
+
+	// Check BG/WoE Item
+	for (i = 0; i < sd->status.inventorySize; i++) {
+		if (sd->status.inventory[i].nameid == item_id && (sd->status.inventory[i].amount > 0 || item_id == 0)) {
+			// Check if special item
+			if (sd->status.inventory[i].card[0] == CARD0_CREATE) {
+				int is_bg, reserved_id = MakeDWord(sd->status.inventory[i].card[2], sd->status.inventory[i].card[3]);
+				struct sd_p_data *data;
+
+				// Check if BG/WoE Items
+				if (reserved_id != bg_reserved_char_id && reserved_id != woe_reserved_char_id)
+					break;
+
+				data = pdb_search(sd, false);
+				EBG_OR_WOE(sd, data, is_bg);
+
+				if (reserved_id == woe_reserved_char_id && is_bg != MAP_IS_WOE)
+					continue;
+				if (reserved_id == bg_reserved_char_id) {
+					// BG Items can be consumed in PvP
+					if (bg_items_pvp) {
+						if (map->list[sd->bl.m].flag.pvp || map->list[sd->bl.m].flag.pvp_noguild || map->list[sd->bl.m].flag.pvp_noparty)
+							break;
+					}
+					if (is_bg != MAP_IS_BG) {
+						continue;
+					}
+				}
+			}
+			break;
+		}
+	}
+
+	hookStop();
+	return (i < sd->status.inventorySize) ? i : INDEX_NOT_FOUND;
+}
+
 void bg_initialize_constants(void)
 {
 	/// Common Constants 
@@ -6213,6 +6262,7 @@ HPExport void plugin_init(void)
 	addHookPre(pc, dead, pc_dead_pre);
 	addHookPre(pc, update_idle_time, update_ebg_idle);
 	addHookPre(bg, send_xy_timer_sub, set_ebg_idle);
+	addHookPre(pc, search_inventory, pc_search_inventory_pre);
 	// Post Hooks
 	addHookPost(npc, script_event, bg_clear_char_data_hook);
 	addHookPost(pc, dead, pc_dead_post);
