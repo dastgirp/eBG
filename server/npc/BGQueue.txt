@@ -206,19 +206,19 @@ function	script	F_splitTeams	{
 	copyarray .@logout$[0], getarg(5), getarraysize(getarg(5));
 	
 	if (getarraysize(.@guild) < .@teams && (getarraysize(.@guild) != 0 || .@guild != 0)) {
-		debugmes(_("Unable to make BG Data, GuildID Invalid. Ending Script..."));
-		debugmes(sprintf(_$("Teams: %d, GuildID: %d"), .@teams, getarraysize(.@guild)));
+		consolemes(CONSOLEMES_ERROR, _("Unable to make BG Data, GuildID Invalid. Ending Script..."));
+		consolemes(CONSOLEMES_ERROR, _$("Teams: %d, GuildID: %d"), .@teams, getarraysize(.@guild));
 		return -4;
 	}
 	if (getarraysize(.@logout$) < .@teams && (getarraysize(.@logout$) != 0 || .@logout$ != "")) {
-		debugmes(_("Unable to make BG Data, LogoutEvent Invalid. Ending Script..."));
-		debugmes(sprintf(_$("Teams: %d, LogoutSize: %d"), .@teams, getarraysize(.@logout$)));
+		consolemes(CONSOLEMES_ERROR, _("Unable to make BG Data, LogoutEvent Invalid. Ending Script..."));
+		consolemes(CONSOLEMES_ERROR, _$("Teams: %d, LogoutSize: %d"), .@teams, getarraysize(.@logout$));
 		return -5;
 	}
 		
 	// Check if map is valid:
 	if (.@map$[0] == "" || !map_exists(.@map$[1])) {
-		debugmes(sprintf(_$("F_splitTeams: Unable to make BG data: sent empty or nonexistent(%s:%s) map name. Ending script..."), @map$[0], @map$[1]));
+		consolemes(CONSOLEMES_ERROR, _$("F_splitTeams: Unable to make BG data: sent empty or nonexistent(%s:%s) map name. Ending script..."), @map$[0], @map$[1]);
 		return -1; // Nonexistent map.
 	}
 	
@@ -451,18 +451,18 @@ function	script	F_balanceTeams	{
 	.@add_player = getarg(5);
 	
 	if (.@min_p > .@max_p && .@max_p != -1) {
-		debugmes(_("F_balanceTeams: Minimum Player cannot be more than maximum Player. Ending Script."));
+		consolemes(CONSOLEMES_ERROR, _("F_balanceTeams: Minimum Player cannot be more than maximum Player. Ending Script."));
 		return -1;
 	}
 	
 	if (getarraysize(.@guild) < .@teams && (getarraysize(.@guild) != 0 || .@guild != 0)) {
-		debugmes(_("F_balanceTeams: Unable to make BG Data, GuildID Invalid. Ending Script..."));
+		consolemes(CONSOLEMES_ERROR, _("F_balanceTeams: Unable to make BG Data, GuildID Invalid. Ending Script..."));
 		return -1;
 	}
 
 	// Check if map is valid:
 	if (.@map$[0] == "" || !map_exists(.@map$[1])) {
-		debugmes(sprintf(_$("F_balanceTeams: Unable to make BG data: sent empty or nonexistent(%s:%s) map name. Ending script..."), @map$[0], @map$[1]));
+		consolemes(CONSOLEMES_ERROR, _$("F_balanceTeams: Unable to make BG data: sent empty or nonexistent(%s:%s) map name. Ending script..."), @map$[0], @map$[1]);
 		return -1;
 	}
 	
@@ -573,13 +573,13 @@ function	script	F_joinTeams	{
 	copyarray .@logout$[0],getarg(8),getarraysize(getarg(8));
 	
 	if (getarraysize(.@guild) < .@teams_ && (getarraysize(.@guild) != 0 || .@guild != 0)) {
-		debugmes(_("Unable to make BG Data, GuildID Invalid. Ending Script..."));
+		consolemes(CONSOLEMES_ERROR, _("Unable to make BG Data, GuildID Invalid. Ending Script..."));
 		return -1;
 	}
 
 	// Check if map is valid:
 	if (.@map$[0] == "" || !map_exists(.@map$[1])) {
-		debugmes(sprintf(_$("F_joinTeams: Unable to make BG data: sent empty or nonexistent(%s:%s) map name. Ending script..."), @map$[0], @map$[1]));
+		consolemes(CONSOLEMES_ERROR, _$("F_joinTeams: Unable to make BG data: sent empty or nonexistent(%s:%s) map name. Ending script..."), @map$[0], @map$[1]);
 		return -1;
 	}
 	
