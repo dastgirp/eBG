@@ -4571,11 +4571,11 @@ void clif_charname_virt(struct map_session_data **ssd_) {
 }
 
 /**
- * PreHook of clif->charnameack
+ * PreHook of clif->blname_ack
  * Resolves the Name
- * @see clif_charnameack
+ * @see clif_blname_ack
  **/
-void clif_charname_virt2(int *fd, struct block_list **bl_)
+void clif_blname_ack_pre(int *fd, struct block_list **bl_)
 {
 	unsigned char buf[103];
 	int cmd = 0x95;
@@ -6301,7 +6301,7 @@ HPExport void plugin_init(void)
 	addHookPre(clif, guild_allianceinfo, clif_virt_alliance);
 	addHookPre(clif, guild_skillinfo, clif_virt_skill);
 	addHookPre(guild, isallied, guild_virt_allied);
-	addHookPre(clif, charnameack, clif_charname_virt2);
+	addHookPre(clif, blname_ack, clif_blname_ack_pre);
 #endif
 	addHookPre(unit, walktoxy, mob_can_move);
 	addHookPre(unit, walktobl, mob_can_move_v2);
