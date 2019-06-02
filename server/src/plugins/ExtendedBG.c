@@ -1919,6 +1919,7 @@ void clear_bg_guild_data(struct map_session_data *sd, struct battleground_data *
 		bg->queue_pc_cleanup(sd);
 	}
 	memset(&bgd->members[i], 0, sizeof(bgd->members[0]));
+	bgd->members[i].sd = NULL;
 }
 
 /**
@@ -3299,7 +3300,7 @@ void bg_guild_build_data(void) {
 #else
 		g = guild->search(GET_EBG_GUILD_ID(i));
 		if (g == NULL) {
-			ShowError("Guild %d Doesnt Exist\n", GET_EBG_GUILD_ID(i);
+			ShowError("Guild %d Doesnt Exist\n", GET_EBG_GUILD_ID(i));
 			guild->request_info(GET_EBG_GUILD_ID(i));
 			continue;
 		}
@@ -3438,11 +3439,13 @@ int bg_e_team_leave(struct map_session_data **sd_, enum bg_team_leave_type* flag
 		eBG_ChangeLeader(data, sd->bg_id);
 	}
 	npc->event(sd, "BG_Settings::OnLeaveBGSource", 0);
-	// Sets bg_id to 0
-	clear_bg_guild_data(sd, bgd);
+	// Sets bg_id to 0 and clear the Data
+	eBG_turnOff(sd);
+	//clear_bg_guild_data(sd, bgd); // eBG_turnOff  calls clear_bg_guild_data.
 	
+	hookStop(); // Original function should not be called
 	if (bgd != NULL) {
-		// bgd count is decreased in ebg_turn_off
+		// bgd count is decreased in ebg_turnOff
 		return bgd->count;
 	} else {
 		return 0;

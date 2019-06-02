@@ -689,7 +689,7 @@ OnLeaveBGSourceSub:
 	.@ret = getarg(0, 0);
 OnLeaveBGSource:	// called from Source
 	.@BG_ID = @BG_ID;
-	if (.@BG_ID <= 0) {
+	if (.@BG_ID < 0 || .@BG_ID == BGT_MAX) {
 		if (.@ret)
 			return;
 		end;
@@ -730,7 +730,7 @@ OnLeaveBGSource:	// called from Source
 
 	callfunc("F_balanceTeams", .@bg_mapname$, .queue, .@team, .bg_maxplayer[.@BG_ID], .@bg_guild, 0);
 
-	@BG_ID = 0;
+	@BG_ID = BGT_MAX;
 	if (.@ret)
 		return;
 	end;
@@ -770,8 +770,10 @@ OnLeaveBG:	// Replicate in bg_team_delete_pre (called when used .@leavebg/leaved
 		.@BG_ID = @BG_ID;
 
 		callsub(OnLeaveBGSourceSub, 1);
-		// Act as if player has logged out.
-		dispbottom(_("BG Leaved"));
+		if (.@dont_warn == false) {
+			// Act as if player has logged out.
+			dispbottom(_("BG Leaved"));
+		}
 		
 		// Warp back to savepoint
 		if (getmapflag(strcharinfo(PC_MAP), mf_battleground))
