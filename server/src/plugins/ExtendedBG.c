@@ -2566,11 +2566,12 @@ int pc_dead_pre(struct map_session_data **sd_, struct block_list **src)
 #endif
 		if (sd->bg_id) {
 			if (bg->team_search(sd->bg_id) != NULL) {
-				pc->setreg(sd, script->add_variable("@killer_bg_id"), bg->team_get_id(*src));                                 // Killer Battleground ID
-				pc->setreg(sd, script->add_variable("@killer_bg_src"), ssd && ssd->bg_id ? ssd->bl.id : 0);                  // Killer BL ID
-				pc->setreg(sd, script->add_variable("@killer_bg_acc_id"), ssd && ssd->bg_id ? ssd->status.account_id : 0);   // Killer AccountID
+				// Used by Tierra Inferno
+				pc->setreg(sd, script->add_variable("@killer_bg_id"), bg->team_get_id(*src));                                // Killer Battleground ID
+				pc->setreg(sd, script->add_variable("@killer_bg_src"), (ssd && ssd->bg_id) ? ssd->bl.id : 0);                  // Killer BL ID
+				pc->setreg(sd, script->add_variable("@killer_bg_acc_id"), (ssd && ssd->bg_id) ? ssd->status.account_id : 0);   // Killer AccountID
 				if (data && data->eBG) {
-					data->kills = data->kills+1;
+					data->kills = data->kills + 1;
 				}
 			}
 		}

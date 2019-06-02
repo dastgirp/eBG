@@ -4,12 +4,12 @@
 	end;
 
 OnInit:
-	setwall("ebg_tti",46,85,8,6,0,"ti_wall_a");
-	setwall("ebg_tti",46,74,8,6,0,"ti_wall_a1");
-	setwall("ebg_tti",14,46,8,0,0,"ti_wall_b");
-	setwall("ebg_tti",25,46,8,0,0,"ti_wall_b1");
-	setwall("ebg_tti",85,46,8,0,0,"ti_wall_c");
-	setwall("ebg_tti",74,46,8,0,0,"ti_wall_c1");
+	setwall("ebg_tti", 46, 85, 8, 6, 0, "ti_wall_a");
+	setwall("ebg_tti", 46, 74, 8, 6, 0, "ti_wall_a1");
+	setwall("ebg_tti", 14, 46, 8, 0, 0, "ti_wall_b");
+	setwall("ebg_tti", 25, 46, 8, 0, 0, "ti_wall_b1");
+	setwall("ebg_tti", 85, 46, 8, 0, 0, "ti_wall_c");
+	setwall("ebg_tti", 74, 46, 8, 0, 0, "ti_wall_c1");
 	end;
 
 OnPCDieEvent:
@@ -17,20 +17,26 @@ OnPCDieEvent:
 	if (strcharinfo(PC_MAP) == "ebg_tti") {
 		.@team = callfunc("F_ValidateeBG", BGT_TI, 0);
 		if ($@eBG_start[BGT_TI] == EBG_RUNNING) {
-			getmapxy .@m$, .@x, .@y, 0;
+			// Get Location
+			getmapxy(.@m$, .@x, .@y, UNITTYPE_PC);
+			// Save BG ID
 			.@bg_id = getcharid(CHAR_ID_BG);
-			for (.@i=0; .@i < 3; ++.@i) {
+			// Loop through all items to delete
+			for (.@i = 0; .@i < 3; ++.@i) {
 				.@count = countitem($bg_tierra_ti[.@i]);
 				delitem($bg_tierra_ti[.@i], .@count);
-				bg_areaitem("ebg_tti", .@x, .@y, $bg_tierra_ti[.@i], .@count);
+				// Drop the item nearby
+				bg_areaitem("ebg_tti", .@x + rand(-3, 3), .@y + rand(-3, 3), $bg_tierra_ti[.@i], .@count);
 			}
+
+			// Killer is from different team.
 			if (@killer_bg_id != .@bg_id) {
 				if (.@team >= 1 && .@team <= 3) {
 					bg_areaitem("ebg_tti", .@x, .@y, $bg_tierra_ti[.@team - 1], 1);
 				}
 			}
 		}
-		callfunc("F_warpDie",BGT_TI,.@team);
+		callfunc("F_warpDie", BGT_TI, .@team);
 	}
 	end;
 
@@ -40,21 +46,26 @@ OnReadyCheck:
 		
 	$@eBG_start[BGT_TI] = EBG_RUNNING;
 
-	initnpctimer;
+	initnpctimer();
 	.time_remaining = getvariableofnpc(.bg_time[BGT_TI], "BG_Settings");
 
 	.Team1_Score = 0;
 	.Team2_Score = 0;
 	.Team3_Score = 0;
 	donpcevent("::OnEmblem_TI");
+
 	sleep 1500;
-	bg_warp($@ebg_tti_BG_id1,"ebg_tti",29,49);
-	bg_warp($@ebg_tti_BG_id2,"ebg_tti",70,50);
-	bg_warp($@ebg_tti_BG_id3,"ebg_tti",49,70);
+
+	bg_warp($@ebg_tti_BG_id1, "ebg_tti", 29, 49);
+	bg_warp($@ebg_tti_BG_id2, "ebg_tti", 70, 50);
+	bg_warp($@ebg_tti_BG_id3, "ebg_tti", 49, 70);
+
 	sleep 1500;
+
 	donpcevent("ti_respawn#5::OnBGStart");
 	donpcevent("ti_respawn#6::OnBGStart");
 	donpcevent("ti_respawn#7::OnBGStart");
+
 	for (.@i = 1; .@i <= 3; ++.@i) {
 		sleep 1000;
 		bg_team_reveal(getd("$@ebg_tti_BG_id"+ .@i));
@@ -90,7 +101,7 @@ OnTimer60000:
 OnMatchStop:
 OnMatchEnd:
 	stopnpctimer;
-	cleanmap "ebg_tti"; // Removes all ground items
+	cleanmap("ebg_tti"); // Removes all ground items
 	donpcevent("ti_respawn#5::OnBGStop");
 	donpcevent("ti_respawn#6::OnBGStop");
 	donpcevent("ti_respawn#7::OnBGStop");
