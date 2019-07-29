@@ -221,7 +221,7 @@ ACMD(order)
 #ifdef VIRT_GUILD
 			GET_ORIG_GUILD_ID(bg_data_t->g->guild_id)
 #else
-			GET_ORIG_GUILD_ID(sd_data->g->guild_id)
+			GET_ORIG_GUILD_ID(data->g->guild_id)
 #endif
 		];
 		ebg_broadcast2(&sd->bl, message, (int)strlen(message) + 1, color, 0x190, 20, 0, 0, CLIENT_EBG);
@@ -284,7 +284,7 @@ ACMD(leader)
 #ifdef VIRT_GUILD
 	color = bg_colors[GET_ORIG_GUILD_ID(bg_data_t->g->guild_id)];
 #else
-	color = bg_colors[GET_ORIG_GUILD_ID(sd_data->g->guild_id)];
+	color = bg_colors[GET_ORIG_GUILD_ID(data->g->guild_id)];
 #endif
 
 	sprintf(output, "Team Leader transfered to [%s]", pl_sd->status.name);
@@ -350,7 +350,7 @@ ACMD(reportafk)
 #ifdef VIRT_GUILD
 	color = bg_colors[GET_ORIG_GUILD_ID(bg_data_t->g->guild_id)];
 #else
-	color = bg_colors[GET_ORIG_GUILD_ID(sd_data->g->guild_id)];
+	color = bg_colors[GET_ORIG_GUILD_ID(data->g->guild_id)];
 #endif
 	
 	sprintf(output, "- AFK [%s] Kicked -", pl_sd->status.name);

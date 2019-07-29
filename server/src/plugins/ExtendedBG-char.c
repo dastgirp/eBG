@@ -377,7 +377,8 @@ char skill_db[256] = "skill";
 
 static const char dataToHex[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
-int inter_guild_tosql_pre(struct guild *g,int *flag_){
+int inter_guild_tosql_pre(struct guild** g_,int *flag_){
+	struct guild* g = *g_;
 	int flag = *flag_;
 	// Table guild (GS_BASIC_MASK)
 	// GS_EMBLEM `emblem_len`,`emblem_id`,`emblem_data`
@@ -419,7 +420,7 @@ int inter_guild_tosql_pre(struct guild *g,int *flag_){
 						"VALUES ('%d','%d','%d','%d','%d','%d','%d','%d','%"PRIu64"','%d','%d','%d','%s')",
 						"eBG_member", g->guild_id, m->account_id, m->char_id,
 						m->hair, m->hair_color, m->gender,
-						m->class_, m->lv, m->exp, m->exp_payper, m->online, m->position, esc_name) )
+						m->class, m->lv, m->exp, m->exp_payper, m->online, m->position, esc_name) )
 						Sql_ShowDebug(inter->sql_handle);
 					m->modified = GS_MEMBER_UNMODIFIED;
 				}
@@ -544,7 +545,7 @@ struct guild * inter_guild_fromsql_pre(int *guild_id_){
 			SQL->GetData(inter->sql_handle,  2, &data, NULL); m->hair = atoi(data);
 			SQL->GetData(inter->sql_handle,  3, &data, NULL); m->hair_color = atoi(data);
 			SQL->GetData(inter->sql_handle,  4, &data, NULL); m->gender = atoi(data);
-			SQL->GetData(inter->sql_handle,  5, &data, NULL); m->class_ = atoi(data);
+			SQL->GetData(inter->sql_handle,  5, &data, NULL); m->class = atoi(data);
 			SQL->GetData(inter->sql_handle,  6, &data, NULL); m->lv = atoi(data);
 			SQL->GetData(inter->sql_handle,  7, &data, NULL); m->exp = strtoull(data, NULL, 10);
 			SQL->GetData(inter->sql_handle,  8, &data, NULL); m->exp_payper = (unsigned int)atoi(data);
@@ -678,7 +679,7 @@ int inter_guild_broken_pre(int* guild_id)
 	return 1;
 }
 
-int mapif_parse_BreakGuild_pre(int fd, int* guild_id_)
+int mapif_parse_BreakGuild_pre(int* fd, int* guild_id_)
 {
 	int guild_id = *guild_id_;
 	if (guild_id >= EBG_GUILDSTART && guild_id <= EBG_GUILDEND){
@@ -688,13 +689,14 @@ int mapif_parse_BreakGuild_pre(int fd, int* guild_id_)
 	return 0;
 }
 
-int chr_mmo_char_tosql_pre(int *char_id_, struct mmo_charstatus* p)
+int chr_mmo_char_tosql_pre(int *char_id_, struct mmo_charstatus** p_)
 {
 	int i = 0;
 	int count = 0;
 	int diff = 0;
 	int char_id = *char_id_;
 	char save_status[128]; //For displaying save information. [Skotlex]
+	struct mmo_charstatus* p = *p_;
 	struct mmo_charstatus *cp;
 	int errors = 0; //If there are any errors while saving, "cp" will not be updated at the end.
 	StringBuf buf;
@@ -711,7 +713,7 @@ int chr_mmo_char_tosql_pre(int *char_id_, struct mmo_charstatus* p)
 
 	//map inventory data
 	if( memcmp(p->inventory, cp->inventory, sizeof(p->inventory)) ) {
-		if (!chr->inventory_to_sql(p->inventory, MAX_INVENTORY, p->char_id))
+		if (!chr->memitemdata_to_sql(p->inventory, p->char_id, TABLE_INVENTORY))
 			strcat(save_status, " inventory");
 		else
 			errors++;
@@ -719,7 +721,7 @@ int chr_mmo_char_tosql_pre(int *char_id_, struct mmo_charstatus* p)
 
 	//map cart data
 	if( memcmp(p->cart, cp->cart, sizeof(p->cart)) ) {
-		if (!chr->memitemdata_to_sql(p->cart, MAX_CART, p->char_id, TABLE_CART))
+		if (!chr->memitemdata_to_sql(p->cart, p->char_id, TABLE_CART))
 			strcat(save_status, " cart");
 		else
 			errors++;
@@ -849,7 +851,7 @@ int chr_mmo_char_tosql_pre(int *char_id_, struct mmo_charstatus* p)
 	//Values that will seldom change (to speed up saving)
 	if (
 		(p->hair != cp->hair) || (p->hair_color != cp->hair_color) || (p->clothes_color != cp->clothes_color) ||
-		(p->class_ != cp->class_) ||
+		(p->class != cp->class) ||
 		(p->partner_id != cp->partner_id) || (p->father != cp->father) ||
 		(p->mother != cp->mother) || (p->child != cp->child) ||
 		(p->karma != cp->karma) || (p->manner != cp->manner) ||
@@ -861,7 +863,7 @@ int chr_mmo_char_tosql_pre(int *char_id_, struct mmo_charstatus* p)
 			"`partner_id`='%d', `father`='%d', `mother`='%d', `child`='%d',"
 			"`karma`='%d',`manner`='%d', `fame`='%d'"
 			" WHERE  `account_id`='%d' AND `char_id` = '%d'",
-			char_db, p->class_,
+			char_db, p->class,
 			p->hair, p->hair_color, p->clothes_color,
 			p->partner_id, p->father, p->mother, p->child,
 			p->karma, p->manner, p->fame,
@@ -933,7 +935,7 @@ int chr_mmo_char_tosql_pre(int *char_id_, struct mmo_charstatus* p)
 		StrBuf->Clear(&buf);
 		StrBuf->Printf(&buf, "INSERT INTO `%s`(`char_id`,`id`,`lv`,`flag`) VALUES ", skill_db);
 		//insert here.
-		for( i = 0, count = 0; i < MAX_SKILL; ++i ) {
+		for( i = 0, count = 0; i < MAX_SKILL_DB; ++i ) {
 			if( p->skill[i].id != 0 && p->skill[i].flag != SKILL_FLAG_TEMPORARY ) {
 				if( p->skill[i].lv == 0 && ( p->skill[i].flag == SKILL_FLAG_PERM_GRANTED || p->skill[i].flag == SKILL_FLAG_PERMANENT ) )
 					continue;
