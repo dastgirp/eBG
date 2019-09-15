@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This file is part of Hercules.
 # http://herc.ws - http://github.com/HerculesWS/Hercules
@@ -18,8 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Base Author: Haru @ http://herc.ws
+# Modified By: Dastgir @ http://herc.ws
+
 MODE="$1"
-script_dir="server/npc/eBG"
 shift
 
 function foo {
@@ -30,10 +32,11 @@ function foo {
 
 function usage {
 	echo "usage:"
-	echo "    $0 createdb <dbname> [dbuser] [dbpassword]"
-	echo "    $0 importdb <dbname> [dbuser] [dbpassword]"
+	echo "    $0 createdb <dbname> [dbuser] [dbpassword] [dbhost]"
+	echo "    $0 importdb <dbname> [dbuser] [dbpassword] [dbhost]"
+	echo "    $0 adduser <dbname> <new_user> <new_user_password> [dbuser] [dbpassword] [dbhost]"
 	echo "    $0 build [configure args]"
-	echo "    $0 test <dbname> [dbuser] [dbpassword]"
+	echo "    $0 test <dbname> [dbuser] [dbpassword] [dbhost]"
 	echo "    $0 getrepo"
 	exit 1
 }
@@ -45,51 +48,108 @@ function aborterror {
 
 function run_server {
 	echo "Running: $1 --run-once $2"
-	$1 --run-once $2 2>runlog.txt
+	rm -rf core* || true
+	CRASH_PLEASE=1 $1 --run-once $2 2>runlog.txt
 	export errcode=$?
-	export teststr=$(cat runlog.txt)
+	export teststr=$(head -c 10000 runlog.txt)
 	if [[ -n "${teststr}" ]]; then
 		echo "Errors found in running server $1."
-		cat runlog.txt
+		head -c 10000 runlog.txt
 		aborterror "Errors found in running server $1."
 	else
 		echo "No errors found for server $1."
 	fi
 	if [ ${errcode} -ne 0 ]; then
 		echo "server $1 terminated with exit code ${errcode}"
+		COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1)
+		if [[ -f "$COREFILE" ]]; then
+			gdb -c "$COREFILE" $1 -ex "thread apply all bt" -ex "set pagination 0" -batch
+		fi
 		aborterror "Test failed"
 	fi
 }
 
+function run_test {
+	echo "Running: test_$1"
+	sysctl -w kernel.core_pattern=core || true
+	./test_$1 2>runlog.txt
+	export errcode=$?
+	export teststr=$(head -c 10000 runlog.txt)
+	if [[ -n "${teststr}" ]]; then
+		echo "Errors found in running test $1."
+		head -c 10000 runlog.txt
+		aborterror "Errors found in running test $1."
+	else
+		echo "No errors found for test $1."
+	fi
+	if [ ${errcode} -ne 0 ]; then
+		echo "test $1 terminated with exit code ${errcode}"
+		aborterror "Test failed"
+	fi
+}
+
+# Defaults
+DBNAME=ragnarok
+DBUSER=ragnarok
+DBPASS=ragnarok
+DBHOST=localhost
+
 case "$MODE" in
 	createdb|importdb|test)
-		DBNAME="$1"
-		DBUSER="$2"
-		DBPASS="$3"
-		if [ -z "$DBNAME" ]; then
+		if [ -z "$1" ]; then
 			usage
 		fi
-		if [ "$MODE" != "test" ]; then
-			if [ -n "$DBUSER" ]; then
-				DBUSER="-u $DBUSER"
-			fi
-			if [ -n "$DBPASS" ]; then
-				DBPASS="-p$DBPASS"
-			fi
+		DBNAME="$1"
+		if [ -n "$2" ]; then
+			DBUSER_ARG="--user=$2"
+			DBUSER="$2"
+		fi
+		if [ -n "$3" ]; then
+			DBPASS_ARG="--password=$3"
+			DBPASS="$3"
+		fi
+		if [ -n "$4" ]; then
+			DBHOST_ARG="--host=$4"
+			DBHOST="$4"
+		fi
+		;;
+	adduser)
+		if [ -z "$3" ]; then
+			usage
+		fi
+		DBNAME="$1"
+		NEWUSER="$2"
+		NEWPASS="$3"
+		if [ -n "$4" ]; then
+			DBUSER_ARG="--user=$4"
+			DBUSER="$4"
+		fi
+		if [ -n "$5" ]; then
+			DBPASS_ARG="--password=$5"
+			DBPASS="$5"
+		fi
+		if [ -n "$6" ]; then
+			DBHOST_ARG="--host=$6"
+			DBHOST="$6"
 		fi
 		;;
 esac
 
 case "$MODE" in
 	createdb)
-		echo "Creating database $DBNAME..."
-		mysql $DBUSER $DBPASS -e "create database $DBNAME;" || aborterror "Unable to create database."
+		echo "Creating database $DBNAME as $DBUSER..."
+		mysql $DBUSER_ARG $DBPASS_ARG $DBHOST_ARG --execute="CREATE DATABASE $DBNAME;" || aborterror "Unable to create database."
 		;;
 	importdb)
-		echo "Importing tables into $DBNAME..."
-		mysql $DBUSER $DBPASS $DBNAME < sql-files/main.sql || aborterror "Unable to import main database."
-		mysql $DBUSER $DBPASS $DBNAME < sql-files/logs.sql || aborterror "Unable to import logs database."
-		mysql $DBUSER $DBPASS $DBNAME < server/sql-files/main_bg.sql || aborterror "Unable to import eBG database."
+		echo "Importing tables into $DBNAME as $DBUSER..."
+		mysql $DBUSER_ARG $DBPASS_ARG $DBHOST_ARG --database=$DBNAME < sql-files/main.sql || aborterror "Unable to import main database."
+		mysql $DBUSER_ARG $DBPASS_ARG $DBHOST_ARG --database=$DBNAME < sql-files/logs.sql || aborterror "Unable to import logs database."
+		mysql $DBUSER_ARG $DBPASS_ARG $DBHOST_ARG --database=$DBNAME < server/sql-files/bg_main.sql || aborterror "Unable to import eBG main database."
+		mysql $DBUSER_ARG $DBPASS_ARG $DBHOST_ARG --database=$DBNAME < server/sql-files/bg_guild.sql || aborterror "Unable to import eBG logs database."
+		;;
+	adduser)
+		echo "Adding user $NEWUSER as $DBUSER, with access to database $DBNAME..."
+		mysql $DBUSER_ARG $DBPASS_ARG $DBHOST_ARG --execute="GRANT SELECT,INSERT,UPDATE,DELETE ON $DBNAME.* TO '$NEWUSER'@'$DBHOST' IDENTIFIED BY '$NEWPASS';"
 		;;
 	build)
 		(cd tools && ./validateinterfaces.py silent) || aborterror "Interface validation error."
@@ -97,15 +157,19 @@ case "$MODE" in
 		make -j3 || aborterror "Build failed."
 		make plugins -j3 || aborterror "Build failed."
 		make plugin.script_mapquit -j3 || aborterror "Build failed."
-		make plugin.ExtendedBG -j3 || aborterror "Build failed."
-		make plugin.ExtendedBG-char -j3 || aborterror "Build failed."
+		make test || aborterror "Build failed."
+		;;
+	buildhpm)
+		./configure $@ || (cat config.log && aborterror "Configure error, aborting build.")
+		cd tools/HPMHookGen
+		make
 		;;
 	test)
 		cat > conf/travis_sql_connection.conf << EOF
 sql_connection: {
 	//default_codepage: ""
 	//case_sensitive: false
-	db_hostname: "localhost"
+	db_hostname: "$DBHOST"
 	db_username: "$DBUSER"
 	db_password: "$DBPASS"
 	db_database: "$DBNAME"
@@ -144,7 +208,7 @@ inter_configuration: {
 }
 EOF
 		[ $? -eq 0 ] || aborterror "Unable to override inter-server configuration, aborting tests."
-		# Replace maps
+
 		sed -i '/"alb_ship",/r server/conf/map/maps.conf' conf/map/maps.conf
 		sed -i '/alb2trea/r server/db/map_index.txt' db/map_index.txt
 
@@ -159,13 +223,27 @@ EOF
 		SCRIPTS="--load-script $script_dir/bg_flavius_ctf.txt --load-script $script_dir/bg_flavius_td.txt --load-script $script_dir/bg_flavius_sc.txt $SCRIPTS"
 		# Queue
 		SCRIPTS="--load-script server/npc/BGQueue.txt $SCRIPTS"
+		# Misc Scripts
+		SCRIPTS="--load-script $script_dir/bg_shop.txt --load-script $script_dir/bg_ranking.txt $SCRIPTS"
 		# Common functions
 		SCRIPTS="--load-script $script_dir/bg_functions.txt --load-script $script_dir/bg_common.txt $SCRIPTS"
-		# Run with only HPM
+		echo "run tests"
+		if [[ $DBUSER == "travis" ]]; then
+			echo "Disable leak dection on travis"
+			export ASAN_OPTIONS=detect_leaks=0:detect_stack_use_after_return=true:strict_init_order=true
+		else
+			export ASAN_OPTIONS=detect_stack_use_after_return=true:strict_init_order=true
+		fi
+		# run_test spinlock # Not running the spinlock test for the time being (too time consuming)
+		run_test libconfig
+		echo "run all servers without HPM"
+		run_server ./login-server
+		run_server ./char-server
+		run_server ./map-server "$ARGS"
 		echo "run all servers with HPM"
 		run_server ./login-server "$PLUGINS"
 		run_server ./char-server "$PLUGINS"
-		run_server ./map-server "$ARGS $PLUGINS $SCRIPTS"
+		run_server ./map-server "$ARGS $PLUGINS"
 		;;
 	getrepo)
 		echo "Cloning Hercules repository..."
@@ -180,6 +258,7 @@ EOF
 		yes | cp -a server/db/emblems/* db/emblems/
 		yes | cp -a server/maps/* maps/re/
 		yes | cp -a server/maps/* maps/pre-re/
+		yes | cp -a server/conf/import/* conf/import/
 		rm -rf tmp
 		;;
 	*)
