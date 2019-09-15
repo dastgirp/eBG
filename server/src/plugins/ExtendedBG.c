@@ -5094,7 +5094,7 @@ int set_ebg_idle(union DBKey *key, struct DBData **data_db, va_list ap)
  * Checks if monster can move or not
  * @see unit_movetoxy
  **/
-int mob_can_move(struct block_list **bl, int16 *x, int16 *y, int *flag)
+int mob_can_move(struct block_list **bl, short *x, short *y, int *flag)
 {
 	nullpo_ret(*bl);
 	
