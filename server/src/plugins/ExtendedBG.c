@@ -383,13 +383,13 @@ struct bg_arith_struct {
  * @see bg_timerdb_struct
  **/
 struct bg_areaheal_struct {
-	short x1;                                   ///< Co-Ordinate x1
-	short x2;                                   ///< Co-Ordinate x2
-	short y1;                                   ///< Co-Ordinate y1
-	short y2;                                   ///< Co-Ordinate y2
-	short hp;                                   ///< Percentage of HP to be healed
-	short sp;                                   ///< Percentage of SP to be healed
-	int m;                                      ///< MapID
+	int16 x1;                                   ///< Co-Ordinate x1
+	int16 x2;                                   ///< Co-Ordinate x2
+	int16 y1;                                   ///< Co-Ordinate y1
+	int16 y2;                                   ///< Co-Ordinate y2
+	int16 hp;                                   ///< Percentage of HP to be healed
+	int16 sp;                                   ///< Percentage of SP to be healed
+	int16 m;                                      ///< MapID
 //	int uid;
 };
 
@@ -399,15 +399,15 @@ struct bg_areaheal_struct {
  * @see bg_timerdb_struct
  **/
 struct bg_areawarp_struct {
-	short x0;                                   ///< Co-Ordinate x1 (Source CoOrdinate)
-	short x1;                                   ///< Co-Ordinate x2 (Source CoOrdinate)
-	short x2;                                   ///< Co-Ordinate x1 (Destination CoOrdinate)
-	short x3;                                   ///< Co-Ordinate x2 (Destination CoOrdinate)
-	short y0;                                   ///< Co-Ordinate y1 (Source CoOrdinate)
-	short y1;                                   ///< Co-Ordinate y2 (Source CoOrdinate)
-	short y2;                                   ///< Co-Ordinate y1 (Destination CoOrdinate)
-	short y3;                                   ///< Co-Ordinate y2 (Destination CoOrdinate)
-	int m;                                      ///< Source MapID
+	int16 x0;                                   ///< Co-Ordinate x1 (Source CoOrdinate)
+	int16 x1;                                   ///< Co-Ordinate x2 (Source CoOrdinate)
+	int16 x2;                                   ///< Co-Ordinate x1 (Destination CoOrdinate)
+	int16 x3;                                   ///< Co-Ordinate x2 (Destination CoOrdinate)
+	int16 y0;                                   ///< Co-Ordinate y1 (Source CoOrdinate)
+	int16 y1;                                   ///< Co-Ordinate y2 (Source CoOrdinate)
+	int16 y2;                                   ///< Co-Ordinate y1 (Destination CoOrdinate)
+	int16 y3;                                   ///< Co-Ordinate y2 (Destination CoOrdinate)
+	int16 m;                                    ///< Source MapID
 //	int uid;
 	int index;                                  ///< Destination MapID
 };
@@ -442,9 +442,9 @@ struct bg_mapannounce_struct {
  **/
 struct bg_viewpoint_struct {
 	int type;                ///< ViewPoint Map
-	short x;                 ///< X CoOrdinate
-	short y;                 ///< Y CoOrdinate
-	short m;                 ///< MapID
+	int16 x;                 ///< X CoOrdinate
+	int16 y;                 ///< Y CoOrdinate
+	int16 m;                 ///< MapID
 	int id;                  ///< ViewPoint ID
 	int color;               ///< Color
 };
@@ -976,7 +976,7 @@ int npc_reload_pre(void)
  **/
 int eBG_warp_eos(struct block_list *bl, va_list ap)
 {
-	int x2, y2, x3, y3;
+	int16 x2, y2, x3, y3;
 	bool ebg_custom;
 	unsigned int index;
 	struct map_session_data *sd = BL_CAST(BL_PC, bl);
@@ -1022,6 +1022,7 @@ int eBG_warp_eos(struct block_list *bl, va_list ap)
 		pc->randomwarp(sd,CLR_TELEPORT);
 	} else if (x3 > 0 && y3 > 0) {
 		int max, tx, ty, j = 0;
+		int16 m = map->mapindex2mapid(index);
 
 		/// choose a suitable max number of attempts
 		if ((max = (y3 - y2 + 1) * (x3 - x2 + 1) * 3) > 1000) {
@@ -1033,7 +1034,7 @@ int eBG_warp_eos(struct block_list *bl, va_list ap)
 			tx = rnd() % (x3 - x2 + 1) + x2;
 			ty = rnd() % (y3 - y2 + 1) + y2;
 			j++;
-		} while(map->getcell(index,bl,tx,ty,CELL_CHKNOPASS) && j < max);
+		} while(map->getcell(m, bl, tx, ty, CELL_CHKNOPASS) && j < max);
 
 		pc->setpos(sd, index, tx, ty, CLR_OUTSIGHT);
 	} else {
@@ -1364,7 +1365,7 @@ int bg_timer_function(int tid, int64 tick, int id, intptr_t data)
 		
 	if (!freed && OPERATION_CHECK(operations, BG_T_O_AREAWARP, tdb)) {
 		int c = 0;
-		int x2, y2;
+		int16 x2, y2;
 		if (tdb->areawarp == NULL) {
 			ShowError("bg_timer_function: Timer with UID(%d) Does not have timer Data(BG_T_O_AREAWARP). Deleting Timer.\n",bg_timer_uid);
 #ifdef TIMER_LOG
@@ -2767,7 +2768,7 @@ int bg_sp_loss_function(int tid, int64 tick, int id, intptr_t data)
  * @param itemid ItemID to Drop
  * @param amount amount of ItemID to drop
  **/
-void area_flooritem(int m, short x, short y, int itemid, int amount)
+void area_flooritem(int16 m, int16 x, int16 y, int itemid, int amount)
 {
 	struct item item_tmp;
 	int range, i;
@@ -5093,7 +5094,7 @@ int set_ebg_idle(union DBKey *key, struct DBData **data_db, va_list ap)
  * Checks if monster can move or not
  * @see unit_movetoxy
  **/
-int mob_can_move(struct block_list **bl, short *x, short *y, int *flag)
+int mob_can_move(struct block_list **bl, int16 *x, int16 *y, int *flag)
 {
 	nullpo_ret(*bl);
 	

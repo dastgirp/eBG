@@ -169,7 +169,8 @@ BUILDIN(bg_hpsp_time_extra)
  **/
 BUILDIN(viewpointmap)
 {
-	int type, x, y, id, color, m;
+	int type, id, color;
+	int16 x, y, m;
 	const char *map_name;
 
 	map_name = script_getstr(st, 2);
@@ -288,7 +289,8 @@ BUILDIN(bg_addpoints)
 	int *point;
 	
 	const char *mapname;
-	int x0 = 0, y0 = 0, x1 = 0, y1 = 0, bg_id, m = 0;
+	int bg_id;
+	int16 x0 = 0, y0 = 0, x1 = 0, y1 = 0, m = 0;
 	bool area = false;
 
 
@@ -519,11 +521,11 @@ BUILDIN(bg_logincheck)
  **/
 BUILDIN(bg_mapwarp)
 {
-	int m;
+	int16 m;
 	const char *mapname;
 	mapname = script_getstr(st,2);
 
-	if ((m=map->mapname2mapid(mapname)) < 0)
+	if ((m = map->mapname2mapid(mapname)) < 0)
 		return true;
 
 	map->foreachinmap(bg_mapwarp_sub, m, BL_PC);
@@ -646,8 +648,9 @@ BUILDIN(bg_timer_start)
 
 BUILDIN(bg_areaheal_timer)
 {
-	int uid = script_getnum(st,2), m,add_op=0;
-	const char *mapname = script_getstr(st,3);
+	int uid = script_getnum(st, 2), add_op = 0;
+	int16 m;
+	const char *mapname = script_getstr(st, 3);
 	struct bg_timerdb_struct* tdb = bg_timer_search(uid);
 	
 	if (script_hasdata(st, 10) && script_isinttype(st, 10))
@@ -662,7 +665,7 @@ BUILDIN(bg_areaheal_timer)
 		return true;
 	}
 	
-	if( (m = map->mapname2mapid(mapname)) < 0){
+	if ((m = map->mapname2mapid(mapname)) < 0) {
 		ShowWarning("bg_areaheal_timer: Map \"%s\" Doesn't Exist.\n",mapname);
 		return true;
 	}
@@ -683,12 +686,14 @@ BUILDIN(bg_areaheal_timer)
 
 BUILDIN(bg_areawarp_timer)
 {
-	int uid = script_getnum(st,2), m, index, add_op = 0;
+	int uid = script_getnum(st,2), index, add_op = 0;
 	const char *mapname = script_getstr(st,3), *str = script_getstr(st,8);
 	struct bg_timerdb_struct* tdb = bg_timer_search(uid);
+
+	int16 m;
 	
-	int x2 = script_getnum(st,9), y2 = script_getnum(st,10);
-	int x3 = 0, y3 = 0;
+	int16 x2 = script_getnum(st,9), y2 = script_getnum(st,10);
+	int16 x3 = 0, y3 = 0;
 	
 	if (script_hasdata(st,11) && script_hasdata(st,12)) { // Warp area to area
 		if ((x3 = script_getnum(st,11)) < 0 || (y3 = script_getnum(st,12)) < 0) {
@@ -779,10 +784,10 @@ BUILDIN(bg_effect_timer)
 
 BUILDIN(bg_viewpoint_timer)
 {
-	int uid = script_getnum(st,2),add_op=0;
+	int uid = script_getnum(st, 2), add_op = 0;
 	struct bg_timerdb_struct* tdb = bg_timer_search(uid);
-	int m;
-	const char *map_name = script_getstr(st,3);
+	int16 m;
+	const char *map_name = script_getstr(st, 3);
 	
 	if (script_hasdata(st, 9) && script_isinttype(st, 9))
 		add_op = script_getnum(st, 9);
@@ -1105,23 +1110,24 @@ BUILDIN(bg_areaitem)
 {
 	struct item_data *data;
 	const char *mapname = script_getstr(st,2);
-	int x = script_getnum(st, 3);
-	int y = script_getnum(st, 4);
+	int16 x = script_getnum(st, 3);
+	int16 y = script_getnum(st, 4);
 	int nameid = script_getnum(st, 5);
 	int amount = script_getnum(st, 6);
-	int m;
+	int16 m;
 	
-	if( (m = map->mapname2mapid(mapname)) < 0 )
+	if ((m = map->mapname2mapid(mapname)) < 0)
 		return false;
 	
-	if( (data = itemdb->search(nameid)) == NULL )
+	if ((data = itemdb->search(nameid)) == NULL)
 		return false;
 
-	area_flooritem( m, x, y, nameid, amount);
+	area_flooritem(m, x, y, nameid, amount);
 	return true;
 }
 
-BUILDIN(bg_team_reveal){
+BUILDIN(bg_team_reveal)
+{
 	struct battleground_data *bgd;
 	struct bg_extra_info *bg_data_t;
 	int id = script_getnum(st, 2);	//bg_id
