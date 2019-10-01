@@ -265,7 +265,7 @@ ACMD(leader)
 		clif->message(fd, "Please, enter the new Leader name (usage: @leader <name>).");
 		return false;
 	}
-	if ((pl_sd = map->nick2sd(message)) == NULL) {
+	if ((pl_sd = map->nick2sd(message, true)) == NULL) {
 		clif->message(fd, msg_txt(3)); // Character not found.
 		return false;
 	}
@@ -330,7 +330,7 @@ ACMD(reportafk)
 		clif->message(fd, "Please, enter the character name (usage: @reportafk <name>).");
 		return false;
 	}
-	if ((pl_sd = map->nick2sd(message)) == NULL) {
+	if ((pl_sd = map->nick2sd(message, true)) == NULL) {
 		clif->message(fd, msg_txt(3)); // Character not found.
 		return false;
 	}

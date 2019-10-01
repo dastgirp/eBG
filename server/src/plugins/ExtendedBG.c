@@ -1210,7 +1210,7 @@ int bg_timer_function(int tid, int64 tick, int id, intptr_t data)
 		int value, i = 0;
 		struct map_session_data *sd = NULL;
 		if (!tdb->npcs->npc_or_var) {
-			sd = map->nick2sd(tdb->npcs->name);
+			sd = map->nick2sd(tdb->npcs->name, false);
 			if (sd == NULL) {
 				ShowError("bg_timer_function: Player(%s) is offline.\n",tdb->npcs->name);
 #ifdef TIMER_LOG
@@ -5187,7 +5187,7 @@ int store_damage_ranking(struct block_list *src, struct block_list *dst, int64 i
  * clif_skill_damage preHooked
  * @see clif_skill_damage
  **/
-int record_max_damage(struct block_list **src, struct block_list **dst, int64 *tick, int *sdelay, int *ddelay, int64 *in_damage, int *div, uint16 *skill_id, uint16 *skill_lv, int *type)
+int record_max_damage(struct block_list **src, struct block_list **dst, int64 *tick, int *sdelay, int *ddelay, int64 *in_damage, int *div, uint16 *skill_id, uint16 *skill_lv, enum battle_dmg_type *type)
 {
 	nullpo_ret(*src);
 	if ((*src)->type == BL_PC) {
@@ -5214,7 +5214,7 @@ int record_max_damage(struct block_list **src, struct block_list **dst, int64 *t
  * clif_damage PreHooked
  * @see clif_damage
  **/
-int record_max_damage2(struct block_list **src, struct block_list **dst, int *sdelay, int *ddelay, int64 *in_damage, short *div, unsigned char *type, int64 *in_damage2)
+int record_max_damage2(struct block_list **src, struct block_list **dst, int *sdelay, int *ddelay, int64 *in_damage, short *div, enum battle_dmg_type *type, int64 *in_damage2)
 {
 	nullpo_ret(*src);
 	nullpo_ret(*dst);
