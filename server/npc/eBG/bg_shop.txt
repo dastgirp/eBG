@@ -223,8 +223,8 @@ OnShopRedBox:
 	.@can_buy = true;
 	.@max_buy = -1;
 	for (.@i = BGT_CTF; .@i <= getvariableofnpc(.bg_common[0], "BG_Settings"); ++.@i) {
-		if (.bg_enabled[.@i]) {
-			.@bg_name$ = .bg_name$[.@i];
+		if (getelementofarray(getvariableofnpc(.bg_enabled, "BG_Settings"), .@i)) {
+			.@bg_name$ = getelementofarray(getvariableofnpc(.bg_name$, "BG_Settings"), .@i);
 			.@point = getd(callfunc("F_varAdd", .@i));
 			mesf("%s : ^0000FF %d ^000000", .@bg_name$, .@point); // Name : Points
 			if (.@point <= 0)
@@ -234,7 +234,7 @@ OnShopRedBox:
 		}
 	}
 	next;
-	if (!.@can_buy) {
+	if (!.@can_buy || .@max_buy == -1) {
 		mes("[Telma]");
 		mesf("To exchange your points for the %s, you need to get atleast 1 point in each BG", getitemname(.bg_common[1]));
 		mes("Play all kinds of BG's!!.");
@@ -252,7 +252,7 @@ OnShopRedBox:
 	}
 
 	for (.@i = BGT_CTF; .@i <= getvariableofnpc(.bg_common[0], "BG_Settings"); ++.@i) {
-		if (.bg_enabled[.@i]) {
+		if (getelementofarray(getvariableofnpc(.bg_enabled, "BG_Settings"), .@i)) {
 			.@point$ = callfunc("F_varAdd", .@i);
 			if (getd(.@point$) < .@to_get) {
 				mes("You tried to cheat!!");
