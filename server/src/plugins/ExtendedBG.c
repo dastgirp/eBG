@@ -6357,7 +6357,7 @@ HPExport void plugin_init(void)
 	addHookPre(guild, isallied, guild_virt_allied);
 	addHookPre(clif, blname_ack, clif_blname_ack_pre);
 #endif
-	addHookPre(unit, walktoxy, mob_can_move);
+	addHookPre(unit, walk_toxy, mob_can_move);
 	addHookPre(unit, walktobl, mob_can_move_v2);
 #ifdef EBG_RANKING
 	addHookPre(clif, skill_damage, record_max_damage);
