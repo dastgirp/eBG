@@ -51,17 +51,17 @@
 #include "map/skill.h"
 #include "map/unit.h"
 
-#include "HPMHooking.h"
+#include "plugins/HPMHooking.h"
 #include "common/HPMDataCheck.h"
 
 #define EBG_MAP
 #include "eBG_common.h"
 
 HPExport struct hplugin_info pinfo = {
-	"ExtendedBG",		// Plugin name
-	SERVER_TYPE_MAP,	// Which server types this plugin works with?
-	"BitBucket Version",// Plugin version
-	HPM_VERSION,		// HPM Version (don't change, macro is automatically updated)
+	"ExtendedBG",
+	SERVER_TYPE_MAP,
+	"BitBucket Version",
+	HPM_VERSION,
 };
 /*
 Changelogs:	See BitBucket Changelog Issue.

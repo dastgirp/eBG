@@ -25,7 +25,7 @@
 #include "char/mapif.h"
 #include "char/int_mercenary.h"
 
-#include "HPMHooking.h"
+#include "plugins/HPMHooking.h"
 #include "common/HPMDataCheck.h"
 
 HPExport struct hplugin_info pinfo = {

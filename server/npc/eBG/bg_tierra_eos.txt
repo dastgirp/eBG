@@ -244,13 +244,19 @@ OnTimerStop:
 	return;
 	
 OnTimerStart:
-	if (.uid){
+	if (.uid) {
+		if (.@end) {
+			end;
+		}
 		return;
 	}
 	.uid = bg_timer_start(2000, 1);
 	bg_npc_cond_timer(.uid, strnpcinfo(NPC_NAME), 0, EBG_CONDITION_EQUAL, EBG_OP_VIEWPOINT | EBG_OP_EFFECT);
 	bg_effect_timer(.uid, EF_GANBANTEIN);
 	bg_viewpoint_timer(.uid, "ebg_eos", 1, -1, -1, 3, 0xFFFF00);
+	if (.@end) {
+		end;
+	}
 	return;
 
 OnDisable:
