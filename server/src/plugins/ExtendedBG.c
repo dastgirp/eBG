@@ -49,6 +49,7 @@
 #include "map/quest.h"
 #include "map/script.h"
 #include "map/skill.h"
+#include "map/storage.h"
 #include "map/unit.h"
 
 #include "plugins/HPMHooking.h"
@@ -2075,15 +2076,18 @@ int skill_notok_pre(uint16 *skill_id, struct map_session_data **sd)
 		return 1;
 	}
 
-	if ((*sd)->blockskill[idx]) {
-		clif->skill_fail(*sd, *skill_id, USESKILL_FAIL_SKILLINTERVAL, 0, 0);
+	if ((*sd)->autocast.type == AUTOCAST_NONE && (*sd)->canskill_tick != 0 &&
+		DIFF_TICK(timer->gettick(), (*sd)->canskill_tick) < ((*sd)->battle_status.amotion * (battle->bc->skill_amotion_leniency) / 100) )
+	{// attempted to cast a skill before the attack motion has finished
 		hookStop();
 		return 1;
 	}
 
-	if ((*sd)->skillitem == *skill_id) {
+
+	if ((*sd)->blockskill[idx]) {
+		clif->skill_fail(*sd, *skill_id, USESKILL_FAIL_SKILLINTERVAL, 0, 0);
 		hookStop();
-		return 0;
+		return 1;
 	}
 
 	if ((*sd)->sc.data[SC_ALL_RIDING]) {
@@ -4032,43 +4036,48 @@ int gmaster_skill_cast(struct map_session_data **sd_, uint16 *skill_id, uint16 *
 }
 
 /**
- * clif->pUseSkillToId PreHooked. To Allow Execution of Guild Skills.
- * @see clif_parse_UseSkillToID
+ * clif->useSkillToIdReal PreHooked.
+ * To Allow Execution of Guild Skills for BG.
+ * @see clif_useSkillToIdReal
  **/
-void unit_guild_skill(int *fd_, struct map_session_data **sd_)
+static void unit_guild_skill(int *fd_, struct map_session_data **sd_, int *skill_id_, int *skill_lv_, int *target_id_)
 {
-	struct map_session_data *sd = *sd_;
-	int fd = *fd_;
-	uint16 skill_id, skill_lv;
-	int tmp, target_id;
 	int64 tick = timer->gettick();
-	bool stopHook = false;
+	struct map_session_data *sd = *sd_;
+	int skill_id = *skill_id_;
+	int skill_lv = *skill_lv_;
+	int target_id = *target_id_;
 	
-	skill_lv = RFIFOW(fd,2);
-	skill_id = RFIFOW(fd,4);
-	target_id = RFIFOL(fd,6);
 	eShowDebug("%d - %d - %d\n",skill_lv,skill_id,target_id);
-	if (skill_lv < 1) skill_lv = 1; //No clue, I have seen the client do this with guild skills :/ [Skotlex]
-	if (skill_id < GD_SKILLBASE || sd->skillitem)
+	if (skill_lv < 1)
+		skill_lv = 1; //No clue, I have seen the client do this with guild skills :/ [Skotlex]
+
+	int tmp = skill->get_inf(skill_id);
+	if (tmp & INF_GROUND_SKILL || !tmp)
 		return;
 
-	tmp = skill->get_inf(skill_id);
-	if (tmp&INF_GROUND_SKILL || !tmp)
-		return; //Using a ground/passive skill on a target? WRONG.
-	if (sd->npc_id || sd->state.workinprogress&1) {
-#if PACKETVER >= 20110308
-		clif->msgtable(sd, MSG_BUSY);
-#else
-		clif->messagecolor_self(fd, COLOR_WHITE, msg_fd(fd, 48));
-#endif
+	if (skill_id < GD_SKILLBASE)
+		return;
+
+	if (skill_id >= HM_SKILLBASE && skill_id < HM_SKILLBASE + MAX_HOMUNSKILL) {
 		return;
 	}
-	if (pc_cant_act(sd)
-	&& skill_id != RK_REFRESH
-	&& !(skill_id == SR_GENTLETOUCH_CURE && (sd->sc.opt1 == OPT1_STONE || sd->sc.opt1 == OPT1_FREEZE || sd->sc.opt1 == OPT1_STUN))
-	&& ( sd->state.storage_flag && !(tmp&INF_SELF_SKILL)) // SELF skills can be used with the storage open, issue: 8027
-	)
+
+	if (skill_id >= MC_SKILLBASE && skill_id < MC_SKILLBASE + MAX_MERCSKILL) {
 		return;
+	}
+
+	if (sd->npc_id || sd->state.workinprogress & 1) {
+		return;
+	}
+
+	if (pc_cant_act(sd)
+		&& skill_id != RK_REFRESH
+		&& !(skill_id == SR_GENTLETOUCH_CURE && (sd->sc.opt1 == OPT1_STONE || sd->sc.opt1 == OPT1_FREEZE || sd->sc.opt1 == OPT1_STUN))
+		&& (sd->state.storage_flag != STORAGE_FLAG_CLOSED && !(tmp&INF_SELF_SKILL)) // SELF skills can be used with the storage open, issue: 8027
+	) {
+		return;
+	}
 
 	if (pc_issit(sd))
 		return;
@@ -4076,33 +4085,34 @@ void unit_guild_skill(int *fd_, struct map_session_data **sd_)
 	if (skill->not_ok(skill_id, sd))
 		return;
 
-	if (sd->bl.id != target_id && tmp&INF_SELF_SKILL)
-		target_id = sd->bl.id; // never trust the client
-
-	if (target_id < 0 && -target_id == sd->bl.id) // for disguises [Valaris]
-		target_id = sd->bl.id;
-
 	if (sd->ud.skilltimer != INVALID_TIMER) {
 		if (skill_id != SA_CASTCANCEL && skill_id != SO_SPELLFIST)
 			return;
 	} else if (DIFF_TICK(tick, sd->ud.canact_tick) < 0) {
-		if (sd->skillitem != skill_id) {
-			clif->skill_fail(sd, skill_id, USESKILL_FAIL_SKILLINTERVAL, 0, 0);
+		if (sd->autocast.type == AUTOCAST_NONE) {
 			return;
 		}
 	}
-	
-	if (sd->sc.option&OPTION_COSTUME)
+
+	if (sd->sc.option & OPTION_COSTUME)
 		return;
 
-	eShowDebug("UGS: 8\n");
-	if (sd->sc.data[SC_BASILICA])
+	if (sd->sc.data[SC_BASILICA] && (skill_id != HP_BASILICA || sd->sc.data[SC_BASILICA]->val4 != sd->bl.id))
 		return; // On basilica only caster can use Basilica again to stop it.
 
-	sd->skillitem = sd->skillitemlv = 0;
+	if (sd->menuskill_id) {
+		if (sd->menuskill_id == SA_TAMINGMONSTER) {
+			//Cancel pet capture.
+		} else if (sd->menuskill_id != SA_AUTOSPELL)
+			return; //Can't use skills while a menu is open.
+	}
+	if (sd->autocast.type != AUTOCAST_NONE) {
+		return;
+	}
 
-	if (skill_id >= GD_SKILLBASE) {
+	if (skill_id >= GD_SKILLBASE && skill_id < GD_MAX) {
 		struct sd_p_data *data = pdb_search(sd, false);
+
 		if (data && data->eBG && data->leader && map->list[sd->bl.m].flag.battleground) {
 #ifdef VIRT_GUILD
 			struct bg_extra_info *bg_data_t = bg_extra_create(bg->team_search(sd->bg_id), false);
@@ -4113,15 +4123,11 @@ void unit_guild_skill(int *fd_, struct map_session_data **sd_)
 			skill_lv = guild->checkskill(sd->guild, skill_id);
 #endif
 			eShowDebug("UGS: Hooked\n");
-			stopHook = true;
+			unit->skilluse_id(&sd->bl, target_id, skill_id, skill_lv);
+			hookStop();
 		}
 	}
-
-	eShowDebug("UGS: %d:%d:%d:%d\n",GD_EMERGENCYCALL,skill_id,skill_lv,sd->status.char_id);
-	pc->delinvincibletimer(sd);
-	unit->skilluse_id(&sd->bl, target_id, skill_id, skill_lv);
-	if (stopHook)
-		hookStop();
+	return;
 }
 
 /**
@@ -5463,7 +5469,7 @@ int record_requirement(struct map_session_data **sd_, uint16 *skill_id, uint16 *
 				req.sp = 0;
 				break;
 			default:
-				if (sd->state.autocast)
+				if (sd->autocast.type != AUTOCAST_NONE)
 					req.sp = 0;
 				break;
 		}
@@ -6255,7 +6261,7 @@ HPExport void plugin_init(void)
 	//addHookPost(clif, map_type, Stop_This_Shitty_Battleground_Check);
 #endif
 	addHookPre(skill, check_condition_castbegin, gmaster_skill_cast);
-	addHookPre(clif, pUseSkillToId, unit_guild_skill);
+	addHookPre(clif, useSkillToIdReal, unit_guild_skill);
 	addHookPre(skill, castend_nodamage_id, skill_castend_guild);
 	addHookPre(clif, guild_basicinfo, send_bg_basicinfo);
 	addHookPre(clif, pGuildRequestEmblem, send_bg_emblem_single_);
