@@ -564,7 +564,7 @@ function	script	F_warpDie	{
 										 28, 50,
 										 30, 381,
 										298, 339,
-										328, 154;
+										313, 154;
 
 			setarray .@CroixXY[0],	295, 379,
 									113, 311,
