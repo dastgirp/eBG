@@ -2054,60 +2054,61 @@ int pc_setpos_pre(struct map_session_data **sd, unsigned short *map_index_, int 
  * skill_notok PreHook. Allows the Usage of Guild Skill for leaders, Restriction of Item/Skills.
  * @see skill_notok
  **/
-int skill_notok_pre(uint16 *skill_id, struct map_session_data **sd)
+int skill_notok_pre(uint16 *skill_id, struct map_session_data **sd_)
 {
 	int16 idx;
 	struct sd_p_data *data;
 	struct ebg_mapflags *mf_data;
-	nullpo_retr(1, *sd);
+	struct map_session_data* sd = *sd_;
+	nullpo_retr(1, sd);
 
 	if (*skill_id != GD_EMERGENCYCALL) 
 		return 1;
 
 	idx = skill->get_index(*skill_id);
 
-	if (get_itemskill_restriction(*sd)) {
+	/** Only Return 1; Conditions are added here */
+	if (get_itemskill_restriction(sd)) {
 		hookStop();
 		return 1;
 	}
 
-	if (idx == 0 || pc_has_permission(*sd, PC_PERM_DISABLE_SKILL_USAGE)) {
+	if (idx == 0 || pc_has_permission(sd, PC_PERM_DISABLE_SKILL_USAGE)) {
 		hookStop();
 		return 1;
 	}
 
-	if ((*sd)->autocast.type == AUTOCAST_NONE && (*sd)->canskill_tick != 0 &&
-		DIFF_TICK(timer->gettick(), (*sd)->canskill_tick) < ((*sd)->battle_status.amotion * (battle->bc->skill_amotion_leniency) / 100) )
-	{// attempted to cast a skill before the attack motion has finished
+	if (sd->auto_cast_current.type == AUTOCAST_NONE && sd->canskill_tick != 0 &&
+		DIFF_TICK(timer->gettick(), sd->canskill_tick) < (sd->battle_status.amotion * (battle->bc->skill_amotion_leniency) / 100)) {
 		hookStop();
 		return 1;
 	}
 
 
-	if ((*sd)->blockskill[idx]) {
-		clif->skill_fail(*sd, *skill_id, USESKILL_FAIL_SKILLINTERVAL, 0, 0);
+	if (sd->blockskill[idx]) {
+		clif->skill_fail(sd, *skill_id, USESKILL_FAIL_SKILLINTERVAL, 0, 0);
 		hookStop();
 		return 1;
 	}
 
-	if ((*sd)->sc.data[SC_ALL_RIDING]) {
+	if (sd->sc.data[SC_ALL_RIDING]) {
 		hookStop();
 		return 1;
 	}
 
 	eShowDebug("NotOk: Emergency Skill1 - 1\n");
 
-	data = pdb_search(*sd, false);
-	mf_data = getFromMAPD(&map->list[(*sd)->bl.m], 0);
+	data = pdb_search(sd, false);
+	mf_data = getFromMAPD(&map->list[sd->bl.m], 0);
 
 	if (mf_data && mf_data->no_ec) {
-		clif->message((*sd)->fd, "Emergency Call cannot be cast here.");
+		clif->message(sd->fd, "Emergency Call cannot be cast here.");
 		hookStop();
 		return 1;
 	}
 
 	eShowDebug("NotOk: Emergency Skill1 - 2: %d\n", (data && data->leader)? 1: 0);
-	if (data != NULL && map->list[(*sd)->bl.m].flag.battleground && data->eBG == true && data->leader) {
+	if (data != NULL && map->list[sd->bl.m].flag.battleground && data->eBG == true && data->leader) {
 		eShowDebug("NotOk: Emergency Skill1 - 3\n");
 		hookStop();
 		return 0;
@@ -4039,6 +4040,7 @@ int gmaster_skill_cast(struct map_session_data **sd_, uint16 *skill_id, uint16 *
  * clif->useSkillToIdReal PreHooked.
  * To Allow Execution of Guild Skills for BG.
  * @see clif_useSkillToIdReal
+ * @note Don't display any message, as real message will be displayed in original function
  **/
 static void unit_guild_skill(int *fd_, struct map_session_data **sd_, int *skill_id_, int *skill_lv_, int *target_id_)
 {
@@ -4052,6 +4054,7 @@ static void unit_guild_skill(int *fd_, struct map_session_data **sd_, int *skill
 	if (skill_lv < 1)
 		skill_lv = 1; //No clue, I have seen the client do this with guild skills :/ [Skotlex]
 
+	
 	int tmp = skill->get_inf(skill_id);
 	if (tmp & INF_GROUND_SKILL || !tmp)
 		return;
@@ -4086,10 +4089,11 @@ static void unit_guild_skill(int *fd_, struct map_session_data **sd_, int *skill
 		return;
 
 	if (sd->ud.skilltimer != INVALID_TIMER) {
-		if (skill_id != SA_CASTCANCEL && skill_id != SO_SPELLFIST)
+		if (skill_id != SA_CASTCANCEL && skill_id != SO_SPELLFIST && sd->auto_cast_current.type == AUTOCAST_NONE)
 			return;
-	} else if (DIFF_TICK(tick, sd->ud.canact_tick) < 0) {
-		if (sd->autocast.type == AUTOCAST_NONE) {
+	}
+	else if (DIFF_TICK(tick, sd->ud.canact_tick) < 0) {
+		if (sd->auto_cast_current.type == AUTOCAST_NONE) {
 			return;
 		}
 	}
@@ -4106,7 +4110,7 @@ static void unit_guild_skill(int *fd_, struct map_session_data **sd_, int *skill
 		} else if (sd->menuskill_id != SA_AUTOSPELL)
 			return; //Can't use skills while a menu is open.
 	}
-	if (sd->autocast.type != AUTOCAST_NONE) {
+	if (sd->auto_cast_current.type != AUTOCAST_NONE) {
 		return;
 	}
 
@@ -5469,7 +5473,7 @@ int record_requirement(struct map_session_data **sd_, uint16 *skill_id, uint16 *
 				req.sp = 0;
 				break;
 			default:
-				if (sd->autocast.type != AUTOCAST_NONE)
+				if (sd->auto_cast_current.type != AUTOCAST_NONE) // Auto-cast skills don't consume SP.
 					req.sp = 0;
 				break;
 		}
@@ -5651,7 +5655,7 @@ int record_support_skill(int retVal, struct block_list *src, struct block_list *
 		default:
 			if (skill->castend_nodamage_id_undead_unknown(src, bl, &skill_id, &skill_lv, &tick, &flag)) {
 				//Skill is actually ground placed.
-				if (src == bl && skill->get_unit_id(skill_id,0))
+				if (src == bl && skill->get_unit_id(skill_id, skill_lv, 0))
 					return retVal;
 			}
 			break;
