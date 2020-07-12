@@ -2567,7 +2567,8 @@ int pc_dead_pre(struct map_session_data **sd_, struct block_list **src)
 
 	ssd = BL_CAST(BL_PC, master);
 	if (sd != NULL && ssd != NULL) {
-		struct sd_p_data* data = pdb_search(ssd, false);
+		struct sd_p_data* data_sd = pdb_search(sd, false);
+		struct sd_p_data* data_ssd = pdb_search(ssd, false);
 #ifdef EBG_RANKING
 		int is_bg = MAP_IS_NONE;
 #endif
@@ -2575,19 +2576,24 @@ int pc_dead_pre(struct map_session_data **sd_, struct block_list **src)
 			if (bg->team_search(sd->bg_id) != NULL) {
 				// Used by Tierra Inferno
 				pc->setreg(sd, script->add_variable("@killer_bg_id"), bg->team_get_id(*src));                                // Killer Battleground ID
-				pc->setreg(sd, script->add_variable("@killer_bg_src"), (ssd && ssd->bg_id) ? ssd->bl.id : 0);                  // Killer BL ID
-				pc->setreg(sd, script->add_variable("@killer_bg_acc_id"), (ssd && ssd->bg_id) ? ssd->status.account_id : 0);   // Killer AccountID
-				if (data && data->eBG) {
-					data->kills = data->kills + 1;
+				pc->setreg(sd, script->add_variable("@killer_bg_src"), (ssd->bg_id > 0) ? ssd->bl.id : 0);                   // Killer BL ID
+				pc->setreg(sd, script->add_variable("@killer_bg_acc_id"), (ssd->bg_id > 0) ? ssd->status.account_id : 0);    // Killer AccountID
+				if (data_ssd && data_ssd->eBG) {
+					data_ssd->kills = data_ssd->kills + 1;
 				}
 			}
 		}
 #ifdef EBG_RANKING
-		EBG_OR_WOE(sd, data, is_bg);
+		
+		EBG_OR_WOE(sd, data_sd, is_bg);
 		if (is_bg != MAP_IS_NONE) {
 			unsigned int *kill_death;
-			SET_VARIABLE_ADD(ssd, kill_death, RANKING_KILLS, 1, unsigned int);
 			SET_VARIABLE_ADD(sd, kill_death, RANKING_DEATHS, 1, unsigned int);
+		}
+		EBG_OR_WOE(ssd, data_ssd, is_bg);
+		if (is_bg != MAP_IS_NONE) {
+			unsigned int* kill_death;
+			SET_VARIABLE_ADD(ssd, kill_death, RANKING_KILLS, 1, unsigned int);
 		}
 		ebg_kill(sd, ssd);
 #endif
@@ -3559,7 +3565,7 @@ void ebg_request_save_data(int64 save_type, struct sd_p_data *sd_data, struct ma
 		int sub_with = low_const; \
 		bool save = false; /* Save the Data? **/ \
 		data_type values[(high_const)-(low_const)+1]; \
-		data_type *value_ptr; \
+		data_type *value_ptr = NULL; \
 		if (data == NULL)	\
 			return;	\
 		for (i=(low_const); i <= (high_const); i++) { \
@@ -5185,6 +5191,11 @@ int store_damage_ranking(struct block_list *src, struct block_list *dst, int64 i
 		SET_VARIABLE_ADD(sd, damage, RANKING_DAMAGE_DEALT, total_damage, uint64);
 		if (dst->type == BL_PC) {
 			struct map_session_data *tsd = BL_UCAST(BL_PC, dst);
+			// Other player should satisfy criteria too [BG/Guild]
+			struct sd_p_data* tsd_data = pdb_search(tsd, false);
+			EBG_OR_WOE(tsd, tsd_data, is_bg);
+			if (is_bg == MAP_IS_NONE)
+				return 1;
 			SET_VARIABLE_ADD(tsd, damage, RANKING_DAMAGE_RECEIVED, total_damage, uint64);
 		}
 	}

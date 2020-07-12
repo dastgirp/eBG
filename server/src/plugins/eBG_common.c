@@ -1192,11 +1192,11 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
  * @param len Total number of data
  * @param len_ Index after which which bgm_status data begins
  */
-#define GET_SAVE_SQL_DATA_(len, len_, arr_name)	\
+#define GET_SAVE_SQL_DATA_(len, len_, arr_name, start_idx)	\
 	if (use_sql) { \
 		save = false; \
 		save_ = false; \
-		for (i = 0; i < len; i++) { \
+		for (i = start_idx; i < len; i++) { \
 			arr_name[i] = 0; \
 			SQL->GetData(sql_handle, i, &data, NULL); arr_name[i] = atoi(data); \
 			if (arr_name[i] > 0) { \
@@ -1256,7 +1256,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** eBG Save Dmg Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_BG_RANK_DMG, sql_handle, "SELECT `max_damage`, `damage`, `damage_received` FROM `eBG_bg_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(3, 2, temp64);
+		GET_SAVE_SQL_DATA_(3, 2, temp64, 0);
 		if (save) {
 			uint64 *damage_ptr;
 			SET_VARIABLE_REPLACE(damage_ptr, MakeDWord(RANKING_MAX_DAMAGE, RANKING_BG_FORCE), temp64[temp_index], temp_index, uint64);
@@ -1269,7 +1269,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** eBG Save Misc Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_BG_RANK_MISC, sql_handle, "SELECT `kills`, `deaths`, `ammo_used`, `score` FROM `eBG_bg_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(4, 3, temp);
+		GET_SAVE_SQL_DATA_(4, 3, temp, 0);
 		SET_VARIABLE_REPLACE_(udata_temp, MakeDWord(RANKING_SCORE, RANKING_BG_FORCE), 2000, unsigned int);
 		if (save) {
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_KILLS, RANKING_BG_FORCE), temp[temp_index], temp_index, unsigned int);
@@ -1283,14 +1283,15 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** eBG Save Heal Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_BG_RANK_HEAL, sql_handle, "SELECT `healing`, `healing_fail`, `sp_used`, `hp_potions`, `sp_potions` FROM `eBG_bg_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(5, 4, temp64);
+		GET_SAVE_SQL_DATA_(2, 1, temp64, 0);
+		GET_SAVE_SQL_DATA_(5, 4, temp, 2);
 		if (save) {
 			uint64 *heal_ptr;
 			SET_VARIABLE_REPLACE(heal_ptr, MakeDWord(RANKING_HEAL_TEAM, RANKING_BG_FORCE), temp64[temp_index], temp_index, uint64);
 			SET_VARIABLE_REPLACE(heal_ptr, MakeDWord(RANKING_HEAL_ENEMY, RANKING_BG_FORCE), temp64[temp_index], temp_index, uint64);
-			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SP_USED, RANKING_BG_FORCE), (int)temp64[temp_index], temp_index, unsigned int);
-			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_HP_POTION, RANKING_BG_FORCE), (int)temp64[temp_index], temp_index, unsigned int);
-			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SP_POTION, RANKING_BG_FORCE), (int)temp64[temp_index], temp_index, unsigned int);
+			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SP_USED, RANKING_BG_FORCE), temp[temp_index], temp_index, unsigned int);
+			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_HP_POTION, RANKING_BG_FORCE), temp[temp_index], temp_index, unsigned int);
+			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SP_POTION, RANKING_BG_FORCE), temp[temp_index], temp_index, unsigned int);
 			save_type2 |= EBG_SAVE_BG_RANK_HEAL;
 		}
 	}
@@ -1298,7 +1299,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** eBG Save Item Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_BG_RANK_ITEM, sql_handle, "SELECT `red_gemstones`, `blue_gemstones`, `yellow_gemstones`, `poison_bottles`, `acid_demostration`, `acid_demostration_fail` FROM `eBG_bg_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(6, 5, temp);
+		GET_SAVE_SQL_DATA_(6, 5, temp, 0);
 		if (save) {
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_RED_GEMSTONE, RANKING_BG_FORCE), temp[temp_index], temp_index, unsigned int);
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_BLUE_GEMSTONE, RANKING_BG_FORCE), temp[temp_index], temp_index, unsigned int);
@@ -1313,7 +1314,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** eBG Save Skill Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_BG_RANK_SKILL, sql_handle, "SELECT `support_skills`, `support_skills_fail`, `spiritb_used`, `zeny_used` FROM `eBG_bg_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(4, 3, temp);
+		GET_SAVE_SQL_DATA_(4, 3, temp, 0);
 		if (save) {
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SUPPORT_SKILL_TEAM, RANKING_BG_FORCE), temp[temp_index], temp_index, unsigned int);
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SUPPORT_SKILL_ENEMY, RANKING_BG_FORCE), temp[temp_index], temp_index, unsigned int);
@@ -1326,7 +1327,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** eBG Save Dmg2 Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_BG_RANK_DMG2, sql_handle, "SELECT `boss_damage` FROM `eBG_bg_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(1, 0, temp);
+		GET_SAVE_SQL_DATA_(1, 0, temp, 0);
 		if (save) {
 			uint64 *dmg_ptr;
 			SET_VARIABLE_REPLACE(dmg_ptr, MakeDWord(RANKING_BG_BOSS_DMG, RANKING_BG_FORCE), temp64[temp_index], temp_index, uint64);
@@ -1345,7 +1346,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** WoE Save Dmg Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_WOE_RANK_DMG, sql_handle, "SELECT `max_damage`, `damage`, `damage_received` FROM `eBG_woe_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(3, 2, temp64);
+		GET_SAVE_SQL_DATA_(3, 2, temp64, 0);
 		if (save) {
 			uint64 *damage_ptr;
 			SET_VARIABLE_REPLACE(damage_ptr, MakeDWord(RANKING_MAX_DAMAGE, RANKING_WOE_FORCE), temp64[temp_index], temp_index, uint64);
@@ -1358,7 +1359,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** WoE Save Misc Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_WOE_RANK_MISC, sql_handle, "SELECT `kills`, `deaths`, `ammo_used`, `score` FROM `eBG_woe_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(4, 3, temp);
+		GET_SAVE_SQL_DATA_(4, 3, temp, 0);
 		SET_VARIABLE_REPLACE_(udata_temp, MakeDWord(RANKING_SCORE, RANKING_WOE_FORCE), 2000, unsigned int);
 		if (save) {
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_KILLS, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
@@ -1372,14 +1373,15 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** WoE Save Heal Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_WOE_RANK_HEAL, sql_handle, "SELECT `healing`, `healing_fail`, `sp_used`, `hp_potions`, `sp_potions` FROM `eBG_woe_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(5, 4, temp64);
+		GET_SAVE_SQL_DATA_(2, 1, temp64, 0);
+		GET_SAVE_SQL_DATA_(5, 4, temp, 2);
 		if (save) {
 			uint64 *heal_ptr;
 			SET_VARIABLE_REPLACE(heal_ptr, MakeDWord(RANKING_HEAL_TEAM, RANKING_WOE_FORCE), temp64[temp_index], temp_index, uint64);
 			SET_VARIABLE_REPLACE(heal_ptr, MakeDWord(RANKING_HEAL_ENEMY, RANKING_WOE_FORCE), temp64[temp_index], temp_index, uint64);
-			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SP_USED, RANKING_WOE_FORCE), (int)temp64[temp_index], temp_index, unsigned int);
-			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_HP_POTION, RANKING_WOE_FORCE), (int)temp64[temp_index], temp_index, unsigned int);
-			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SP_POTION, RANKING_WOE_FORCE), (int)temp64[temp_index], temp_index, unsigned int);
+			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SP_USED, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
+			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_HP_POTION, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
+			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SP_POTION, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
 			save_type2 |= EBG_SAVE_WOE_RANK_HEAL;
 		}
 	}
@@ -1387,7 +1389,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** WoE Save Item Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_WOE_RANK_ITEM, sql_handle, "SELECT `red_gemstones`, `blue_gemstones`, `yellow_gemstones`, `poison_bottles`, `acid_demostration`, `acid_demostration_fail` FROM `eBG_woe_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(6, 5, temp);
+		GET_SAVE_SQL_DATA_(6, 5, temp, 0);
 		if (save) {
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_RED_GEMSTONE, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_BLUE_GEMSTONE, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
@@ -1402,7 +1404,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** WoE Save Skill Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_WOE_RANK_SKILL, sql_handle, "SELECT `support_skills`, `support_skills_fail`, `spiritb_used`, `zeny_used` FROM `eBG_woe_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(4, 3, temp);
+		GET_SAVE_SQL_DATA_(4, 3, temp, 0);
 		if (save) {
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SUPPORT_SKILL_TEAM, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_SUPPORT_SKILL_ENEMY, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
@@ -1415,7 +1417,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** WoE Save Misc2 Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_WOE_RANK_MISC2, sql_handle, "SELECT `emperium`, `barricade`, `guardian`, `gstone` FROM `eBG_woe_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(4, 3, temp);
+		GET_SAVE_SQL_DATA_(4, 3, temp, 0);
 		if (save) {
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_WOE_EMPERIUM, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
 			SET_VARIABLE_REPLACE(udata_temp, MakeDWord(RANKING_WOE_BARRICADE, RANKING_WOE_FORCE), temp[temp_index], temp_index, unsigned int);
@@ -1428,7 +1430,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	/** WoE Save Dmg2 Rank */
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, NULL, save_type & EBG_SAVE_WOE_RANK_DMG2, sql_handle, "SELECT `emperium_dmg`, `barricade_dmg`, `guardian_dmg`, `gstone_dmg` FROM `eBG_woe_rankings` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(4, 3, temp64);
+		GET_SAVE_SQL_DATA_(4, 3, temp64, 0);
 		if (save) {
 			uint64 *damage_ptr;
 			SET_VARIABLE_REPLACE(damage_ptr, MakeDWord(RANKING_WOE_EMPERIUM_DAMAGE, RANKING_WOE_FORCE), temp64[temp_index], temp_index, uint64);
@@ -1448,7 +1450,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	///< Common 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_COMMON)), sql_handle, "SELECT `points`,`rank_points`,`rank_games`,`total_rank_games`,`daymonth` FROM `eBG_main` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(5, 4, temp)
+		GET_SAVE_SQL_DATA_(5, 4, temp, 0)
 		if (save == true) {
 			time_t clock;
 			struct tm *t;
@@ -1481,7 +1483,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	// Other Common Data
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_COMMON_STATS)), sql_handle, "SELECT `wins`,`loss`,`tie` FROM `eBG_main` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(3, -1, temp)
+		GET_SAVE_SQL_DATA_(3, -1, temp, 0)
 		if (save_ == true) {
 			BG_CREATE_DATA_CHAR(bgd, common, bg_data_main, 3)
 			SET_VARIABLE_REPLACE(data_temp, BG_WON, temp[temp_index], temp_index, int);
@@ -1498,7 +1500,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 
 	///< Ctf
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_CTF)), sql_handle, "SELECT `taken`,`onhand`,`drops`,`wins`,`loss`,`tie` FROM `eBG_ctf` WHERE char_id='%d'", &char_id, fd)) {
-		GET_SAVE_SQL_DATA_(6, 2, temp)
+		GET_SAVE_SQL_DATA_(6, 2, temp, 0)
 		temp_index = 0;
 		if (save == true) {
 			BG_CREATE_DATA_CHAR(bgd, ctf, ctf_bg_data, 1);
@@ -1523,7 +1525,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 
 	///< Boss 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_BOSS)), sql_handle, "SELECT `killed`,`flag`,`wins`,`loss`,`tie` FROM `eBG_boss` WHERE char_id='%d'", &char_id, fd)) {
-		GET_SAVE_SQL_DATA_(5, 1, temp)
+		GET_SAVE_SQL_DATA_(5, 1, temp, 0)
 		temp_index = 0;
 		if (save == true) {
 			BG_CREATE_DATA_CHAR(bgd, boss, boss_bg_data, 1);
@@ -1547,7 +1549,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 
 	///< TI 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_TI)), sql_handle, "SELECT `skulls`,`wins`,`loss`,`tie` FROM `eBG_ti` WHERE char_id='%d'", &char_id, fd)) {
-		GET_SAVE_SQL_DATA_(4, 0, temp)
+		GET_SAVE_SQL_DATA_(4, 0, temp, 0)
 		temp_index = 0;
 		if (save == true) {
 			BG_CREATE_DATA_CHAR(bgd, ti, ti_bg_data, 1);
@@ -1571,7 +1573,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 	///< EoS 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_EOS)), sql_handle, "SELECT `flags`,`bases`,`wins`,`loss`,`tie` FROM `eBG_eos` WHERE char_id='%d'", &char_id, fd)) {
 		temp_index = 0;
-		GET_SAVE_SQL_DATA_(5, 1, temp)
+		GET_SAVE_SQL_DATA_(5, 1, temp, 0)
 		if (save == true) {
 			BG_CREATE_DATA_CHAR(bgd, eos, eos_bg_data, 1);
 			SET_VARIABLE_REPLACE(data_temp, BG_EOS_FLAG, temp[temp_index], temp_index, int);
@@ -1594,7 +1596,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 
 	///< TDM 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_TD)), sql_handle, "SELECT `kills`,`deaths`,`wins`,`loss`,`tie` FROM `eBG_tdm` WHERE char_id='%d'", &char_id, fd)) {
-		GET_SAVE_SQL_DATA_(5, 1, temp)
+		GET_SAVE_SQL_DATA_(5, 1, temp, 0)
 		temp_index = 0;
 		if (save == true) {
 			BG_CREATE_DATA_CHAR(bgd, td, tdm_bg_data, 1);
@@ -1618,7 +1620,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 
 	///< SC 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_SC)), sql_handle, "SELECT `steals`,`captures`,`drops`,`wins`,`loss`,`tie` FROM `eBG_sc` WHERE char_id='%d'", &char_id, fd)) {
-		GET_SAVE_SQL_DATA_(6, 2, temp)
+		GET_SAVE_SQL_DATA_(6, 2, temp, 0)
 		temp_index = 0;
 		if (save == true) {
 			BG_CREATE_DATA_CHAR(bgd, sc, sc_bg_data, 1);
@@ -1643,7 +1645,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 
 	///< Conquest 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_CONQ)), sql_handle, "SELECT `emperium`,`barricade`,`guardian`,`wins`,`loss` FROM `eBG_conq` WHERE char_id='%d'", &char_id, fd)) {
-		GET_SAVE_SQL_DATA_(5, 2, temp)
+		GET_SAVE_SQL_DATA_(5, 2, temp, 0)
 		temp_index = 0;
 		if (save == true) {
 			BG_CREATE_DATA_CHAR(bgd, conq, conq_bg_data, 1);
@@ -1667,7 +1669,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 
 	///< Rush 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_RUSH)), sql_handle, "SELECT `emp_captured`,`wins`,`loss` FROM `eBG_rush` WHERE char_id='%d'", &char_id, fd)) {
-		GET_SAVE_SQL_DATA_(3, 0, temp)
+		GET_SAVE_SQL_DATA_(3, 0, temp, 0)
 		temp_index = 0;
 		if (save == true) {
 			BG_CREATE_DATA_CHAR(bgd, rush, rush_bg_data, 1);
@@ -1690,7 +1692,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 
 	///< DOM 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_DOM)), sql_handle, "SELECT `off_kill`,`def_kill`,`bases`,`wins`,`loss`,`tie` FROM `eBG_dom` WHERE char_id='%d'", &char_id, fd)) {
-		GET_SAVE_SQL_DATA_(5, 2, temp)
+		GET_SAVE_SQL_DATA_(5, 2, temp, 0)
 		temp_index = 0;
 		if (save == true) {
 			BG_CREATE_DATA_CHAR(bgd, dom, dom_bg_data, 1);
@@ -1715,7 +1717,7 @@ void bg_load_char_data_sub(struct Sql *sql_handle, struct ebg_save_data *esdb, i
 
 	///< Leader 
 	if (ebg_execute_sql_query(temp, temp64, use_sql, &save, &save_, ((save_type)&(EBG_SAVE_LEADER)), sql_handle, "SELECT `wins`,`loss`,`tie` FROM `eBG_leader` WHERE char_id='%d'", &char_id, fd)) {
-		GET_SAVE_SQL_DATA_(3, 2, temp)
+		GET_SAVE_SQL_DATA_(3, 2, temp, 0)
 		temp_index = 0;
 		if (save == true || save_ == true) {	// only save is needed
 			BG_CREATE_DATA_CHAR(bgd, leader, bg_status_data, 3);
