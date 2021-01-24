@@ -5126,7 +5126,7 @@ int mob_can_move(struct block_list **bl, short *x, short *y, int *flag)
 
 /**
  * Checks if monster can move or not
- * @see unit_walktobl
+ * @see unit_walk_tobl
  **/
 int mob_can_move_v2(struct block_list **bl, struct block_list **tbl, int *range, int *flag)
 {
@@ -6379,7 +6379,7 @@ HPExport void plugin_init(void)
 	addHookPre(clif, blname_ack, clif_blname_ack_pre);
 #endif
 	addHookPre(unit, walk_toxy, mob_can_move);
-	addHookPre(unit, walktobl, mob_can_move_v2);
+	addHookPre(unit, walk_tobl, mob_can_move_v2);
 #ifdef EBG_RANKING
 	addHookPre(clif, skill_damage, record_max_damage);
 	addHookPre(clif, damage, record_max_damage2);
