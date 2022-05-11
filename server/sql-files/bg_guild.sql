@@ -22,19 +22,19 @@ CREATE TABLE IF NOT EXISTS `eBG_member` (
   KEY `char_id` (`char_id`)
 ) ENGINE=MyISAM;
 
-REPLACE INTO `guild` VALUES (901,'Blue Team',150000,'General Guillaume',1,0,16,1,1,1,1,'Blue Team - eBG','Blue Team - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (902,'Red Team',150000,'Prince Croix',1,0,16,1,1,1,1,'Red Team - eBG','Red Team - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (903,'Green Team',150000,'Mercenary',1,0,16,1,1,1,1,'Green Team - eBG','Green Team - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (904,'Team 1',0,'Team 1',1,0,16,1,1,1,1,'Team 1 - eBG','Team 1 - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (905,'Team 2',0,'Team 2',1,0,16,1,1,1,1,'Team 2 - eBG','Team 2 - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (906,'Team 3',0,'Team 3',1,0,16,1,1,1,1,'Team 3 - eBG','Team 3 - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (907,'Team 4',0,'Team 4',1,0,16,1,1,1,1,'Team 4 - eBG','Team 4 - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (908,'Team 5',0,'Team 5',1,0,16,1,1,1,1,'Team 5 - eBG','Team 5 - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (909,'Team 6',0,'Team 6',1,0,16,1,1,1,1,'Team 6 - eBG','Team 6 - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (910,'Team 7',0,'Team 7',1,0,16,1,1,1,1,'Team 7 - eBG','Team 7 - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (911,'Team 8',0,'Team 8',1,0,16,1,1,1,1,'Team 8 - eBG','Team 8 - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (912,'Team 9',0,'Team 9',1,0,16,1,1,1,1,'Team 9 - eBG','Team 9 - eBG',0,0,NULL);
-REPLACE INTO `guild` VALUES (913,'Team 10',0,'Team 10',1,0,16,1,1,1,1,'Team 10 - eBG','Team 10 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (901,'Blue Team',150000,'General Guillaume',1,0,16,1,255,1,1,0,'Blue Team - eBG','Blue Team - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (902,'Red Team',150000,'Prince Croix',1,0,16,1,1,1,1,0,'Red Team - eBG','Red Team - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (903,'Green Team',150000,'Mercenary',1,0,16,1,1,1,1,0,'Green Team - eBG','Green Team - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (904,'Team 1',0,'Team 1',1,0,16,1,1,1,1,0,'Team 1 - eBG','Team 1 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (905,'Team 2',0,'Team 2',1,0,16,1,1,1,1,0,'Team 2 - eBG','Team 2 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (906,'Team 3',0,'Team 3',1,0,16,1,1,1,1,0,'Team 3 - eBG','Team 3 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (907,'Team 4',0,'Team 4',1,0,16,1,1,1,1,0,'Team 4 - eBG','Team 4 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (908,'Team 5',0,'Team 5',1,0,16,1,1,1,1,0,'Team 5 - eBG','Team 5 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (909,'Team 6',0,'Team 6',1,0,16,1,1,1,1,0,'Team 6 - eBG','Team 6 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (910,'Team 7',0,'Team 7',1,0,16,1,1,1,1,0,'Team 7 - eBG','Team 7 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (911,'Team 8',0,'Team 8',1,0,16,1,1,1,1,0,'Team 8 - eBG','Team 8 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (912,'Team 9',0,'Team 9',1,0,16,1,1,1,1,0,'Team 9 - eBG','Team 9 - eBG',0,0,NULL);
+REPLACE INTO `guild` VALUES (913,'Team 10',0,'Team 10',1,0,16,1,1,1,1,0,'Team 10 - eBG','Team 10 - eBG',0,0,NULL);
 
 REPLACE INTO `guild_position` VALUES (901,0,'Blue Team Leader',0,0);
 REPLACE INTO `guild_position` VALUES (901,1,'Blue Team',0,0);
