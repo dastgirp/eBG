@@ -3281,7 +3281,7 @@ int bg_e_team_join(int bg_id, struct map_session_data *sd, int guild_id)
 		clif->guild_memberlist(pl_sd);
 		clif->guild_positioninfolist(pl_sd);
 		if (pl_sd != sd)
-			clif->hpmeter_single(sd->fd, pl_sd->bl.id, pl_sd->battle_status.hp, pl_sd->battle_status.max_hp);
+			clif->hpmeter_single(sd->fd, pl_sd->status.account_id, pl_sd->battle_status.hp, pl_sd->battle_status.max_hp, pl_sd->battle_status.sp, pl_sd->battle_status.max_sp);
 	}
 
 	clif->bg_hp(sd);
@@ -5508,7 +5508,7 @@ int record_requirement(struct map_session_data **sd_, uint16 *skill_id, uint16 *
  * pc_delitem PreHooked
  * @see pc_delitem
  **/
-int record_requirement_item(struct map_session_data **sd_, int *n, int *amount, int *type, short *reason, e_log_pick_type *log_type)
+int record_requirement_item(struct map_session_data **sd_, int *n, int *amount, int *type, enum delitem_reason *reason, e_log_pick_type *log_type)
 {
 	struct map_session_data *sd = *sd_;
 	int is_bg = MAP_IS_NONE;
