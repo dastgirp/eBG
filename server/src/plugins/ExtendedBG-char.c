@@ -207,7 +207,7 @@ void ebg_char_p_send_data(int fd)
 		}
 	}
 	if (offset > 0) {
-		mapif->send(fd, buf, offset);
+		mapif->send(buf, offset);
 		return;
 	}
 	return;
@@ -251,7 +251,7 @@ void ebg_char_p_fame_data_sub(int fd, int type) {
 
 	WBUFL(buf, 2) = len;
 	if (len > 8)
-		mapif->send(fd, buf, len);
+		mapif->send(buf, len);
 }
 
 int ebg_char_p_fame_data(int fd) {
